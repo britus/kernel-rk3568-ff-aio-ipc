@@ -52,6 +52,8 @@ modules.builtin
 /kernel.img
 /resource.img
 /zboot.img
+/extboot.img
+/extboot
 /tags
 /TAGS
 /linux
