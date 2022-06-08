@@ -68,6 +68,14 @@
 			default-state = "on";
 			gpios = <&pca9555_1 PCA_IO0_7 GPIO_ACTIVE_HIGH>;
 		};
+
+		rs232_485_switch: rs232-485-switch {
+			label = "firefly:rs232_485_switch:user";
+			linux,default-trigger = "ir-user-click";
+			default-state = "off";  //off:RS232 on:RS485
+			gpios = <&pca9555_1 PCA_IO1_3 GPIO_ACTIVE_HIGH>;
+		};
+
 	};
 
 //	tp_power: tp-power-regulator {
