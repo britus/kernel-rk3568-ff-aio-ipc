@@ -42,7 +42,7 @@ static int firefly_gpio_probe(struct platform_device *pdev)
     struct device_node *firefly_gpio_node = pdev->dev.of_node;
 
     printk("Firefly GPIO Test Program Probe\n");
-        gpio_info = devm_kzalloc(&pdev->dev,sizeof(struct firefly_gpio_info *), GFP_KERNEL);
+        gpio_info = devm_kzalloc(&pdev->dev, sizeof(struct firefly_gpio_info), GFP_KERNEL);
         if (!gpio_info) {
         dev_err(&pdev->dev, "devm_kzalloc failed!\n");
                 return -ENOMEM;
