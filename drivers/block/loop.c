@@ -681,6 +681,10 @@ static void loop_reread_partitions(struct loop_device *lo,
 {
 	int rc;
 
+	if (lo->lo_flags & LO_FLAGS_PARTSCAN &&
+				lo->lo_disk->flags & GENHD_FL_NO_PART_SCAN)
+		lo->lo_disk->flags &= ~GENHD_FL_NO_PART_SCAN;
+
 	rc = blkdev_reread_part(bdev);
 	if (rc)
 		pr_warn("%s: partition scan of loop%d (%s) failed (rc=%d)\n",
