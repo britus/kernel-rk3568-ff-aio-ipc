@@ -47,6 +47,7 @@
 #define PASSIVE_ERR		BIT(4)
 #define TX_LOSTARB		BIT(5)
 #define BUS_ERR_INT		BIT(6)
+#define BUS_OFF_INT		BIT(9)
 
 /* Bit Timing Register */
 #define CAN_BTT			0x18
@@ -370,7 +371,7 @@ static void rockchip_can_clean_rx_info(struct rockchip_can *rcan)
 	readl(rcan->base + CAN_RX_DATA2);
 }
 
-static int rockchip_can_err(struct net_device *ndev, u8 isr)
+static int rockchip_can_err(struct net_device *ndev, u32 isr)
 {
 	struct rockchip_can *rcan = netdev_priv(ndev);
 	struct net_device_stats *stats = &ndev->stats;
@@ -410,7 +411,7 @@ static int rockchip_can_err(struct net_device *ndev, u8 isr)
 		set_normal_mode(ndev);
 	}
 
-	if (isr & ERR_WARN_INT) {
+	if (isr & ERR_WARN_INT || isr & BUS_OFF_INT) {
 		/* error warning interrupt */
 		netdev_dbg(ndev, "error warning interrupt\n");
 
@@ -501,9 +502,9 @@ static irqreturn_t rockchip_can_interrupt(int irq, void *dev_id)
 	struct net_device *ndev = (struct net_device *)dev_id;
 	struct rockchip_can *rcan = netdev_priv(ndev);
 	struct net_device_stats *stats = &ndev->stats;
-	u8 err_int = ERR_WARN_INT | RX_BUF_OV | PASSIVE_ERR |
-		     TX_LOSTARB | BUS_ERR_INT;
-	u8 isr;
+	u32 err_int = ERR_WARN_INT | RX_BUF_OV | PASSIVE_ERR |
+		     TX_LOSTARB | BUS_ERR_INT | BUS_OFF_INT;
+	u32 isr;
 
 	isr = readl(rcan->base + CAN_INT);
 	if (isr & TX_FINISH) {
