@@ -517,7 +517,7 @@ static int rockchip_canfd_start_xmit(struct sk_buff *skb,
 	struct rockchip_canfd *rcan = netdev_priv(ndev);
 	struct canfd_frame *cf = (struct canfd_frame *)skb->data;
 	u32 id, dlc;
-	u32 cmd = CAN_TX0_REQ;
+	u32 cmd = CAN_TX0_REQ, mode;
 	int i;
 
 	if (can_dropped_invalid_skb(ndev, skb))
@@ -534,6 +534,16 @@ static int rockchip_canfd_start_xmit(struct sk_buff *skb,
 		id = cf->can_id & CAN_EFF_MASK;
 		dlc = can_len2dlc(cf->len) & DLC_MASK;
 		dlc |= FORMAT_MASK;
+		/* Extended frames need workround */
+		if ((rockchip_canfd_read(rcan, CAN_STATE) & RX_PERIOD) == 0) {
+			mode = rockchip_canfd_read(rcan, CAN_MODE);
+			rockchip_canfd_write(rcan, CAN_MODE,
+					     mode | MODE_SLEEP);
+			mode = rockchip_canfd_read(rcan, CAN_MODE);
+			rockchip_canfd_write(rcan, CAN_MODE,
+					     mode & (~MODE_SLEEP));
+			rockchip_canfd_write(rcan, CAN_INT, WAKEUP_INT);
+		}
 
 		/* Extended frames remote TX request */
 		if (cf->can_id & CAN_RTR_FLAG)
