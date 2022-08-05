@@ -252,6 +252,10 @@
     status = "okay";
 };
 
+&dmc {
+	status = "disabled";
+};
+
 &pinctrl {
 	usb {
 		vcc_5v_en: vcc-5v-en {
