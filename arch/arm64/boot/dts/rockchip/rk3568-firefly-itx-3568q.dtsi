@@ -57,7 +57,7 @@
 			label = "firefly:yellow:user";
 			linux,default-trigger = "ir-user-click";
 			default-state = "off";
-			gpios = <&gpio4 RK_PC4 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio4 RK_PC4 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led_user>;
 		};
@@ -281,8 +281,8 @@
 
 &gmac0 {
     status = "okay";
-    tx_delay = <0x3e>;
-    rx_delay = <0x34>;
+    tx_delay = <0x47>;
+    rx_delay = <0x31>;
 	snps,reset-gpio = <&gpio0 RK_PD5 GPIO_ACTIVE_LOW>;
 //	snps,reset-gpio = <&gpio2 RK_PD3 GPIO_ACTIVE_LOW>;
 };
