@@ -34,7 +34,7 @@ config PC9202_WATCHDOG
     depends on I2C
     default y
     help
-        This option to verify the valid of PCBA.
+        Enable this option to support PC9202 watchdog.
 
 config WATCHDOG_CORE
 	bool "WatchDog Timer Driver Core"
