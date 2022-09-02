@@ -1402,4 +1402,11 @@ config GPIO_FIREFLY
 	help
 		Firefly gpio driver demo
 
+config GPIO_CSR2_SUB_POSITION
+	tristate "Firefly Cluster-R2 GPIO SUB position driver"
+	default n
+	help
+		This driver is for sub-board in Cluster-R2 Server
+		Read /dev/sub_position to know which drawer slot is current sub-board in
+
 endif
