@@ -55,6 +55,7 @@ static const struct platform_device_id ntc_thermistor_id[] = {
 	{ "b57330v2103", TYPE_B57330V2103},
 	{ "ncp03wf104", TYPE_NCPXXWF104 },
 	{ "ncp15xh103", TYPE_NCPXXXH103 },
+	{ "ncu18wf103f6srb", TYPE_NCU18WF103F6SRB },
 	{ },
 };
 
@@ -252,6 +253,41 @@ static const struct ntc_compensation b57330v2103[] = {
 	{ .temp_c	= 125, .ohm	= 531 },
 };
 
+static const struct ntc_compensation ncu18wf103f6srb[] = {
+    { .temp_c   = -30, .ohm = 119520 },
+    { .temp_c   = -25, .ohm = 91830 },
+    { .temp_c   = -20, .ohm = 71180 },
+    { .temp_c   = -15, .ohm = 55620 },
+    { .temp_c   = -10, .ohm = 43810 },
+    { .temp_c   = -5, .ohm = 34770 },
+    { .temp_c   = 0, .ohm = 27800 },
+    { .temp_c   = 5, .ohm = 22370 },
+    { .temp_c   = 10, .ohm = 18130 },
+    { .temp_c   = 15, .ohm = 14780 },
+    { .temp_c   = 20, .ohm = 12120 },
+    { .temp_c   = 25, .ohm = 10000 },
+    { .temp_c   = 30, .ohm = 8300 },
+    { .temp_c   = 35, .ohm = 6920 },
+    { .temp_c   = 40, .ohm = 5800 },
+    { .temp_c   = 45, .ohm = 4880 },
+    { .temp_c   = 50, .ohm = 4130 },
+    { .temp_c   = 55, .ohm = 3510 },
+    { .temp_c   = 60, .ohm = 3000 },
+    { .temp_c   = 65, .ohm = 2570 },
+    { .temp_c   = 70, .ohm = 2210 },
+    { .temp_c   = 75, .ohm = 1910 },
+    { .temp_c   = 80, .ohm = 1660 },
+    { .temp_c   = 85, .ohm = 1440 },
+    { .temp_c   = 90, .ohm = 1260 },
+    { .temp_c   = 95, .ohm = 1100 },
+    { .temp_c   = 100, .ohm = 970 },
+    { .temp_c   = 105, .ohm = 850 },
+    { .temp_c   = 110, .ohm = 760 },
+    { .temp_c   = 115, .ohm = 670 },
+    { .temp_c   = 120, .ohm = 600 },
+    { .temp_c   = 125, .ohm = 530 },
+};
+
 struct ntc_data {
 	struct ntc_thermistor_platform_data *pdata;
 	const struct ntc_compensation *comp;
@@ -308,6 +344,9 @@ static const struct of_device_id ntc_match[] = {
 		.data = &ntc_thermistor_id[3] },
 	{ .compatible = "ntc,ncp15wl333",
 		.data = &ntc_thermistor_id[4] },
+
+    { .compatible = "firefly,ncu18wf103f6srb",
+        .data = &ntc_thermistor_id[8] },
 	{ },
 };
 MODULE_DEVICE_TABLE(of, ntc_match);
@@ -626,6 +665,10 @@ static int ntc_thermistor_probe(struct platform_device *pdev)
 	case TYPE_NCPXXXH103:
 		data->comp = ncpXXxh103;
 		data->n_comp = ARRAY_SIZE(ncpXXxh103);
+		break;
+	case TYPE_NCU18WF103F6SRB:
+		data->comp = ncu18wf103f6srb;
+		data->n_comp = ARRAY_SIZE(ncu18wf103f6srb);
 		break;
 	default:
 		dev_err(dev, "Unknown device type: %lu(%s)\n",
