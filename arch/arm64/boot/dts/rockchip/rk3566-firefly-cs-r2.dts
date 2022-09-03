@@ -1,0 +1,14 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2020 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+ /dts-v1/;
+
+#include "rk3566-firefly-cs-r2.dtsi"
+
+/ {
+    model = "CORE-3566JD4 CS-R2 (Linux)";
+    compatible = "rockchip,rk3566-firefly-cs-r2", "rockchip,rk3566";
+};

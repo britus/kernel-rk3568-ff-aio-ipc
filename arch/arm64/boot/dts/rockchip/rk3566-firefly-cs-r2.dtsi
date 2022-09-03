@@ -1,0 +1,255 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2020 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+#include "rk3568-firefly-port.dtsi"
+#include "rk3566-diff.dtsi"
+
+/ {
+	core_mb_sys_en: core-mb-sys-en {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio0 RK_PC5 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&core_mb_sys_en_pin>;
+		regulator-name = "core_mb_sys_en";
+		regulator-always-on;
+	};
+
+	vcc_watchdog_5v: vcc-watchdog-5v {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio3 RK_PA1 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&vcc5v0_wd_en>;
+		regulator-name = "vcc_watchdog_5v";
+		regulator-always-on;
+	};
+
+	ntc_thermistor: ntc-thermistor {
+		status = "okay";
+		compatible = "firefly,ncu18wf103f6srb";
+		pullup-uv = <1800000>;
+		pullup-ohm = <10000>;
+		pulldown-ohm = <0>;
+		io-channels = <&saradc 3>;
+	};
+
+	/* temperature sensor */
+	ds18b20: ds18b20-sensor {
+		status = "okay";
+		compatible = "firefly,ds1820";
+		ds1820-dq = <&gpio4 RK_PA2 GPIO_ACTIVE_LOW>;
+		//ds1820-dq-1 = <&gpio0 19 GPIO_ACTIVE_LOW>; // old R2 version
+		pinctrl-names = "default";
+		pinctrl-0 = <&ds18b20_dp_pin>;
+	};
+
+	sub_position: sub-position {
+		status = "okay";
+		compatible = "firefly,sub_position";
+		core-add-0 = <&gpio4 RK_PC2 GPIO_ACTIVE_HIGH>;
+		core-add-1 = <&gpio4 RK_PC3 GPIO_ACTIVE_HIGH>;
+		core-add-2 = <&gpio4 RK_PC6 GPIO_ACTIVE_HIGH>;
+		core-add-3 = <&gpio4 RK_PC5 GPIO_ACTIVE_HIGH>;
+	};
+
+	firefly_leds: leds {
+		compatible = "gpio-leds";
+		power_led: power {
+			label = "firefly:blue:power";
+			linux,default-trigger = "ir-power-click";
+			default-state = "on";
+			gpios = <&gpio4 RK_PB6 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led_power>;
+		};
+
+		user_led: user {
+			label = "firefly:yellow:user";
+			linux,default-trigger = "ir-user-click";
+			default-state = "off";
+			gpios = <&gpio4 RK_PB0 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led_user>;
+		};
+	};
+};
+
+&sdmmc0 {
+	status = "disabled";
+};
+
+&hdmi {
+	status = "disabled";
+};
+
+&route_hdmi {
+	status = "disabled";
+	connect = <&vp0_out_hdmi>;
+};
+
+// iomux with GPIO2_B2(WIFI,host_wake_irq)
+&uart8 {
+    status = "disabled";
+};
+
+&rk809 {
+	rtc {
+		status = "disabled";
+	};
+};
+
+&rk809_sound {
+	status = "disabled";
+};
+
+&rk809_codec {
+	status = "disabled";
+};
+
+/delete-node/ &pcie30_3v3;
+/* pcie multiplex with sata2 */
+&pcie2x1 {
+    status = "disabled";
+};
+
+&sata2 {
+	status = "okay";
+};
+/* choose only one to enable */
+
+&its {
+    status = "okay";
+};
+
+&pwm4 {
+    status = "disabled";
+};
+
+&pwm5 {
+    status = "disabled";
+};
+
+&pwm7 {
+    status = "okay";
+};
+
+&dfi {
+	status = "disabled";
+};
+
+&dmc {
+	status = "disabled";
+};
+
+&gmac1 {
+    phy-mode = "rgmii";
+    clock_in_out = "input";
+
+    snps,reset-gpio = <&gpio0 RK_PB7 GPIO_ACTIVE_LOW>;
+    snps,reset-active-low;
+    /* Reset time is 20ms, 100ms for rtl8211f */
+    snps,reset-delays-us = <0 20000 100000>;
+
+    assigned-clocks = <&cru SCLK_GMAC1_RX_TX>, <&cru SCLK_GMAC1>;
+    assigned-clock-parents = <&cru SCLK_GMAC1_RGMII_SPEED>, <&gmac1_clkin>;
+
+    pinctrl-names = "default";
+    pinctrl-0 = <&gmac1m0_miim
+             &gmac1m0_tx_bus2
+             &gmac1m0_rx_bus2
+             &gmac1m0_rgmii_clk
+             &gmac1m0_rgmii_bus
+             &gmac1m0_clkinout>;
+
+    tx_delay = <0x48>;
+    rx_delay = <0x2e>;
+
+    phy-handle = <&rgmii_phy1>;
+    status = "okay";
+};
+
+&i2c2 {
+	status = "okay";
+	pinctrl-0 = <&i2c2m1_xfer>;
+	/* Watchdog */
+    pc9202: pc9202@3c{
+        status = "okay";
+        compatible = "firefly,pc9202";
+        reg = <0x3c>;
+        wd-en-gpio = <&gpio4 RK_PC1 GPIO_ACTIVE_HIGH>;
+    };
+};
+
+&i2c4 {
+    status = "disabled";
+};
+
+&spdif_out {
+	status = "disabled";
+};
+
+&rkisp {
+	status = "disabled";
+};
+
+&rkisp_mmu {
+	status = "disabled";
+};
+
+&rkisp_vir0 {
+	status = "disabled";
+};
+
+&rkisp_vir1 {
+	status = "disabled";
+};
+
+&csi2_dphy_hw {
+	status = "disabled";
+};
+
+&csi2_dphy0 {
+	status = "disabled";
+};
+
+&csi2_dphy1 {
+	status = "disabled";
+};
+
+&csi2_dphy2 {
+	status = "disabled";
+};
+
+&pinctrl {
+	power {
+		core_mb_sys_en_pin: core-mb-sys-en-pin {
+			rockchip,pins = <0 RK_PC5 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+    watchdog {
+		vcc5v0_wd_en: vcc5v0-wd-en {
+			rockchip,pins = <3 RK_PA1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	sensor {
+		ds18b20_dp_pin: ds18b20-dp-pin {
+			rockchip,pins = <4 RK_PA2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+    leds {
+		led_power: led-power {
+			rockchip,pins = <4 RK_PB6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led_user: led-user {
+			rockchip,pins = <4 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+};
