@@ -11,6 +11,7 @@
 			status = "okay";
 			compatible = "simple-panel";
 			ddc-i2c-bus = <&i2c2>;
+			soft-hpd;
 			//enable-gpios =<&pca9555 PCA_IO0_1 GPIO_ACTIVE_HIGH>;
 			reset-gpios = <&pca9555 PCA_IO0_5 GPIO_ACTIVE_LOW>;
 			/*	bus-format. default RGB for D23-D16/D15-8/D7-D0. 
