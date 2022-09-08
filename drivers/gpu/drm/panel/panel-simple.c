@@ -686,13 +686,15 @@ static void panel_simple_detect_dev_work(struct work_struct *work)
 			     I2C_SMBUS_QUICK, NULL);
 
 	if (ret == 0 && flag != 0){
-		panel_simple_handle_connector_status(p, "on");
-		drm_sysfs_hotplug_event(p->base.drm);
-		flag = 0;
+		if(!panel_simple_handle_connector_status(p, "on")) {
+			drm_sysfs_hotplug_event(p->base.drm);
+			flag = 0;
+		}
 	} else if (ret != 0 && flag == 0) {
-		panel_simple_handle_connector_status(p, "off");
-		drm_sysfs_hotplug_event(p->base.drm);
-		flag = 1;
+		if(!panel_simple_handle_connector_status(p, "off")) {
+			drm_sysfs_hotplug_event(p->base.drm);
+			flag = 1;
+		}
 	}
 
 	schedule_delayed_work(&p->detect_dev_work, msecs_to_jiffies(3000));
