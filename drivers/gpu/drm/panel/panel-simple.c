@@ -40,7 +40,6 @@
 #include <video/videomode.h>
 
 #include "../rockchip/rockchip_drm_drv.h"
-
 struct panel_cmd_header {
 	u8 data_type;
 	u8 delay;
@@ -111,6 +110,7 @@ struct panel_simple {
 	bool prepared;
 	bool enabled;
 	bool power_invert;
+	bool soft_hpd;
 
 	const struct panel_desc *desc;
 
@@ -127,6 +127,7 @@ struct panel_simple {
 	struct gpio_desc *spi_scl_gpio;
 	struct gpio_desc *spi_cs_gpio;
 	struct device_node *np_crtc;
+	struct delayed_work detect_dev_work;
 };
 
 enum rockchip_cmd_type {
@@ -634,6 +635,69 @@ static int panel_simple_enable(struct drm_panel *panel)
 	return 0;
 }
 
+
+static int panel_simple_handle_connector_status(struct panel_simple *p, const char *status)
+{
+	struct drm_connector *connector = p->base.connector;
+	struct drm_device *dev = p->base.drm;
+	enum drm_connector_force old_force;
+	int ret;
+
+	ret = mutex_lock_interruptible(&dev->mode_config.mutex);
+	if (ret)
+		return ret;
+
+	old_force = connector->force;
+
+	if (!strcmp(status, "on"))
+		connector->force = DRM_FORCE_ON;
+	else if (!strcmp(status, "off"))
+		connector->force = DRM_FORCE_OFF;
+	else
+		ret = -EINVAL;
+
+	if (old_force != connector->force || !connector->force) {
+		DRM_DEBUG_KMS("[CONNECTOR:%d:%s] force updated from %d to %d or reprobing\n",
+			      connector->base.id,
+			      connector->name,
+			      old_force, connector->force);
+
+		connector->funcs->fill_modes(connector,
+					     dev->mode_config.max_width,
+					     dev->mode_config.max_height);
+	}
+
+	mutex_unlock(&dev->mode_config.mutex);
+
+	return ret;
+}
+
+static void panel_simple_detect_dev_work(struct work_struct *work)
+{
+	struct panel_simple *p =
+			container_of(work, struct panel_simple, detect_dev_work.work);
+	static int flag;
+	int ret = 0;
+
+	if (!p->ddc)
+		return;
+
+	ret = i2c_smbus_xfer(p->ddc, DDC_ADDR, 0, I2C_SMBUS_WRITE, 0,
+			     I2C_SMBUS_QUICK, NULL);
+
+	if (ret == 0 && flag != 0){
+		panel_simple_handle_connector_status(p, "on");
+		drm_sysfs_hotplug_event(p->base.drm);
+		flag = 0;
+	} else if (ret != 0 && flag == 0) {
+		panel_simple_handle_connector_status(p, "off");
+		drm_sysfs_hotplug_event(p->base.drm);
+		flag = 1;
+	}
+
+	schedule_delayed_work(&p->detect_dev_work, msecs_to_jiffies(3000));
+}
+
 static int panel_simple_get_modes(struct drm_panel *panel)
 {
 	struct panel_simple *p = to_panel_simple(panel);
@@ -800,6 +864,8 @@ static int panel_simple_probe(struct device *dev, const struct panel_desc *desc)
 		}
 	}
 
+	panel->soft_hpd = of_property_read_bool(dev->of_node, "soft-hpd");
+
 	drm_panel_init(&panel->base);
 	panel->base.dev = dev;
 	panel->base.funcs = &panel_simple_funcs;
@@ -809,6 +875,11 @@ static int panel_simple_probe(struct device *dev, const struct panel_desc *desc)
 		goto free_ddc;
 
 	dev_set_drvdata(dev, panel);
+
+	if (panel->soft_hpd) {
+		INIT_DELAYED_WORK(&panel->detect_dev_work, panel_simple_detect_dev_work);
+		schedule_delayed_work(&panel->detect_dev_work, msecs_to_jiffies(3000));
+	}
 
 	return 0;
 
@@ -830,6 +901,9 @@ static int panel_simple_remove(struct device *dev)
 
 	panel_simple_disable(&panel->base);
 	panel_simple_unprepare(&panel->base);
+
+	if (panel->soft_hpd)
+		cancel_delayed_work_sync(&panel->detect_dev_work);
 
 	if (panel->ddc)
 		put_device(&panel->ddc->dev);
