@@ -281,10 +281,22 @@
 
 &gmac0 {
     status = "okay";
-    tx_delay = <0x47>;
-    rx_delay = <0x31>;
+    tx_delay = <0x44>;
+    rx_delay = <0x35>;
 	snps,reset-gpio = <&gpio0 RK_PD5 GPIO_ACTIVE_LOW>;
-//	snps,reset-gpio = <&gpio2 RK_PD3 GPIO_ACTIVE_LOW>;
+
+	clock_in_out = "output";
+	assigned-clocks = <&cru SCLK_GMAC0_RX_TX>, <&cru SCLK_GMAC0>;
+	assigned-clock-rates = <0>, <125000000>;
+	assigned-clock-parents = <&cru SCLK_GMAC0_RGMII_SPEED>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&gmac0_miim
+		     &gmac0_tx_bus2
+		     &gmac0_rx_bus2
+		     &gmac0_rgmii_clk
+		     &gmac0_rgmii_bus>;
+
 };
 
 &gmac1 {
@@ -292,6 +304,18 @@
     tx_delay = <0x4d>;
     rx_delay = <0x2d>;
 	snps,reset-gpio = <&gpio1 RK_PB0 GPIO_ACTIVE_LOW>;
+
+	clock_in_out = "output";
+	assigned-clocks = <&cru SCLK_GMAC1_RX_TX>, <&cru SCLK_GMAC1>;
+	assigned-clock-rates = <0>, <125000000>;
+	assigned-clock-parents = <&cru SCLK_GMAC1_RGMII_SPEED>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&gmac1m1_miim
+		     &gmac1m1_tx_bus2
+		     &gmac1m1_rx_bus2
+		     &gmac1m1_rgmii_clk
+		     &gmac1m1_rgmii_bus>;
 };
 
 &rgmii_phy0 {
