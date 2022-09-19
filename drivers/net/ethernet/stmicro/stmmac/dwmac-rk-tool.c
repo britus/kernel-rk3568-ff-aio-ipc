@@ -18,6 +18,7 @@
 #include <net/pkt_cls.h>
 #include <net/tcp.h>
 #include <net/udp.h>
+#include <linux/of.h>
 #include <linux/soc/rockchip/rk_vendor_storage.h>
 #include "stmmac.h"
 #include "dwmac1000.h"
@@ -1452,3 +1453,81 @@ int dwmac_rk_remove_loopback_sysfs(struct device *device)
 
 	return 0;
 }
+
+#ifdef CONFIG_DWMAC_RK_AUTO_DELAYLINE
+int dwmac_rk_get_rgmii_delayline_from_vendor(struct stmmac_priv *priv)
+{
+	int phy_iface = dwmac_rk_get_phy_interface(priv);
+	unsigned char delayline[8];
+	int tx_pos = 0, rx_pos = 1, len = 2, bus_id;
+	int ret;
+
+	if (phy_iface != PHY_INTERFACE_MODE_RGMII &&
+	    phy_iface != PHY_INTERFACE_MODE_RGMII_ID)
+		return 0;
+
+	bus_id = of_alias_get_id(priv->device->of_node, "ethernet");
+	if (bus_id > 0 && bus_id < 4) {
+		tx_pos += bus_id*2;
+		rx_pos += bus_id*2;
+		len += bus_id*2;
+	}
+
+	memset(delayline, 0x0, sizeof(delayline));
+	ret = rk_vendor_read(LAN_RGMII_DL_ID, delayline, len);
+	if (ret == len &&
+	    dwmac_rk_delayline_is_valid(delayline[tx_pos], delayline[rx_pos])) {
+		pr_info("damac rk: read rgmii dl from vendor tx = 0x%02x, rx = 0x%02x\n",
+			delayline[tx_pos], delayline[rx_pos]);
+		dwmac_rk_set_rgmii_delayline(priv, delayline[tx_pos], delayline[rx_pos]);
+
+		return 0;
+	}
+
+	return -ERANGE;
+}
+
+int dwmac_rk_search_rgmii_delayline(struct stmmac_priv *priv)
+{
+	struct dwmac_rk_lb_priv *lb_priv;
+	unsigned char delayline[8];
+	int tx_pos = 0, rx_pos = 1, bus_id;
+	int ret;
+
+	lb_priv = kzalloc(sizeof(*lb_priv), GFP_KERNEL);
+	if (!lb_priv)
+		return -ENOMEM;
+
+	lb_priv->sysfs = 0;
+	lb_priv->type = LOOPBACK_TYPE_PHY;
+	lb_priv->speed = LOOPBACK_SPEED1000;
+	lb_priv->scan = 1;
+
+	bus_id = of_alias_get_id(priv->device->of_node, "ethernet");
+	if (bus_id > 0 && bus_id < 4) {
+		tx_pos += bus_id*2;
+		rx_pos += bus_id*2;
+	}
+
+	ret = dwmac_rk_loopback_run(priv, lb_priv);
+	if (!ret) {
+		/* write tx/rx delayline back if loopback okay */
+		dwmac_rk_set_rgmii_delayline(priv, lb_priv->final_tx,
+					     lb_priv->final_rx);
+	} else {
+		of_property_read_u32(priv->device->of_node, "tx_delay", &lb_priv->final_tx);
+		of_property_read_u32(priv->device->of_node, "rx_delay", &lb_priv->final_rx);
+	}
+
+	memset(delayline, 0x0, sizeof(delayline));
+	rk_vendor_read(LAN_RGMII_DL_ID, delayline, 8);
+	delayline[tx_pos] = lb_priv->final_tx;
+	delayline[rx_pos] = lb_priv->final_rx;
+
+	if (rk_vendor_write(LAN_RGMII_DL_ID, delayline, 8))
+		pr_err("damac rk: write rgmii delayline to vendor failed\n");
+
+	kfree(lb_priv);
+	return ret;
+}
+#endif

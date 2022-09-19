@@ -188,6 +188,11 @@ struct stmmac_priv {
 	void __iomem *mmcaddr;
 	void __iomem *ptpaddr;
 
+#ifdef CONFIG_DWMAC_RK_AUTO_DELAYLINE
+	bool delayline_scanned;
+	struct delayed_work scan_dwork;
+#endif
+
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *dbgfs_dir;
 	struct dentry *dbgfs_rings_status;
