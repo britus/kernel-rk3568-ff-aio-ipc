@@ -281,7 +281,7 @@
 
 &gmac0 {
     status = "okay";
-    tx_delay = <0x44>;
+    tx_delay = <0x4a>;
     rx_delay = <0x35>;
 	snps,reset-gpio = <&gpio0 RK_PD5 GPIO_ACTIVE_LOW>;
 
@@ -401,6 +401,41 @@
 
 		led_user: led-user {
 			rockchip,pins = <4 RK_PC4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	gmac0 {
+		/omit-if-no-ref/
+		gmac0_tx_bus2: gmac0-tx-bus2 {
+			rockchip,pins =
+				/* gmac0_txd0 */
+				<2 RK_PB3 1 &pcfg_pull_none_drv_level_5>,
+				/* gmac0_txd1 */
+				<2 RK_PB4 1 &pcfg_pull_none_drv_level_5>,
+				/* gmac0_txen */
+				<2 RK_PB5 1 &pcfg_pull_none>;
+		};
+
+		/omit-if-no-ref/
+		gmac0_rgmii_clk: gmac0-rgmii-clk {
+			rockchip,pins =
+				/* gmac0_rxclk */
+				<2 RK_PA5 2 &pcfg_pull_none>,
+				/* gmac0_txclk */
+				<2 RK_PB0 2 &pcfg_pull_none_drv_level_5>;
+		};
+
+		/omit-if-no-ref/
+		gmac0_rgmii_bus: gmac0-rgmii-bus {
+			rockchip,pins =
+				/* gmac0_rxd2 */
+				<2 RK_PA3 2 &pcfg_pull_none>,
+				/* gmac0_rxd3 */
+				<2 RK_PA4 2 &pcfg_pull_none>,
+				/* gmac0_txd2 */
+				<2 RK_PA6 2 &pcfg_pull_none_drv_level_5>,
+				/* gmac0_txd3 */
+				<2 RK_PA7 2 &pcfg_pull_none_drv_level_5>;
 		};
 	};
 
