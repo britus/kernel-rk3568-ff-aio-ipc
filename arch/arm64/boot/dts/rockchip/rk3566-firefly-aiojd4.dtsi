@@ -354,6 +354,10 @@
     status = "okay";
 };
 
+&rgmii_phy1 {
+	led_status_value = <0x2f60>;
+};
+
 /delete-node/ &mc3230;
 &i2c4 {
     status = "okay";
