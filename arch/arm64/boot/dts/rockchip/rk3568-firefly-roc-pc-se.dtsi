@@ -158,10 +158,14 @@
 
 &gmac0 {
     status = "okay";
+	tx_delay = <0x41>;
+	rx_delay = <0x38>;
 };
 
 &gmac1 {
     status = "okay";
+	tx_delay = <0x4c>;
+	rx_delay = <0x30>;
 };
 
 &rgmii_phy0 {
