@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #define RTL_8211F_PHY_ID  0x001cc916
+#define RTL_8211F_VD_CG_PHY_ID  0x001cc878
 
 #include <linux/kernel.h>
 #include <linux/string.h>
@@ -1988,8 +1989,10 @@ static int phy_probe(struct device *dev)
 	if(ret) {
 		dev_info(&phydev->mdio.dev, "[%s-%d] led_status_value normal\n", __func__, __LINE__);
 	}else {
-		phy_register_fixup_for_uid(RTL_8211F_PHY_ID, 0xffffffff, phy_rtl8211f_led_fixup);
-		dev_info(&phydev->mdio.dev, "[%s-%d] led_status_value = 0x%x\n", __func__, __LINE__, led_value);
+		if (phydev->phy_id == RTL_8211F_PHY_ID || phydev->phy_id == RTL_8211F_VD_CG_PHY_ID) {
+			phy_register_fixup_for_uid(phydev->phy_id, 0xffffffff, phy_rtl8211f_led_fixup);
+			dev_info(&phydev->mdio.dev, "[%s-%d] led_status_value = 0x%x\n", __func__, __LINE__, led_value);
+		}
 	}
 
 	mutex_unlock(&phydev->lock);
