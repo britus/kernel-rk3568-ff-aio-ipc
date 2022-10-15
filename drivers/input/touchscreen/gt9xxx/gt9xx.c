@@ -1534,26 +1534,21 @@ static s32 gtp_init_panel(struct goodix_ts_data *ts)
     GTP_INFO("Sensor_ID: %d", sensor_id);
 
 	/* parse config data*/
-#if 0	
 	GTP_DEBUG("Get config data from device tree.");
 	ret = gtp_parse_dt_cfg(&ts->client->dev, &config[GTP_ADDR_LENGTH], &ts->gtp_cfg_len, sensor_id);
 	if (ret < 0) {
 		GTP_ERROR("Failed to parse config data form device tree.");
-		ts->pnl_init_error = 1;
-		return -1;
+		GTP_DEBUG("Get config data from header file.");
+		if ((!cfg_info_len[1]) && (!cfg_info_len[2]) &&
+		    (!cfg_info_len[3]) && (!cfg_info_len[4]) &&
+		    (!cfg_info_len[5]))
+		{
+		    sensor_id = 0;
+		}
+		ts->gtp_cfg_len = cfg_info_len[sensor_id];
+		memset(&config[GTP_ADDR_LENGTH], 0, GTP_CONFIG_MAX_LENGTH);
+		memcpy(&config[GTP_ADDR_LENGTH], send_cfg_buf[sensor_id], ts->gtp_cfg_len);
 	}
-#else 
-	GTP_DEBUG("Get config data from header file.");
-    if ((!cfg_info_len[1]) && (!cfg_info_len[2]) && 
-        (!cfg_info_len[3]) && (!cfg_info_len[4]) && 
-        (!cfg_info_len[5]))
-    {
-        sensor_id = 0; 
-    }
-	ts->gtp_cfg_len = cfg_info_len[sensor_id];
-	memset(&config[GTP_ADDR_LENGTH], 0, GTP_CONFIG_MAX_LENGTH);
-	memcpy(&config[GTP_ADDR_LENGTH], send_cfg_buf[sensor_id], ts->gtp_cfg_len);
-#endif
 
     GTP_INFO("CTP_CONFIG_GROUP%d used, config length: %d", sensor_id, ts->gtp_cfg_len);
     
