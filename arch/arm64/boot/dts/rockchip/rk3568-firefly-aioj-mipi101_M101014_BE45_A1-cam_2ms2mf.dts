@@ -28,17 +28,23 @@
         pinctrl-names = "default";
         pinctrl-0 = <&vcc1v8_lcd0_bl_en>;
         regulator-name = "vcc1v8_lcd0_bl_en";
-        regulator-always-on;
+        regulator-boot-on;
+		regulator-state-mem {
+			regulator-off-in-suspend;
+		};
     };
 
     vcc1v8_lcd1_power: vcc1v8-lcd1-power-regulator {
         compatible = "regulator-fixed";
         enable-active-high;
-        gpio = <&gpio1 RK_PB2 GPIO_ACTIVE_HIGH>;
+        gpio = <&gpio1 RK_PB2 GPIO_ACTIVE_HIGH>; // bl enable for mipi_dsi1 30pin interface
         pinctrl-names = "default";
         pinctrl-0 = <&vcc1v8_lcd1_bl_en>;
         regulator-name = "vcc1v8_lcd1_bl_en";
-        regulator-always-on;
+        regulator-boot-on;
+		regulator-state-mem {
+			regulator-off-in-suspend;
+		};
     };
 
     backlight_0: backlight-0 {
@@ -85,6 +91,7 @@
     backlight_1: backlight-1 {
         status = "disabled";
         compatible = "pwm-backlight";
+        enable-gpios = <&gpio2 RK_PC1 GPIO_ACTIVE_HIGH>; // bl enable for mipi_dsi1 40pin interface
         pwms = <&pwm5 0 50000 1>;
         brightness-levels = <
              60  60  60  61  61  61  62  62
@@ -282,6 +289,7 @@
         compatible = "simple-panel-dsi";
         reg = <0>;
         backlight = <&backlight_1>;
+		power-supply = <&vcc1v8_lcd1_power>;
 
         enable-gpios = <&pca9555 PCA_IO0_7 GPIO_ACTIVE_HIGH>;
 	    reset-gpios = <&gpio4 RK_PC6 GPIO_ACTIVE_LOW>;
