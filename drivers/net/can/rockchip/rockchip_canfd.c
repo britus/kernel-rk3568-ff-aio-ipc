@@ -42,6 +42,7 @@ enum rockchip_canfd_reg {
 	CAN_TX_ERR_CNT = 0x38,
 	CAN_IDCODE = 0x3c,
 	CAN_IDMASK = 0x40,
+	CAN_TX_CHECK_FIC = 0x50,
 	CAN_NBTP = 0x100,
 	CAN_DBTP = 0x104,
 	CAN_TDCR = 0x108,
@@ -104,6 +105,7 @@ enum rockchip_canfd_reg {
 enum {
 	ROCKCHIP_CANFD_MODE = 0,
 	ROCKCHIP_CAN_MODE,
+	ROCKCHIP_RK3568_CAN_MODE,
 };
 
 #define DATE_LENGTH_12_BYTE	(0x9)
@@ -222,6 +224,7 @@ enum {
 struct rockchip_canfd {
 	struct can_priv can;
 	struct device *dev;
+	spinlock_t tx_lock;
 	struct clk_bulk_data *clks;
 	int num_clks;
 	struct reset_control *reset;
@@ -230,8 +233,12 @@ struct rockchip_canfd {
 	unsigned long mode;
 	int rx_fifo_shift;
 	u32 rx_fifo_mask;
+	u32 work_interval;
+	u32 work_count;
 	struct delayed_work tx_err_work;
 };
+
+static struct workqueue_struct *canfd_tx_workq;
 
 static inline u32 rockchip_canfd_read(const struct rockchip_canfd *priv,
 				      enum rockchip_canfd_reg reg)
@@ -292,6 +299,9 @@ static int set_normal_mode(struct net_device *ndev)
 
 	val = rockchip_canfd_read(rcan, CAN_MODE);
 	val |= WORK_MODE;
+	if (rcan->mode >=ROCKCHIP_CAN_MODE)
+		val |= MODE_RXSTX;
+
 	rockchip_canfd_write(rcan, CAN_MODE, val);
 
 	netdev_dbg(ndev, "%s MODE=0x%08x\n", __func__,
@@ -307,6 +317,7 @@ static int rockchip_canfd_set_bittiming(struct net_device *ndev)
 	const struct can_bittiming *dbt = &rcan->can.data_bittiming;
 	u16 brp, sjw, tseg1, tseg2;
 	u32 reg_btp;
+	u32 work_interval;
 
 	brp = (bt->brp >> 1) - 1;
 	sjw = bt->sjw - 1;
@@ -354,6 +365,10 @@ static int rockchip_canfd_set_bittiming(struct net_device *ndev)
 
 		rockchip_canfd_write(rcan, CAN_DBTP, reg_btp);
 	}
+
+	work_interval = (125*64*1000)/bt->bitrate;
+	if (rcan->work_interval != work_interval)
+		rcan->work_interval = work_interval;
 
 	netdev_dbg(ndev, "%s NBTP=0x%08x, DBTP=0x%08x, TDCR=0x%08x\n", __func__,
 		   rockchip_canfd_read(rcan, CAN_NBTP),
@@ -448,8 +463,11 @@ static int rockchip_canfd_start(struct net_device *ndev)
 static int rockchip_canfd_stop(struct net_device *ndev)
 {
 	struct rockchip_canfd *rcan = netdev_priv(ndev);
+	unsigned long flags;
 
+	spin_lock_irqsave(&rcan->tx_lock, flags);
 	rcan->can.state = CAN_STATE_STOPPED;
+	spin_unlock_irqrestore(&rcan->tx_lock, flags);
 	/* we need to enter reset mode */
 	set_reset_mode(ndev);
 
@@ -491,22 +509,34 @@ static void rockchip_canfd_tx_err_delay_work(struct work_struct *work)
 		container_of(work, struct rockchip_canfd, tx_err_work.work);
 	struct net_device *ndev = rcan->can.dev;
 	u32 mode;
+	unsigned long flags;
 
-	if (rcan->can.state == CAN_STATE_STOPPED)
-		return;
-
-	mode = rockchip_canfd_read(rcan, CAN_ERR_CODE);
-	if (mode) {
-		schedule_delayed_work(&rcan->tx_err_work, 1);
+	spin_lock_irqsave(&rcan->tx_lock, flags);
+	if (rcan->can.state >= CAN_STATE_BUS_OFF || !netif_queue_stopped(ndev)) {
+		spin_unlock_irqrestore(&rcan->tx_lock, flags);
 		return;
 	}
 
-	rockchip_canfd_start(ndev);
-
-	if (netif_queue_stopped(ndev)) {
-		can_get_echo_skb(ndev, 0);
-		netif_wake_queue(ndev);
+	if (rcan->work_count > 3) {
+		mode = rockchip_canfd_read(rcan, CAN_MODE);
+		rockchip_canfd_write(rcan, CAN_MODE, 0);
+		rockchip_canfd_write(rcan, CAN_MODE, mode | MODE_SLEEP);
+		rockchip_canfd_read(rcan, CAN_ERR_CODE);
+		rcan->work_count = 0;
+	} else {
+		if (!rockchip_canfd_read(rcan, CAN_ERR_CODE)) {
+			mode = rockchip_canfd_read(rcan, CAN_MODE);
+			rockchip_canfd_write(rcan, CAN_MODE, 0);
+			rockchip_canfd_write(rcan, CAN_MODE, mode & (~MODE_SLEEP));
+			rockchip_canfd_write(rcan, CAN_CMD, CAN_TX0_REQ);
+		}
+		rcan->work_count++;
 	}
+
+	queue_delayed_work(canfd_tx_workq, &rcan->tx_err_work,
+				msecs_to_jiffies(rcan->can.state == 0 ? rcan->work_interval
+						: rcan->work_interval<<1));
+	spin_unlock_irqrestore(&rcan->tx_lock, flags);
 }
 
 /* transmit a CAN message
@@ -520,13 +550,17 @@ static int rockchip_canfd_start_xmit(struct sk_buff *skb,
 	struct rockchip_canfd *rcan = netdev_priv(ndev);
 	struct canfd_frame *cf = (struct canfd_frame *)skb->data;
 	u32 id, dlc;
-	u32 cmd = CAN_TX0_REQ, mode;
+	u32 cmd = CAN_TX0_REQ;
 	int i;
+	unsigned long flags;
 
 	if (can_dropped_invalid_skb(ndev, skb))
 		return NETDEV_TX_OK;
 
+	spin_lock_irqsave(&rcan->tx_lock, flags);
 	netif_stop_queue(ndev);
+	rcan->work_count = 0;
+	spin_unlock_irqrestore(&rcan->tx_lock, flags);
 
 	if (rockchip_canfd_read(rcan, CAN_CMD) & CAN_TX0_REQ)
 		cmd = CAN_TX1_REQ;
@@ -537,16 +571,6 @@ static int rockchip_canfd_start_xmit(struct sk_buff *skb,
 		id = cf->can_id & CAN_EFF_MASK;
 		dlc = can_len2dlc(cf->len) & DLC_MASK;
 		dlc |= FORMAT_MASK;
-		/* Extended frames need workround */
-		if ((rockchip_canfd_read(rcan, CAN_STATE) & RX_PERIOD) == 0) {
-			mode = rockchip_canfd_read(rcan, CAN_MODE);
-			rockchip_canfd_write(rcan, CAN_MODE,
-					     mode | MODE_SLEEP);
-			mode = rockchip_canfd_read(rcan, CAN_MODE);
-			rockchip_canfd_write(rcan, CAN_MODE,
-					     mode & (~MODE_SLEEP));
-			rockchip_canfd_write(rcan, CAN_INT, WAKEUP_INT);
-		}
 
 		/* Extended frames remote TX request */
 		if (cf->can_id & CAN_RTR_FLAG)
@@ -575,7 +599,9 @@ static int rockchip_canfd_start_xmit(struct sk_buff *skb,
 				     *(u32 *)(cf->data + i));
 
 	can_put_echo_skb(skb, ndev, 0);
-	schedule_delayed_work(&rcan->tx_err_work, 1);
+	queue_delayed_work(canfd_tx_workq, &rcan->tx_err_work,
+				msecs_to_jiffies(rcan->can.state == 0 ? rcan->work_interval
+						: rcan->work_interval<<1));
 	rockchip_canfd_write(rcan, CAN_CMD, cmd);
 
 	return NETDEV_TX_OK;
@@ -598,6 +624,21 @@ static int rockchip_canfd_rx(struct net_device *ndev)
 	for (i = 0; i < 16; i++)
 		data[i] = rockchip_canfd_read(rcan, CAN_RXFRD);
 
+	if (rcan->mode >= ROCKCHIP_CAN_MODE) {
+		/* may be an empty frame */
+		if (!dlc && !id_rockchip_canfd)
+			return 1;
+
+		ts = rockchip_canfd_read(rcan, CAN_TX_CHECK_FIC);
+		if (ts & FORMAT_MASK) {
+			ret = rockchip_canfd_read(rcan, CAN_TXID) & CAN_SFF_MASK;
+			if (id_rockchip_canfd == ret) {
+				rockchip_canfd_write(rcan, CAN_TX_CHECK_FIC, ts | CAN_TX0_REQ);
+				return 1;
+			}
+		}
+	}
+
 	/* create zero'ed CAN frame buffer */
 	if (dlc & FDF_MASK)
 		skb = alloc_canfd_skb(ndev, &cf);
@@ -605,7 +646,7 @@ static int rockchip_canfd_rx(struct net_device *ndev)
 		skb = alloc_can_skb(ndev, (struct can_frame **)&cf);
 	if (!skb) {
 		stats->rx_dropped++;
-		return 0;
+		return 1;
 	}
 
 	/* Change CAN data length format to socketCAN data format */
@@ -666,10 +707,16 @@ static int rockchip_canfd_err(struct net_device *ndev, u32 isr)
 		cf->data[7] = rxerr;
 	}
 
-	if (isr & BUS_OFF_INT) {
+	if (isr & BUS_OFF_INT || sta_reg & 0x20) {
+		spin_lock(&rcan->tx_lock);
 		rcan->can.state = CAN_STATE_BUS_OFF;
+		spin_unlock(&rcan->tx_lock);
 		rcan->can.can_stats.bus_off++;
-		cf->can_id |= CAN_ERR_BUSOFF;
+		if (skb)
+			cf->can_id |= CAN_ERR_BUSOFF;
+		rockchip_canfd_write(rcan, CAN_MODE, 0);
+		cancel_delayed_work(&rcan->tx_err_work);
+		can_bus_off(ndev);
 	} else if (isr & ERR_WARN_INT) {
 		rcan->can.can_stats.error_warning++;
 		rcan->can.state = CAN_STATE_ERROR_WARNING;
@@ -686,23 +733,21 @@ static int rockchip_canfd_err(struct net_device *ndev, u32 isr)
 		rcan->can.can_stats.error_passive++;
 		rcan->can.state = CAN_STATE_ERROR_PASSIVE;
 		/* error passive state */
-		cf->can_id |= CAN_ERR_CRTL;
-		cf->data[1] = (txerr > rxerr) ?
+		if (skb) {
+			cf->can_id |= CAN_ERR_CRTL;
+			cf->data[1] = (txerr > rxerr) ?
 					CAN_ERR_CRTL_TX_WARNING :
 					CAN_ERR_CRTL_RX_WARNING;
-		cf->data[6] = txerr;
-		cf->data[7] = rxerr;
+			cf->data[6] = txerr;
+			cf->data[7] = rxerr;
+		}
 	}
 
-	if (rcan->can.state >= CAN_STATE_BUS_OFF ||
-	    ((sta_reg & 0x20) == 0x20)) {
-		cancel_delayed_work(&rcan->tx_err_work);
-		can_bus_off(ndev);
+	if (skb) {
+		stats->rx_packets++;
+		stats->rx_bytes += cf->can_dlc;
+		netif_rx(skb);
 	}
-
-	stats->rx_packets++;
-	stats->rx_bytes += cf->can_dlc;
-	netif_receive_skb(skb);
 
 	return 0;
 }
@@ -716,12 +761,10 @@ static irqreturn_t rockchip_canfd_interrupt(int irq, void *dev_id)
 		     TX_LOSTARB_INT | BUS_ERR_INT | BUS_OFF_INT;
 	u32 isr;
 	u32 dlc = 0;
-	u32 quota = 0;
+	u32 quota;
 
 	isr = rockchip_canfd_read(rcan, CAN_INT);
-	rockchip_canfd_write(rcan, CAN_INT, isr);
 	if (isr & TX_FINISH_INT) {
-		cancel_delayed_work(&rcan->tx_err_work);
 		dlc = rockchip_canfd_read(rcan, CAN_TXFIC);
 		/* transmission complete interrupt */
 		if (dlc & FDF_MASK)
@@ -729,16 +772,37 @@ static irqreturn_t rockchip_canfd_interrupt(int irq, void *dev_id)
 		else
 			stats->tx_bytes += (dlc & DLC_MASK);
 		stats->tx_packets++;
+		if (rcan->mode >= ROCKCHIP_CAN_MODE) {
+			if (dlc & FORMAT_MASK) {
+				rockchip_canfd_write(rcan, CAN_TX_CHECK_FIC, FORMAT_MASK);
+				quota = (rockchip_canfd_read(rcan, CAN_RXFC) & rcan->rx_fifo_mask) >>
+						rcan->rx_fifo_shift;
+				while (quota) {
+					rockchip_canfd_rx(ndev);
+					quota--;
+				}
+				if (rockchip_canfd_read(rcan, CAN_TX_CHECK_FIC) & CAN_TX0_REQ) {
+					rockchip_canfd_write(rcan, CAN_CMD, CAN_TX0_REQ);
+					rockchip_canfd_write(rcan, CAN_TX_CHECK_FIC, 0);
+					goto tx_exit;
+				}
+				rockchip_canfd_write(rcan, CAN_TX_CHECK_FIC, 0);
+			}
+		}
+		spin_lock(&rcan->tx_lock);
 		rockchip_canfd_write(rcan, CAN_CMD, 0);
 		can_get_echo_skb(ndev, 0);
 		netif_wake_queue(ndev);
+		spin_unlock(&rcan->tx_lock);
+		cancel_delayed_work(&rcan->tx_err_work);
 		can_led_event(ndev, CAN_LED_EVENT_TX);
 	}
+tx_exit:
 
 	if (isr & RX_FINISH_INT) {
 		quota = (rockchip_canfd_read(rcan, CAN_RXFC) & rcan->rx_fifo_mask) >>
-				rcan->rx_fifo_shift;
-		while(quota) {
+					rcan->rx_fifo_shift;
+		while (quota) {
 			rockchip_canfd_rx(ndev);
 			quota--;
 		}
@@ -794,10 +858,10 @@ static int rockchip_canfd_close(struct net_device *ndev)
 {
 	struct rockchip_canfd *rcan = netdev_priv(ndev);
 
-	cancel_delayed_work(&rcan->tx_err_work);
-	flush_delayed_work(&rcan->tx_err_work);
 	netif_stop_queue(ndev);
 	rockchip_canfd_stop(ndev);
+	cancel_delayed_work(&rcan->tx_err_work);
+	flush_delayed_work(&rcan->tx_err_work);
 	close_candev(ndev);
 	can_led_event(ndev, CAN_LED_EVENT_STOP);
 	pm_runtime_put(rcan->dev);
@@ -823,11 +887,14 @@ static const struct net_device_ops rockchip_canfd_netdev_ops = {
 static int __maybe_unused rockchip_canfd_suspend(struct device *dev)
 {
 	struct net_device *ndev = dev_get_drvdata(dev);
+	struct rockchip_canfd *rcan = netdev_priv(ndev);
 
 	if (netif_running(ndev)) {
 		netif_stop_queue(ndev);
 		netif_device_detach(ndev);
 		rockchip_canfd_stop(ndev);
+		cancel_delayed_work(&rcan->tx_err_work);
+		flush_delayed_work(&rcan->tx_err_work);
 	}
 
 	return pm_runtime_force_suspend(dev);
@@ -919,6 +986,10 @@ static const struct of_device_id rockchip_canfd_of_match[] = {
 		.compatible = "rockchip,can-2.0",
 		.data = (void *)ROCKCHIP_CAN_MODE
 	},
+	{
+		.compatible = "rockchip,rk3568-can-2.0",
+		.data = (void *)ROCKCHIP_RK3568_CAN_MODE
+	},
 	{},
 };
 MODULE_DEVICE_TABLE(of, rockchip_canfd_of_match);
@@ -985,8 +1056,11 @@ static int rockchip_canfd_probe(struct platform_device *pdev)
 		/* IFI CANFD can do both Bosch FD and ISO FD */
 		rcan->can.ctrlmode_supported = CAN_CTRLMODE_LOOPBACK |
 					       CAN_CTRLMODE_FD;
+		rcan->rx_fifo_shift = RX_FIFO_CNT0_SHIFT;
+		rcan->rx_fifo_mask = RX_FIFO_CNT0_MASK;
 		break;
 	case ROCKCHIP_CAN_MODE:
+	case ROCKCHIP_RK3568_CAN_MODE:
 		rcan->can.bittiming_const = &rockchip_canfd_bittiming_const;
 		rcan->can.do_set_mode = rockchip_canfd_set_mode;
 		rcan->can.do_get_berr_counter = rockchip_canfd_get_berr_counter;
@@ -994,15 +1068,14 @@ static int rockchip_canfd_probe(struct platform_device *pdev)
 					       CAN_CTRLMODE_LISTENONLY |
 					       CAN_CTRLMODE_LOOPBACK |
 					       CAN_CTRLMODE_3_SAMPLES;
+		rcan->rx_fifo_shift = RX_FIFO_CNT0_SHIFT;
+		rcan->rx_fifo_mask = RX_FIFO_CNT0_MASK;
 		break;
 	default:
 		return -EINVAL;
 	}
 
-	if (soc_is_rk3566() || soc_is_rk3568()) {
-		rcan->rx_fifo_shift = RX_FIFO_CNT0_SHIFT;
-		rcan->rx_fifo_mask = RX_FIFO_CNT0_MASK;
-	} else {
+	if (rcan->mode == ROCKCHIP_CAN_MODE) {
 		rcan->rx_fifo_shift = RX_FIFO_CNT1_SHIFT;
 		rcan->rx_fifo_mask = RX_FIFO_CNT1_MASK;
 	}
@@ -1011,10 +1084,14 @@ static int rockchip_canfd_probe(struct platform_device *pdev)
 	ndev->irq = irq;
 	ndev->flags |= IFF_ECHO;
 	rcan->can.restart_ms = 1;
+	spin_lock_init(&rcan->tx_lock);
 
 	platform_set_drvdata(pdev, ndev);
 	SET_NETDEV_DEV(ndev, &pdev->dev);
+
 	INIT_DELAYED_WORK(&rcan->tx_err_work, rockchip_canfd_tx_err_delay_work);
+	if (!canfd_tx_workq)
+		canfd_tx_workq = create_singlethread_workqueue("canfd_tx_workq");
 
 	pm_runtime_enable(&pdev->dev);
 	err = pm_runtime_get_sync(&pdev->dev);
