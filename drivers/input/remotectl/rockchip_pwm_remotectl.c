@@ -779,6 +779,7 @@ static int remotectl_resume(struct device *dev)
 	cpumask_clear(&cpumask);
 	cpumask_set_cpu(ddata->handle_cpu_id, &cpumask);
 	irq_set_affinity(ddata->irq, &cpumask);
+	rk_pwm_remotectl_hw_init(ddata->base, ddata->remote_pwm_id);
 	if (ddata->support_psci) {
 		/*
 		 * loop wakeup state
