@@ -18,8 +18,9 @@
 */
 #define EBC_FB_SIZE		0x200000 /* 2M */
 #define EINK_FB_SIZE		0x400000 /* 4M */
-#define DIRECT_FB_SIZE		0x100000 /* 1M */
+#define DIRECT_FB_SIZE		0x200000 /* 2M */
 #define LUT_TABLE_SIZE		0x100000 /* 1M */
+#define FRAME_COUNT_SIZE 0x500000 /* 5M */
 
 #define MAX_FB_NUM		4
 
@@ -54,6 +55,8 @@
 #define EBC_GET_OVERLAY_STATUS	(0x700b)
 #define EBC_ENABLE_BG_CONTROL (0x700c)
 #define EBC_DISABLE_BG_CONTROL (0x700d)
+#define EBC_ENABLE_RESUME_COUNT (0x700e)
+#define EBC_DISABLE_RESUME_COUNT (0x700f)
 
 /*
  * IMPORTANT: Those values is corresponding to android hardware program,

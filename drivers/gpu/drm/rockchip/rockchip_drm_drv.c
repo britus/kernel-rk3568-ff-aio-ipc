@@ -21,7 +21,7 @@
 #include <drm/drm_gem_cma_helper.h>
 #include <drm/drm_of.h>
 #include <linux/devfreq.h>
-#include <linux/dma-buf-cache.h>
+#include <linux/dma-buf.h>
 #include <linux/dma-mapping.h>
 #include <linux/dma-iommu.h>
 #include <linux/genalloc.h>
@@ -150,6 +150,16 @@ int rockchip_drm_get_sub_dev_type(void)
 }
 EXPORT_SYMBOL(rockchip_drm_get_sub_dev_type);
 
+void rockchip_drm_te_handle(struct drm_crtc *crtc)
+{
+	struct rockchip_drm_private *priv = crtc->dev->dev_private;
+	int pipe = drm_crtc_index(crtc);
+
+	if (priv->crtc_funcs[pipe] && priv->crtc_funcs[pipe]->te_handler)
+		priv->crtc_funcs[pipe]->te_handler(crtc);
+}
+EXPORT_SYMBOL(rockchip_drm_te_handle);
+
 static const struct drm_display_mode rockchip_drm_default_modes[] = {
 	/* 4 - 1280x720@60Hz 16:9 */
 	{ DRM_MODE("1280x720", DRM_MODE_TYPE_DRIVER, 74250, 1280, 1390,
@@ -213,7 +223,7 @@ int rockchip_drm_add_modes_noedid(struct drm_connector *connector)
 }
 EXPORT_SYMBOL(rockchip_drm_add_modes_noedid);
 
-#if !defined(CONFIG_DMABUF_CACHE)
+#ifdef CONFIG_ARCH_ROCKCHIP
 struct drm_prime_callback_data {
 	struct drm_gem_object *obj;
 	struct sg_table *sgt;
@@ -1385,7 +1395,47 @@ static int rockchip_drm_summary_show(struct seq_file *s, void *data)
 	return 0;
 }
 
+static int rockchip_drm_regs_dump(struct seq_file *s, void *data)
+{
+	struct drm_info_node *node = s->private;
+	struct drm_minor *minor = node->minor;
+	struct drm_device *drm_dev = minor->dev;
+	struct rockchip_drm_private *priv = drm_dev->dev_private;
+	struct drm_crtc *crtc;
+
+	drm_for_each_crtc(crtc, drm_dev) {
+		int pipe = drm_crtc_index(crtc);
+
+		if (priv->crtc_funcs[pipe] &&
+		    priv->crtc_funcs[pipe]->regs_dump)
+			priv->crtc_funcs[pipe]->regs_dump(crtc, s);
+	}
+
+	return 0;
+}
+
+static int rockchip_drm_active_regs_dump(struct seq_file *s, void *data)
+{
+	struct drm_info_node *node = s->private;
+	struct drm_minor *minor = node->minor;
+	struct drm_device *drm_dev = minor->dev;
+	struct rockchip_drm_private *priv = drm_dev->dev_private;
+	struct drm_crtc *crtc;
+
+	drm_for_each_crtc(crtc, drm_dev) {
+		int pipe = drm_crtc_index(crtc);
+
+		if (priv->crtc_funcs[pipe] &&
+		    priv->crtc_funcs[pipe]->active_regs_dump)
+			priv->crtc_funcs[pipe]->active_regs_dump(crtc, s);
+	}
+
+	return 0;
+}
+
 static struct drm_info_list rockchip_debugfs_files[] = {
+	{ "active_regs", rockchip_drm_active_regs_dump, 0, NULL },
+	{ "regs", rockchip_drm_regs_dump, 0, NULL },
 	{ "summary", rockchip_drm_summary_show, 0, NULL },
 	{ "mm_dump", rockchip_drm_mm_dump, 0, NULL },
 };
@@ -1549,7 +1599,7 @@ static void rockchip_drm_set_property_default(struct drm_device *drm)
 	drm_modeset_lock_all(drm);
 
 	state = drm_atomic_helper_duplicate_state(drm, conf->acquire_ctx);
-	if (!state) {
+	if (IS_ERR(state)) {
 		DRM_ERROR("failed to alloc atomic state\n");
 		goto err_unlock;
 	}
@@ -1701,6 +1751,8 @@ static int rockchip_drm_bind(struct device *dev)
 	/* init kms poll for handling hpd */
 	drm_kms_helper_poll_init(drm_dev);
 
+	private->page_pools = dmabuf_page_pool_create(GFP_HIGHUSER | __GFP_ZERO | __GFP_COMP, 0);
+
 	rockchip_gem_pool_init(drm_dev);
 #ifndef MODULE
 	show_loader_logo(drm_dev);
@@ -1738,6 +1790,7 @@ err_kms_helper_poll_fini:
 	rockchip_gem_pool_destroy(drm_dev);
 	drm_kms_helper_poll_fini(drm_dev);
 err_unbind_all:
+	dmabuf_page_pool_destroy(private->page_pools);
 	component_unbind_all(dev, drm_dev);
 err_mode_config_cleanup:
 	drm_mode_config_cleanup(drm_dev);
@@ -1935,7 +1988,7 @@ static const struct dma_buf_ops rockchip_drm_gem_prime_dmabuf_ops = {
 	.end_cpu_access_partial = rockchip_drm_gem_end_cpu_access_partial,
 };
 
-#if !defined(CONFIG_DMABUF_CACHE)
+#ifdef CONFIG_ARCH_ROCKCHIP
 static void drm_gem_prime_dmabuf_release_callback(void *data)
 {
 	struct drm_prime_callback_data *cb_data = data;
@@ -1961,7 +2014,7 @@ static struct drm_gem_object *rockchip_drm_gem_prime_import_dev(struct drm_devic
 	struct dma_buf_attachment *attach;
 	struct sg_table *sgt;
 	struct drm_gem_object *obj;
-#if !defined(CONFIG_DMABUF_CACHE)
+#ifdef CONFIG_ARCH_ROCKCHIP
 	struct drm_prime_callback_data *cb_data = NULL;
 #endif
 	int ret;
@@ -1978,7 +2031,7 @@ static struct drm_gem_object *rockchip_drm_gem_prime_import_dev(struct drm_devic
 		}
 	}
 
-#if !defined(CONFIG_DMABUF_CACHE)
+#ifdef CONFIG_ARCH_ROCKCHIP
 	cb_data = dma_buf_get_release_callback_data(dma_buf,
 					drm_gem_prime_dmabuf_release_callback);
 	if (cb_data && cb_data->obj && cb_data->obj->dev == dev) {
@@ -1996,7 +2049,7 @@ static struct drm_gem_object *rockchip_drm_gem_prime_import_dev(struct drm_devic
 
 	get_dma_buf(dma_buf);
 
-#if !defined(CONFIG_DMABUF_CACHE)
+#ifdef CONFIG_ARCH_ROCKCHIP
 	cb_data = kmalloc(sizeof(*cb_data), GFP_KERNEL);
 	if (!cb_data) {
 		ret = -ENOMEM;
@@ -2018,7 +2071,7 @@ static struct drm_gem_object *rockchip_drm_gem_prime_import_dev(struct drm_devic
 
 	obj->import_attach = attach;
 
-#if !defined(CONFIG_DMABUF_CACHE)
+#ifdef CONFIG_ARCH_ROCKCHIP
 	cb_data->obj = obj;
 	cb_data->sgt = sgt;
 	dma_buf_set_release_callback(dma_buf,
@@ -2032,7 +2085,7 @@ static struct drm_gem_object *rockchip_drm_gem_prime_import_dev(struct drm_devic
 fail_unmap:
 	dma_buf_unmap_attachment(attach, sgt, DMA_BIDIRECTIONAL);
 fail_detach:
-#if !defined(CONFIG_DMABUF_CACHE)
+#ifdef CONFIG_ARCH_ROCKCHIP
 	kfree(cb_data);
 #endif
 	dma_buf_detach(dma_buf, attach);
