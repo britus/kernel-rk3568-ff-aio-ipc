@@ -655,7 +655,6 @@ ssize_t goodix_tool_write(struct file *filp, const char __user *buff, size_t len
         //got_hotknot_extra_state = 0;
         switch(rqst_hotknot_state)
         {
-            set_current_state(TASK_INTERRUPTIBLE);
             case HN_DEVICE_PAIRED:
                 hotknot_paired_flag = 0;
                 wait_event_interruptible(bp_waiter, force_wake_flag || 
@@ -1051,7 +1050,6 @@ static ssize_t hotknot_write(struct file *filp, const char __user *buff, size_t 
         //got_hotknot_extra_state = 0;
         switch(rqst_hotknot_state)
         {
-            set_current_state(TASK_INTERRUPTIBLE);
             case HN_DEVICE_PAIRED:
                 hotknot_paired_flag = 0;
                 wait_event_interruptible(bp_waiter, force_wake_flag || 
