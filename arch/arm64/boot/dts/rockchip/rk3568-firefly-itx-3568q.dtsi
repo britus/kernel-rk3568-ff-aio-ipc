@@ -260,7 +260,7 @@
 };
 
 &pcie3x2 {
-    reset = <&gpio0 RK_PC6 GPIO_ACTIVE_HIGH>;
+    reset-gpios = <&gpio0 RK_PC6 GPIO_ACTIVE_HIGH>;
     vpcie3v3-supply = <&pcie30_3v3>;
     status = "okay";
 };
@@ -371,7 +371,7 @@
 };
 
 &pwm7 {
-	status = "okay";
+	status = "disabled";
 };
 
 &sata2 {
@@ -380,7 +380,7 @@
 };
 
 &pcie2x1 {
-	reset = <&pca9555_1 PCA_IO0_6 GPIO_ACTIVE_HIGH>;
+	reset-gpios = <&pca9555_1 PCA_IO0_6 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 };
 
