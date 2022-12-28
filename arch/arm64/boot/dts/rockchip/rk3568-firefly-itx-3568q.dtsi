@@ -166,7 +166,7 @@
 		reg = <0x22>;
 		gpio-controller;
 		#gpio-cells = <2>;
-		gpio-group-num = <500>;
+		gpio-group-num = <300>;
 	};
 
     gslx680: gslx680@41 {
