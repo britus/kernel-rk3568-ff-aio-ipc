@@ -1856,7 +1856,22 @@ static struct platform_driver rk_plat_pcie_driver = {
 	},
 };
 
-module_platform_driver_probe(rk_plat_pcie_driver, rk_pcie_probe);
+//module_platform_driver_probe(rk_plat_pcie_driver, rk_pcie_probe);
+
+/*compatible with pca9555, Firefly Redmine Defect #1657*/
+static int __init pcie_dw_rockchip_init(void)
+{
+	return platform_driver_probe(&(rk_plat_pcie_driver), rk_pcie_probe);
+}
+
+
+static void __exit pcie_dw_rockchip_exit(void)
+{
+	platform_driver_unregister(&(rk_plat_pcie_driver));
+}
+
+late_initcall(pcie_dw_rockchip_init);
+module_exit(pcie_dw_rockchip_exit);
 
 MODULE_AUTHOR("Simon Xue <xxm@rock-chips.com>");
 MODULE_DESCRIPTION("RockChip PCIe Controller driver");
