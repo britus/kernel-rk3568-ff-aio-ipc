@@ -1,0 +1,789 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2020 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+#include "rk3568-firefly-port.dtsi"
+
+/ {
+	vcc3v3_sys_rgl: vcc3v3-sys-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio0 RK_PA0 GPIO_ACTIVE_HIGH>;
+		regulator-name = "vcc3v3_sys_rgl";
+		regulator-always-on;
+		pinctrl-names = "default";
+		pinctrl-0 = <&vcc3v3_sys_rgl_en>;
+	};
+
+	vcc5v0_usb2_host: vcc5v0-usb2-host-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio1 RK_PB1 GPIO_ACTIVE_HIGH>;
+		regulator-name = "vcc5v0_usb2_host";
+		regulator-always-on;
+		pinctrl-names = "default";
+		pinctrl-0 = <&vcc5v0_usb2_host_en>;
+	};
+
+	vcc_4g_power: vcc-4g-power-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio0 RK_PA6 GPIO_ACTIVE_HIGH>;
+		regulator-name = "vcc_4g_power";
+		regulator-always-on;
+		pinctrl-names = "default";
+		pinctrl-0 = <&vcc_4g_power_en>;
+	};
+
+	vcc5v0_ext: vcc5v0-ext-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio1 RK_PB2 GPIO_ACTIVE_HIGH>;
+		regulator-name = "vcc5v0_ext";
+		regulator-always-on;
+		pinctrl-names = "default";
+		pinctrl-0 = <&vcc5v0_ext_en>;
+	};
+
+	leds {
+		status = "okay";
+		compatible = "gpio-leds";
+
+		LED1_R {
+			default-state = "off";
+			gpios = <&gpio2 RK_PD2 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led1_r_en>;
+		};
+
+		LED1_G {
+			default-state = "off";
+			gpios = <&gpio3 RK_PA1 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led1_g_en>;
+		};
+
+		LED1_B {
+			default-state = "off";
+			gpios = <&gpio2 RK_PD1 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led1_b_en>;
+		};
+
+		LED2_R {
+			default-state = "off";
+			gpios = <&gpio2 RK_PD3 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led2_r_en>;
+		};
+
+		LED2_G {
+			default-state = "off";
+			gpios = <&gpio3 RK_PA2 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led2_g_en>;
+		};
+
+		LED2_B {
+			default-state = "off";
+			gpios = <&gpio3 RK_PB7 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led2_b_en>;
+		};
+
+		LED3_R {
+			default-state = "off";
+			gpios = <&gpio3 RK_PC0 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led3_r_en>;
+		};
+
+		LED3_G {
+			default-state = "off";
+			gpios = <&gpio2 RK_PD7 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led3_g_en>;
+		};
+
+		LED3_B {
+			default-state = "off";
+			gpios = <&gpio2 RK_PD5 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led3_b_en>;
+		};
+
+		LED4_R {
+			default-state = "off";
+			gpios = <&gpio2 RK_PD4 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led4_r_en>;
+		};
+
+		LED4_G {
+			default-state = "off";
+			gpios = <&gpio3 RK_PA0 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led4_g_en>;
+		};
+
+		LED4_B {
+			default-state = "off";
+			gpios = <&gpio3 RK_PA3 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led4_b_en>;
+		};
+
+		LED5_R {
+			default-state = "off";
+			gpios = <&gpio3 RK_PB5 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led5_r_en>;
+		};
+
+		LED5_G {
+			default-state = "off";
+			gpios = <&gpio3 RK_PB6 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led5_g_en>;
+		};
+
+		LED5_B {
+			default-state = "off";
+			gpios = <&gpio3 RK_PB0 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led5_b_en>;
+		};
+
+		LED6_R {
+			default-state = "off";
+			gpios = <&gpio3 RK_PB4 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led6_r_en>;
+		};
+
+		LED6_G {
+			default-state = "off";
+			gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led6_g_en>;
+		};
+
+		LED6_B {
+			default-state = "off";
+			gpios = <&gpio2 RK_PD6 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led6_b_en>;
+		};
+
+		LED7_R {
+			default-state = "off";
+			gpios = <&gpio4 RK_PD2 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led7_r_en>;
+		};
+
+		LED7_G {
+			default-state = "off";
+			gpios = <&gpio2 RK_PD0 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led7_g_en>;
+		};
+
+		LED8_R {
+			default-state = "off";
+			gpios = <&gpio3 RK_PA6 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led8_r_en>;
+		};
+
+		LED8_G {
+			default-state = "off";
+			gpios = <&gpio3 RK_PA5 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led8_g_en>;
+		};
+
+		LED9_R {
+			default-state = "off";
+			gpios = <&gpio3 RK_PA4 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led9_r_en>;
+		};
+
+		LED9_G {
+			default-state = "off";
+			gpios = <&gpio3 RK_PA7 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led9_g_en>;
+		};
+
+		LED10_R {
+			default-state = "on";
+			gpios = <&gpio1 RK_PA4 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led10_r_en>;
+		};
+
+		LED10_G {
+			default-state = "off";
+			gpios = <&gpio1 RK_PB0 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&led10_g_en>;
+		};
+	};
+
+	fan: pwm-fan {
+		compatible = "pwm-fan";
+		#cooling-cells = <2>;
+		fan-supply = <&vcc5v0_sys>;
+		pwms = <&pwm11 0 50000 0>;
+		cooling-levels = <85 90/*1*/ 95 105 115 125 135 145 155/*8*/ 165 175 185 195 205 215 225 235 245 255/*18*/>;
+	};
+
+	center_thermal {
+		thermal-governor = "step_wise";
+		polling-delay-passive = <20>; /* milliseconds */
+		polling-delay = <1000>; /* milliseconds */
+		thermal-sensors = <&tsadc 0>;
+
+		trips {
+			fan_alert0: trip-point-0 {
+				temperature = <30000>;
+				hysteresis = <2000>;
+				type = "active";
+			};
+			fan_alert1: trip-point-1 {
+				temperature = <50000>;
+				hysteresis = <2000>;
+				type = "active";
+			};
+			fan_alert2: trip-point-2 {
+				temperature = <65000>;
+				hysteresis = <2000>;
+				type = "active";
+			};
+			fan_alert3: trip-point-3 {
+				temperature = <75000>;
+				hysteresis = <2000>;
+				type = "active";
+			};
+		};
+
+		cooling-maps {
+			map0 {
+				trip = <&fan_alert0>;
+				cooling-device = <&fan THERMAL_NO_LIMIT 1>;
+				contribution = <1024>;
+			};
+			map1 {
+				trip = <&fan_alert1>;
+				cooling-device = <&fan 1 8>;
+				contribution = <1024>;
+			};
+			map2 {
+				trip = <&fan_alert2>;
+				cooling-device = <&fan 1 18>;
+				contribution = <1024>;
+			};
+			map3 {
+				trip = <&fan_alert3>;
+				cooling-device = <&fan 18 THERMAL_NO_LIMIT>;
+				contribution = <1024>;
+			};
+		};
+	};
+};
+
+&vcc5v0_host {
+	status = "disabled";
+};
+
+&vcc5v0_otg {
+	status = "okay";
+};
+
+&u2phy0_host {
+	phy-supply = <&vcc_4g_power>;
+	status = "okay";
+};
+
+&u2phy0_otg {
+	vbus-supply = <&vcc5v0_otg>;
+	status = "okay";
+};
+
+&u2phy1_host {
+	phy-supply = <&vcc5v0_usb2_host>;
+	status = "okay";
+};
+
+&u2phy1_otg {
+	phy-supply = <&vcc5v0_usb2_host>;
+	status = "okay";
+};
+
+&usb_host1_ehci {
+	status = "disabled";
+};
+
+&usb_host1_ohci {
+	status = "disabled";
+};
+
+#if 0
+&usbdrd_dwc3 {
+	dr_mode = "host";
+};
+#endif
+
+&csi2_dphy0 {
+	status = "disabled";
+};
+
+&csi2_dphy1 {
+	status = "disabled";
+	/*
+	* dphy1 only used for split mode,
+	* can be used  concurrently  with dphy2
+	* full mode and split mode are mutually exclusive
+	*/
+};
+
+&csi2_dphy2 {
+	status = "okay";
+	/*
+	* dphy2 only used for split mode,
+	* can be used  concurrently  with dphy1
+	* full mode and split mode are mutually exclusive
+	*/
+};
+
+&rkisp_vir0 {
+	status = "disabled";
+};
+
+&rkisp_vir1 {
+	status = "disabled";
+};
+
+&i2c0 {
+	status = "okay";
+};
+
+&i2c1 {
+	status = "okay";
+};
+
+&i2c2 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c2m1_xfer>;
+
+	hym8563: hym8563@51 {
+		status = "okay";
+		compatible = "haoyu,hym8563";
+		reg = <0x51>;
+		#clock-cells = <0>;
+		rtc-irq-gpio = <&gpio0 RK_PD3 IRQ_TYPE_EDGE_FALLING>;
+		clock-frequency = <32768>;
+		clock-output-names = "xin32k";
+		wakeup-source;
+	};
+};
+
+&i2c4 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c4m0_xfer>;
+};
+
+&i2c5 {
+	status = "disabled";
+	/delete-node/ hym8563@51;
+	/delete-node/ mxc6655xa@15;
+};
+
+&vcc_camera {
+	status = "disabled";
+};
+
+&pwm4 {
+	status = "disabled";
+};
+
+&pwm5 {
+	status = "disabled";
+};
+
+&pwm11 {
+	pinctrl-names = "active";
+	pinctrl-0 = <&pwm11m1_pins>;
+	status = "okay";
+};
+
+&pwm14 {
+	status = "disabled";
+};
+
+&mc3230 {
+    status = "disabled";
+};
+
+&pca9555 {
+    status = "disabled";
+};
+
+&uart0 { // rs232_1
+	status = "okay";
+};
+
+&uart3 { // rs232_2
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart3m0_xfer>;
+	status = "okay";
+};
+
+&uart4 { // rs485_1
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart4m1_xfer>;
+	status = "okay";
+};
+
+&uart5 { // rs485_2
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart5m1_xfer>;
+	status = "okay";
+};
+
+&uart7 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart7m1_xfer>;
+	status = "okay";
+};
+
+&uart8 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart8m0_xfer>;
+	status = "okay";
+};
+
+&uart9 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart9m1_xfer>;
+	status = "okay";
+};
+
+&spi0 {
+	pinctrl-names = "default", "high_speed";
+	pinctrl-0 = <&spi0m0_cs1 &spi0m0_pins>;
+	pinctrl-1 = <&spi0m0_cs1 &spi0m0_pins_hs>;
+	status = "okay";
+};
+
+&spi1 {
+	status = "disabled";
+};
+
+&spi_wk2xxx {
+	status = "disabled";
+};
+
+&pcie30_3v3 {
+	status = "disabled";
+};
+
+&pcie30phy {
+	status = "disabled";
+};
+
+&pcie3x2 {
+	status = "disabled";
+};
+
+&its {
+    status = "okay";
+};
+
+&can1 {
+	compatible = "rockchip,rk3568-can-2.0";
+	pinctrl-names = "default";
+	pinctrl-0 = <&can1m1_pins>;
+	status = "okay";
+};
+
+&can2 {
+	compatible = "rockchip,rk3568-can-2.0";
+	pinctrl-names = "default";
+	pinctrl-0 = <&can2m1_pins>;
+	status = "okay";
+};
+
+/delete-node/ &vcc3v3_vga;
+
+&gmac0 {
+	status = "okay";
+	tx_delay = <0x50>;
+	rx_delay = <0x35>;
+	snps,reset-gpio = <&gpio0 RK_PB7 GPIO_ACTIVE_LOW>;
+
+	clock_in_out = "output";
+	assigned-clocks = <&cru SCLK_GMAC0_RX_TX>, <&cru SCLK_GMAC0>;
+	assigned-clock-rates = <0>, <125000000>;
+	assigned-clock-parents = <&cru SCLK_GMAC0_RGMII_SPEED>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&gmac0_miim
+		     &gmac0_tx_bus2
+		     &gmac0_rx_bus2
+		     &gmac0_rgmii_clk
+		     &gmac0_rgmii_bus>;
+};
+
+&gmac1 {
+	status = "okay";
+	tx_delay = <0x4b>;
+	rx_delay = <0x2c>;
+	snps,reset-gpio = <&gpio0 RK_PC6 GPIO_ACTIVE_LOW>;
+
+	clock_in_out = "output";
+	assigned-clocks = <&cru SCLK_GMAC1_RX_TX>, <&cru SCLK_GMAC1>;
+	assigned-clock-rates = <0>, <125000000>;
+	assigned-clock-parents = <&cru SCLK_GMAC1_RGMII_SPEED>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&gmac1m1_miim
+		     &gmac1m1_tx_bus2
+		     &gmac1m1_rx_bus2
+		     &gmac1m1_rgmii_clk
+		     &gmac1m1_rgmii_bus>;
+};
+
+&rgmii_phy0 {
+	led_status_value = <0x6940>;
+};
+
+&rgmii_phy1 {
+	led_status_value = <0x6940>;
+};
+
+&sdio_pwrseq {
+	status = "disabled";
+};
+
+&sdmmc0 {
+	status = "okay";
+};
+
+&spdif_8ch {
+	status = "disabled";
+};
+
+&spdif_out {
+	status = "disabled";
+};
+
+&rk809_sound {
+	status = "disabled";
+};
+
+&rk809_codec {
+	status = "disabled";
+};
+
+&rk809 {
+    rtc {
+        status = "disabled";
+    };
+};
+
+&pwm7 {
+	status = "disabled";
+};
+
+&sata2 {
+	status = "disabled";
+	/delete-property/ pinctrl-0;
+};
+
+&pcie2x1 {
+	status = "disabled";
+};
+
+&dfi {
+	status = "okay";
+};
+
+&dmc {
+	status = "okay";
+};
+
+&pinctrl {
+	/delete-node/ mxc6655xa;
+
+	power {
+		vcc3v3_sys_rgl_en: vcc3v3-sys-rgl-en {
+			rockchip,pins = <0 RK_PA0 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	usb2 {
+		vcc5v0_usb2_host_en: vcc5v0-usb2-host-en {
+			rockchip,pins = <1 RK_PB1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	vcc_4g {
+		vcc_4g_power_en: vcc-4g-power-en {
+			rockchip,pins = <0 RK_PA6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	ext {
+		vcc5v0_ext_en: vcc5v0-ext-en {
+			rockchip,pins = <1 RK_PB2 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	gmac0 {
+		/omit-if-no-ref/
+		gmac0_tx_bus2: gmac0-tx-bus2 {
+			rockchip,pins =
+				/* gmac0_txd0 */
+				<2 RK_PB3 1 &pcfg_pull_none_drv_level_5>,
+				/* gmac0_txd1 */
+				<2 RK_PB4 1 &pcfg_pull_none_drv_level_5>,
+				/* gmac0_txen */
+				<2 RK_PB5 1 &pcfg_pull_none>;
+		};
+
+		/omit-if-no-ref/
+		gmac0_rgmii_clk: gmac0-rgmii-clk {
+			rockchip,pins =
+				/* gmac0_rxclk */
+				<2 RK_PA5 2 &pcfg_pull_none>,
+				/* gmac0_txclk */
+				<2 RK_PB0 2 &pcfg_pull_none_drv_level_5>;
+		};
+
+		/omit-if-no-ref/
+		gmac0_rgmii_bus: gmac0-rgmii-bus {
+			rockchip,pins =
+				/* gmac0_rxd2 */
+				<2 RK_PA3 2 &pcfg_pull_none>,
+				/* gmac0_rxd3 */
+				<2 RK_PA4 2 &pcfg_pull_none>,
+				/* gmac0_txd2 */
+				<2 RK_PA6 2 &pcfg_pull_none_drv_level_5>,
+				/* gmac0_txd3 */
+				<2 RK_PA7 2 &pcfg_pull_none_drv_level_5>;
+		};
+	};
+
+	leds {
+		led1_r_en: led1-r-en {
+			rockchip,pins = <2 RK_PD2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led1_g_en: led1-g-en {
+			rockchip,pins = <3 RK_PA1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led1_b_en: led1-b-en {
+			rockchip,pins = <2 RK_PD1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led2_r_en: led2-r-en {
+			rockchip,pins = <2 RK_PD3 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led2_g_en: led2-g-en {
+			rockchip,pins = <3 RK_PA2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led2_b_en: led2-b-en {
+			rockchip,pins = <3 RK_PB7 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led3_r_en: led3-r-en {
+			rockchip,pins = <3 RK_PC0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led3_g_en: led3-g-en {
+			rockchip,pins = <2 RK_PD7 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led3_b_en: led3-b-en {
+			rockchip,pins = <2 RK_PD5 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led4_r_en: led4-r-en {
+			rockchip,pins = <2 RK_PD4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led4_g_en: led4-g-en {
+			rockchip,pins = <3 RK_PA0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led4_b_en: led4-b-en {
+			rockchip,pins = <3 RK_PA3 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led5_r_en: led5-r-en {
+			rockchip,pins = <3 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led5_g_en: led5-g-en {
+			rockchip,pins = <3 RK_PB6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led5_b_en: led5-b-en {
+			rockchip,pins = <3 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led6_r_en: led6-r-en {
+			rockchip,pins = <3 RK_PB4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led6_g_en: led6-g-en {
+			rockchip,pins = <3 RK_PC1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led6_b_en: led6-b-en {
+			rockchip,pins = <2 RK_PD6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led7_r_en: led7-r-en {
+			rockchip,pins = <4 RK_PD2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led7_g_en: led7-g-en {
+			rockchip,pins = <2 RK_PD0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led8_r_en: led8-r-en {
+			rockchip,pins = <3 RK_PA6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led8_g_en: led8-g-en {
+			rockchip,pins = <3 RK_PA5 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led9_r_en: led9-r-en {
+			rockchip,pins = <3 RK_PA4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led9_g_en: led9-g-en {
+			rockchip,pins = <3 RK_PA7 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led10_r_en: led10-r-en {
+			rockchip,pins = <1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led10_g_en: led10-g-en {
+			rockchip,pins = <1 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+};

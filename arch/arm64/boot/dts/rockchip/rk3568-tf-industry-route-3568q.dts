@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2020 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+/dts-v1/;
+
+#include "rk3568-tf-industry-route-3568q.dtsi"
+
+/ {
+    model = "TF-INDUSTRY-ROUTE-3568Q HDMI (Linux)";
+    compatible = "rockchip,rk3568-tf-industry-route-3568q", "rockchip,rk3568";
+};
+
+&route_hdmi {
+    status = "okay";
+    connect = <&vp0_out_hdmi>;
+};
