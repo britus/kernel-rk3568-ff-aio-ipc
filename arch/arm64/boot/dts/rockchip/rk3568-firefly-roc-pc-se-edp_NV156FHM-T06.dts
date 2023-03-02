@@ -7,6 +7,7 @@
 /dts-v1/;
 
 #include "rk3568-firefly-roc-pc-se.dtsi"
+#include <dt-bindings/display/rockchip_vop.h>
 
 /*
  * Select one of the two
@@ -34,6 +35,7 @@
         status = "okay";
         enable-gpios = <&gpio3 RK_PA6 GPIO_ACTIVE_HIGH>;
         //bus-format = <MEDIA_BUS_FMT_RBG888_1X24>;
+        prepare-delay-ms = <200>;
         backlight = <&backlight>;
 
         display-timings {
@@ -103,6 +105,16 @@
     };
 };
 
+&vp0 {
+	rockchip,plane-mask = <(1 << ROCKCHIP_VOP2_CLUSTER0 | 1 << ROCKCHIP_VOP2_ESMART0 | 1 << ROCKCHIP_VOP2_SMART0)>;
+	rockchip,primary-plane = <ROCKCHIP_VOP2_SMART0>;
+};
+
+&vp1 {
+	rockchip,plane-mask = <(1 << ROCKCHIP_VOP2_CLUSTER1 | 1 << ROCKCHIP_VOP2_ESMART1 | 1 << ROCKCHIP_VOP2_SMART1)>;
+	rockchip,primary-plane = <ROCKCHIP_VOP2_SMART1>;
+};
+
 &pwm1 {
     status = "okay";
 };
@@ -110,8 +122,6 @@
 &edp {
     status = "okay";
     hpd-gpios = <&gpio0 RK_PC2 GPIO_ACTIVE_HIGH>;
-    force-hpd;
-    enable-delay-ms = <200>; // vcc to hpd delay 200ms for power on sequence
 
     ports {
         edp_out: port@1 {
@@ -132,7 +142,8 @@
 };
 
 &route_edp {
-    status = "disabled";
+    status = "okay";
+    connect = <&vp1_out_edp>;
 };
 
 &edp_in_vp0 {
