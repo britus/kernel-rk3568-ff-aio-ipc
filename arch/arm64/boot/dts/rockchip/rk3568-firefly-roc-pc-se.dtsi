@@ -125,6 +125,11 @@
         status = "okay";
 };
 
+&uart7 {
+	status = "okay";
+	pinctrl-0 = <&uart7m1_xfer>;
+};
+
 &spi1 {
 	status = "disabled";
 };
