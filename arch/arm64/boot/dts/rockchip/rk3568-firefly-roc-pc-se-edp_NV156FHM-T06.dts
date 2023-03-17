@@ -7,7 +7,6 @@
 /dts-v1/;
 
 #include "rk3568-firefly-roc-pc-se.dtsi"
-#include <dt-bindings/display/rockchip_vop.h>
 
 /*
  * Select one of the two
