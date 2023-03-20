@@ -239,60 +239,6 @@
 		#cooling-cells = <2>;
 		fan-supply = <&vcc5v0_sys>;
 		pwms = <&pwm11 0 50000 0>;
-		cooling-levels = <85 90/*1*/ 95 105 115 125 135 145 155/*8*/ 165 175 185 195 205 215 225 235 245 255/*18*/>;
-	};
-
-	center_thermal {
-		thermal-governor = "step_wise";
-		polling-delay-passive = <20>; /* milliseconds */
-		polling-delay = <1000>; /* milliseconds */
-		thermal-sensors = <&tsadc 0>;
-
-		trips {
-			fan_alert0: trip-point-0 {
-				temperature = <30000>;
-				hysteresis = <2000>;
-				type = "active";
-			};
-			fan_alert1: trip-point-1 {
-				temperature = <50000>;
-				hysteresis = <2000>;
-				type = "active";
-			};
-			fan_alert2: trip-point-2 {
-				temperature = <65000>;
-				hysteresis = <2000>;
-				type = "active";
-			};
-			fan_alert3: trip-point-3 {
-				temperature = <75000>;
-				hysteresis = <2000>;
-				type = "active";
-			};
-		};
-
-		cooling-maps {
-			map0 {
-				trip = <&fan_alert0>;
-				cooling-device = <&fan THERMAL_NO_LIMIT 1>;
-				contribution = <1024>;
-			};
-			map1 {
-				trip = <&fan_alert1>;
-				cooling-device = <&fan 1 8>;
-				contribution = <1024>;
-			};
-			map2 {
-				trip = <&fan_alert2>;
-				cooling-device = <&fan 1 18>;
-				contribution = <1024>;
-			};
-			map3 {
-				trip = <&fan_alert3>;
-				cooling-device = <&fan 18 THERMAL_NO_LIMIT>;
-				contribution = <1024>;
-			};
-		};
 	};
 };
 
