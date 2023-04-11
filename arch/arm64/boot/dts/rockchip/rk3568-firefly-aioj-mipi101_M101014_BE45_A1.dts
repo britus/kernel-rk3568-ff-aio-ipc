@@ -28,10 +28,7 @@
         pinctrl-names = "default";
         pinctrl-0 = <&vcc1v8_lcd0_bl_en>;
         regulator-name = "vcc1v8_lcd0_bl_en";
-        regulator-boot-on;
-		regulator-state-mem {
-			regulator-off-in-suspend;
-		};
+        regulator-always-on;
     };
 
     vcc1v8_lcd1_power: vcc1v8-lcd1-power-regulator {
