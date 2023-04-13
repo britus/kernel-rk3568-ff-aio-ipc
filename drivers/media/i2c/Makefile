@@ -148,6 +148,7 @@ obj-$(CONFIG_VIDEO_OV2659)	+= ov2659.o
 obj-$(CONFIG_VIDEO_TC358743)	+= tc358743.o
 obj-$(CONFIG_VIDEO_TC35874X)	+= tc35874x.o
 obj-$(CONFIG_VIDEO_RK628_CSI)	+= rk628_csi.o
+obj-$(CONFIG_VIDEO_RK628)	+= rk628/
 obj-$(CONFIG_VIDEO_LT6911UXC)	+= lt6911uxc.o
 obj-$(CONFIG_VIDEO_LT7911D)	+= lt7911d.o
 obj-$(CONFIG_VIDEO_LT8619C)	+= lt8619c.o
@@ -230,3 +231,4 @@ obj-$(CONFIG_VIDEO_XC7022) += xc7022.o
 obj-$(CONFIG_VIDEO_XC7160) += xc7160.o
 
 obj-$(CONFIG_VIDEO_OTP_EEPROM)	+= otp_eeprom.o
+obj-$(CONFIG_FIREFLY_RK628_NOTIFIER_CODEC)	+= firefly_rk628_notifier_codec.o

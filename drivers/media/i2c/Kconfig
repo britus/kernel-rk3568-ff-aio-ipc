@@ -461,6 +461,17 @@ config VIDEO_RK628_CSI
 	  To compile this driver as a module, choose M here: the
 	  module will be called rk628-csi.
 
+config VIDEO_RK628
+	tristate "Rockchip RK628 decoder"
+	depends on VIDEO_V4L2 && I2C && VIDEO_V4L2_SUBDEV_API
+	select HDMI
+	select V4L2_FWNODE
+	help
+	  Support for the Rockchip RK628 HDMI IN.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called rk628 video.
+
 config VIDEO_LT6911UXC
 	tristate "Lontium LT6911UXC decoder"
 	depends on VIDEO_V4L2 && I2C && VIDEO_V4L2_SUBDEV_API
@@ -2303,3 +2314,9 @@ endif
 endmenu
 
 endif
+
+config FIREFLY_RK628_NOTIFIER_CODEC
+	bool "Firefly rk628 notifier codec"
+	default y
+	---help---
+	  Provide a RK628D notification for audio codec
