@@ -152,10 +152,6 @@
     status = "okay";
 };
 
-&can2 {
-    status = "okay";
-};
-
 &gmac0 {
     status = "okay";
 };

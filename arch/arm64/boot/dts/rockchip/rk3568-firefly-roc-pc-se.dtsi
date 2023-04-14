@@ -157,10 +157,6 @@
     status = "okay";
 };
 
-&can2 {
-    status = "okay";
-};
-
 &gmac0 {
     status = "okay";
 	tx_delay = <0x41>;
