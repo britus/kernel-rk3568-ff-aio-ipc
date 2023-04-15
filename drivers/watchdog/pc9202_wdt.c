@@ -10,6 +10,7 @@
  */
 
 
+#include <linux/types.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/device.h>
@@ -28,7 +29,12 @@
 #include <linux/version.h>
 #include <linux/slab.h>
 #include <linux/of_gpio.h>
-#include <linux/wakelock.h>
+
+#include <linux/iio/iio.h>
+#include <linux/iio/machine.h>
+#include <linux/iio/driver.h>
+#include <linux/iio/consumer.h>
+#include <linux/iio/types.h>
 
 #include <linux/blkdev.h>
 
@@ -39,6 +45,9 @@
 #define WDT_KICK_S_2_56				0xd8
 #define WDT_KICK_S_10_24			0xe8
 #define WDT_KICK_S_40_96			0xf8
+#define WDT_KICK_DISABLED			(0x00)
+#define PC9202_VERSION		"firefly 1.0.0   04/15/2023"
+bool iWriteByte(uint8_t addr, uint8_t data);
 
 static unsigned char demoBuffer[16];
 
@@ -52,24 +61,20 @@ static struct sw2001 *the_sw2001;
 static int major;
 static struct class *cls;
 static struct device *dev;
-int wd_en_gpio;
+// int wd_en_gpio;
+struct gpio_desc *wd_en_gpio = NULL;
 
 void enable_wdt(void)
 {
-	if(wd_en_gpio >= 0)
-		gpio_direction_output(wd_en_gpio, 1);
-	else
-		printk("wd_en_gpio not set !!!");
-	return;
+	printk("====== enabled 9202 wdt ======\n");
+	gpiod_direction_output(wd_en_gpio, 1);
 }
 
 void disable_wdt(void)
 {
-	if(wd_en_gpio >= 0)
-		gpio_direction_output(wd_en_gpio, 0);
-	else
-		printk("wd_en_gpio not set !!!");
-	return;
+	printk("====== disabled 9202 wdt ======\n");
+	iWriteByte(SW2001_REG_WDT_CTRL,WDT_KICK_DISABLED);
+	gpiod_direction_output(wd_en_gpio, 0);
 }
 
 /*-------------------------------------------------------------------------*/
@@ -91,7 +96,7 @@ int sw2001_write(unsigned char reg, unsigned char *buf, int len)
 
 	mutex_unlock(&the_sw2001->lock);
 
-	printk("%s: sw2001_write(0x%x,0x%x)\n", "pc9202", reg, *buf);
+	//printk("%s: sw2001_write(0x%x,0x%x)\n", "pc9202", reg, *buf);
 
 	if(status)
 		printk("error.. status=0x%x\n",status);
@@ -180,6 +185,7 @@ ssize_t wdt_read(struct file *filp, char __user *buf, size_t count,loff_t *f_pos
 #if 0
 	uint8_t reg_value;
 	iReadByte(SW2001_REG_WDT_CTRL, &reg_value);
+	/* 把数据复制到应用程序空间 */
     if (copy_to_user(buf,&reg_value,1))
     {
 		count=-EFAULT;
@@ -191,6 +197,7 @@ ssize_t wdt_read(struct file *filp, char __user *buf, size_t count,loff_t *f_pos
 
 ssize_t wdt_write(struct file *filp, const char __user *buf, size_t count,loff_t *f_pos)
 {
+	/* 把数据复制到内核空间 */
 	uint8_t len = (int)count;
 	if(len>2)
 	{
@@ -226,11 +233,11 @@ struct file_operations wdt_fops = {
 static int pc9202_wdt_probe(struct i2c_client *client,
         const struct i2c_device_id *id)
 {
-    //struct device_node *np = client->dev.of_node;
-    //struct sw2001 *ts;
 	struct sw2001	*pEnc;
 	uint8_t reg_value;
 	int retry_count, ret;
+
+	dev_info(&client->dev, "Version: %s\n", PC9202_VERSION);
 
     if (!of_device_is_available(client->dev.of_node)) {
 		return 0;
@@ -253,18 +260,18 @@ static int pc9202_wdt_probe(struct i2c_client *client,
 	for (retry_count = 0; retry_count < 100; retry_count++) {
 	    ret = iReadByte(SW2001_REG_WDT_CTRL, &reg_value);
 	    if(0 != ret) {
-		printk("====== i2c detect failed watchdog init err:0x%x =====\n", reg_value);
+		printk("====== i2c detect failed watchdog init err: 0x%x ======\n", reg_value);
 	    } else {
-		printk("====== i2c detect success watchdog init ========\n");
+		printk("====== i2c detect success watchdog init ======\n");
 		break;
 	    }
 	    msleep(10);
 	}
 
 	if (0 != ret) {
-            printk("====== i2c detect failed watchdog init ======\n");
-            goto err;
-        }
+	    printk("====== i2c detect failed watchdog init ======\n");
+	    goto err;
+	}
 
 	major = register_chrdev(0, "wdt_crl", &wdt_fops);
     if (major < 0)
@@ -272,24 +279,20 @@ static int pc9202_wdt_probe(struct i2c_client *client,
 		printk("Unable to register wdt character device !\n");
 		goto err;
     }
+	// 创建类
 	cls = class_create(THIS_MODULE, "wdt_crl");
+	// 创建设备节点
 	dev = device_create(cls, NULL, MKDEV(major, 0), NULL, "wdt_crl");
 
-	wd_en_gpio = of_get_named_gpio_flags(client->dev.of_node, "wd-en-gpio", 0, NULL);
-	if (gpio_is_valid(wd_en_gpio))
-	{
-		if (gpio_request(wd_en_gpio, "wdt-en"))
-		{
-	        printk(" wdt-en gpio %d request failed!\n", wd_en_gpio);
-	        gpio_free(wd_en_gpio);
-	        goto err;
+	wd_en_gpio = devm_gpiod_get_optional(&client->dev, "wd-en", GPIOD_ASIS);
 
-		}
-		else
-		{
-			gpio_direction_output(wd_en_gpio, 0);
-		}
+	if (IS_ERR(wd_en_gpio)) {
+		ret = PTR_ERR(wd_en_gpio);
+		if (ret != -EPROBE_DEFER)
+			dev_err(dev, "failed to get reset GPIO: %d\n", ret);
+		return ret;
 	}
+
     return 0;
 err:
 	kfree(pEnc);
@@ -304,8 +307,6 @@ static int pc9202_wdt_remove(struct i2c_client *client)
 
 	//PR_DEBUG("%s\n",__func__);
 
-	if(wd_en_gpio >= 0)
-		gpio_free(wd_en_gpio);
 	kfree(axp);
 	i2c_set_clientdata(client, NULL);
 	the_sw2001 = NULL;
@@ -349,6 +350,9 @@ static int __init pc9202_wdt_init(void)
 }
 static void __exit pc9202_wdt_exit(void)
 {
+	if (!IS_ERR(wd_en_gpio) && wd_en_gpio!= NULL) {
+		disable_wdt();
+	}
     i2c_del_driver(&pc9202_wdt_driver);
     return;
 }
