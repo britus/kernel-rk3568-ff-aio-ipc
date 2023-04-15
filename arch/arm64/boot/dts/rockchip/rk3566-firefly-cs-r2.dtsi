@@ -177,6 +177,8 @@
 	pinctrl-0 = <&i2c2m1_xfer>;
 	/* Watchdog */
     pc9202: pc9202@3c{
+        pinctrl-names = "default";
+        pinctrl-0 = <&pc9202_en_pin>;
         status = "okay";
         compatible = "firefly,pc9202";
         reg = <0x3c>;
@@ -252,4 +254,11 @@
 			rockchip,pins = <4 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
+
+	wdt {
+		pc9202_en_pin: pc9202-en-pin {
+			rockchip,pins = <4 RK_PC1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
 };
