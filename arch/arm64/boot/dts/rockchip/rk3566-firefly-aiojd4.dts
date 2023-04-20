@@ -9,10 +9,10 @@
 #include "rk3566-firefly-aiojd4.dtsi"
 
 /*
-*								select camera
 *
 * using single camera xc7160        --->  rk3566-firefly-aiojd4-cam-8ms1m.dtsi
 * using dual camera gc2053/gc2093   --->  rk3566-firefly-aiojd4-cam-2ms2m.dtsi
+* using rk628d                      --->  rk3566-firefly-aiojd4-tf-hdmi-mipi-rk628.dtsi
 *
 */
 #include "rk3566-firefly-aiojd4-cam-8ms1m.dtsi"

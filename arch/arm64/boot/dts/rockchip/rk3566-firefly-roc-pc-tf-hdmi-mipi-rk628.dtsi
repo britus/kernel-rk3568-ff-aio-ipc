@@ -1,0 +1,135 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * ROC-RK3566-PC.
+ *
+ */
+
+&rk809_codec {
+	mic-in-line2-rk628d;
+	micin-pga-gain = <119>;
+};
+
+&i2c4{
+    status = "okay";
+    clock-frequency = <400000>;
+    pinctrl-0 = <&i2c4m0_xfer>;
+
+
+	rk628_csi_v4l2: rk628_csi_v4l2@50 {
+                reg = <0x50>;
+                compatible = "rockchip,rk628-csi-v4l2";
+                interrupt-parent = <&gpio4>;
+                interrupts = <RK_PC0 IRQ_TYPE_LEVEL_HIGH>;
+                enable-gpios = <&gpio4 RK_PB7 GPIO_ACTIVE_LOW>;
+                reset-gpios = <&gpio4 RK_PB0 GPIO_ACTIVE_LOW>;
+                plugin-det-gpios = <&gpio4 RK_PC1 GPIO_ACTIVE_LOW>;
+                //power-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
+
+                rockchip,camera-module-index = <0>;
+                rockchip,camera-module-facing = "back";
+                rockchip,camera-module-name = "RK628-CSI";
+                rockchip,camera-module-lens-name = "NC";
+
+                port {
+		        hdmi_in0: endpoint {
+			        remote-endpoint = <&hdmiin_out0>;
+			        data-lanes = <1 2 3 4>;
+                        };
+                };
+        };
+
+};
+
+&csi2_dphy_hw {
+	status = "okay";
+};
+
+&csi2_dphy0 {
+	status = "okay";
+	/*
+	* dphy0 only used for full mode,
+	* full mode and split mode are mutually exclusive
+	*/
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+			port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			hdmiin_out0: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&hdmi_in0>;
+				data-lanes = <1 2 3 4>;
+			};
+		};
+		port@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			csidphy_out: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&mipi_csi2_input>;
+				data-lanes = <1 2 3 4>;
+			};
+		};
+	};
+};
+
+&mipi_csi2 {
+        status = "okay";
+
+        ports {
+                #address-cells = <1>;
+                #size-cells = <0>;
+
+                port@0 {
+                        reg = <0>;
+                        #address-cells = <1>;
+                        #size-cells = <0>;
+
+                        mipi_csi2_input: endpoint@1 {
+							reg = <1>;
+                            remote-endpoint = <&csidphy_out>;
+							data-lanes = <1 2 3 4>;
+                        };
+                };
+
+                port@1 {
+                        reg = <1>;
+                        #address-cells = <1>;
+                        #size-cells = <0>;
+
+                        mipi_csi2_output: endpoint@0 {
+                            reg = <0>;
+                            remote-endpoint = <&cif_mipi_in>;
+                            data-lanes = <1 2 3 4>;
+                        };
+                };
+        };
+};
+
+&rkcif_mipi_lvds {
+        status = "okay";
+        port {
+                cif_mipi_in: endpoint {
+                    remote-endpoint = <&mipi_csi2_output>;
+                    data-lanes = <1 2 3 4>;
+                };
+        };
+};
+
+
+&rkcif_mmu {
+    status = "okay";
+};
+
+&rkcif {
+    status = "okay";
+};
+
+&rkisp {
+        status = "disabled";
+};
