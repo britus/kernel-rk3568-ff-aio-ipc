@@ -6,11 +6,11 @@
 
 /dts-v1/;
 
-#include "rk3568-tf-industry-route-3568q.dtsi"
+#include "rk3568-firefly-aio-3568gw.dtsi"
 
 / {
-    model = "TF-INDUSTRY-ROUTE-3568Q HDMI (Linux)";
-    compatible = "rockchip,rk3568-tf-industry-route-3568q", "rockchip,rk3568";
+    model = "AIO-3568GW HDMI (Linux)";
+    compatible = "rockchip,rk3568-firefly-aio-3568gw", "rockchip,rk3568";
 };
 
 &route_hdmi {

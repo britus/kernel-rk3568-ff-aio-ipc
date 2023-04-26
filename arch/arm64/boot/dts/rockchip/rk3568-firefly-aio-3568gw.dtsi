@@ -51,11 +51,14 @@
 		status = "okay";
 		compatible = "gpio-leds";
 
+		// UART
 		LED1_R {
 			default-state = "off";
 			gpios = <&gpio2 RK_PD2 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led1_r_en>;
+			linux,default-trigger = "tty";
+			label = "uart:red";
 		};
 
 		LED1_G {
@@ -63,6 +66,8 @@
 			gpios = <&gpio3 RK_PA1 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led1_g_en>;
+			linux,default-trigger = "tty";
+			label = "uart:green";
 		};
 
 		LED1_B {
@@ -70,13 +75,18 @@
 			gpios = <&gpio2 RK_PD1 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led1_b_en>;
+			linux,default-trigger = "tty";
+			label = "uart:blue";
 		};
 
+		// RS485_2
 		LED2_R {
 			default-state = "off";
 			gpios = <&gpio2 RK_PD3 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led2_r_en>;
+			linux,default-trigger = "tty";
+			label = "rs485_2:red";
 		};
 
 		LED2_G {
@@ -84,6 +94,8 @@
 			gpios = <&gpio3 RK_PA2 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led2_g_en>;
+			linux,default-trigger = "tty";
+			label = "rs485_2:green";
 		};
 
 		LED2_B {
@@ -91,13 +103,18 @@
 			gpios = <&gpio3 RK_PB7 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led2_b_en>;
+			linux,default-trigger = "tty";
+			label = "rs485_2:blue";
 		};
 
+		// RS232_1
 		LED3_R {
 			default-state = "off";
 			gpios = <&gpio3 RK_PC0 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led3_r_en>;
+			linux,default-trigger = "tty";
+			label = "rs232_1:red";
 		};
 
 		LED3_G {
@@ -105,6 +122,8 @@
 			gpios = <&gpio2 RK_PD7 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led3_g_en>;
+			linux,default-trigger = "tty";
+			label = "rs232_1:green";
 		};
 
 		LED3_B {
@@ -112,13 +131,18 @@
 			gpios = <&gpio2 RK_PD5 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led3_b_en>;
+			linux,default-trigger = "tty";
+			label = "rs232_1:blue";
 		};
 
+		// RS232_2
 		LED4_R {
 			default-state = "off";
 			gpios = <&gpio2 RK_PD4 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led4_r_en>;
+			linux,default-trigger = "tty";
+			label = "rs232_2:red";
 		};
 
 		LED4_G {
@@ -126,6 +150,8 @@
 			gpios = <&gpio3 RK_PA0 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led4_g_en>;
+			linux,default-trigger = "tty";
+			label = "rs232_2:green";
 		};
 
 		LED4_B {
@@ -133,13 +159,18 @@
 			gpios = <&gpio3 RK_PA3 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led4_b_en>;
+			linux,default-trigger = "tty";
+			label = "rs232_2:blue";
 		};
 
+		// CAN
 		LED5_R {
 			default-state = "off";
 			gpios = <&gpio3 RK_PB5 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led5_r_en>;
+			linux,default-trigger = "netdev";
+			label = "can:red";
 		};
 
 		LED5_G {
@@ -147,6 +178,8 @@
 			gpios = <&gpio3 RK_PB6 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led5_g_en>;
+			linux,default-trigger = "netdev";
+			label = "can:green";
 		};
 
 		LED5_B {
@@ -154,13 +187,18 @@
 			gpios = <&gpio3 RK_PB0 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led5_b_en>;
+			linux,default-trigger = "netdev";
+			label = "can:blue";
 		};
 
+		// GPIO_IN_1
 		LED6_R {
 			default-state = "off";
 			gpios = <&gpio3 RK_PB4 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led6_r_en>;
+			linux,default-trigger = "gpio";
+			label = "gpio_in_1:red";
 		};
 
 		LED6_G {
@@ -168,6 +206,8 @@
 			gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led6_g_en>;
+			linux,default-trigger = "gpio";
+			label = "gpio_in_1:green";
 		};
 
 		LED6_B {
@@ -175,13 +215,18 @@
 			gpios = <&gpio2 RK_PD6 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led6_b_en>;
+			linux,default-trigger = "gpio";
+			label = "gpio_in_1:blue";
 		};
 
+		// GPIO_IN_2
 		LED7_R {
 			default-state = "off";
 			gpios = <&gpio4 RK_PD2 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led7_r_en>;
+			linux,default-trigger = "gpio";
+			label = "gpio_in_2:red";
 		};
 
 		LED7_G {
@@ -189,13 +234,18 @@
 			gpios = <&gpio2 RK_PD0 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led7_g_en>;
+			linux,default-trigger = "gpio";
+			label = "gpio_in_2:green";
 		};
 
+		// GPIO_OUT_1
 		LED8_R {
 			default-state = "off";
 			gpios = <&gpio3 RK_PA6 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led8_r_en>;
+			//linux,default-trigger = "gpio";
+			label = "gpio_out_1:red";
 		};
 
 		LED8_G {
@@ -203,13 +253,18 @@
 			gpios = <&gpio3 RK_PA5 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led8_g_en>;
+			//linux,default-trigger = "gpio";
+			label = "gpio_out_1:green";
 		};
 
+		// GPIO_OUT_2
 		LED9_R {
 			default-state = "off";
 			gpios = <&gpio3 RK_PA4 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led9_r_en>;
+			//linux,default-trigger = "gpio";
+			label = "gpio_out_2:red";
 		};
 
 		LED9_G {
@@ -217,13 +272,18 @@
 			gpios = <&gpio3 RK_PA7 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led9_g_en>;
+			//linux,default-trigger = "gpio";
+			label = "gpio_out_2:green";
 		};
 
+		// RS485_1
 		LED10_R {
-			default-state = "on";
+			default-state = "off";
 			gpios = <&gpio1 RK_PA4 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led10_r_en>;
+			linux,default-trigger = "tty";
+			label = "rs485_1:red";
 		};
 
 		LED10_G {
@@ -231,6 +291,8 @@
 			gpios = <&gpio1 RK_PB0 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&led10_g_en>;
+			linux,default-trigger = "tty";
+			label = "rs485_1:green";
 		};
 	};
 
@@ -470,8 +532,8 @@
 
 &gmac0 {
 	status = "okay";
-	tx_delay = <0x50>;
-	rx_delay = <0x35>;
+	tx_delay = <0x43>;
+	rx_delay = <0x33>;
 	snps,reset-gpio = <&gpio0 RK_PB7 GPIO_ACTIVE_LOW>;
 
 	clock_in_out = "output";
