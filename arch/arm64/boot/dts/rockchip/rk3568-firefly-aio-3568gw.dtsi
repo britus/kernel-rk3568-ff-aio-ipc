@@ -340,11 +340,9 @@
 	status = "disabled";
 };
 
-#if 0
 &usbdrd_dwc3 {
 	dr_mode = "host";
 };
-#endif
 
 &csi2_dphy0 {
 	status = "disabled";
