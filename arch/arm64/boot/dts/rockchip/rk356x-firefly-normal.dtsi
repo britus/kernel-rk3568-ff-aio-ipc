@@ -1,0 +1,24 @@
+&cpu0_opp_table {
+	/delete-node/ opp-1608000000;
+	/delete-node/ opp-1800000000;
+	/delete-node/ opp-1992000000;
+};
+
+&npu_opp_table {
+	/delete-node/ opp-700000000;
+	/delete-node/ opp-800000000;
+	/delete-node/ opp-900000000;
+};
+
+&gpu_opp_table {
+	/delete-node/ opp-700000000;
+	/delete-node/ opp-800000000;
+};
+
+&dfi {
+	status = "disabled";
+};
+
+&dmc {
+	status = "disabled";
+};
