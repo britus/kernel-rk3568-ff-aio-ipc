@@ -2251,6 +2251,19 @@ static int rk_gmac_resume(struct device *dev)
 }
 #endif /* CONFIG_PM_SLEEP */
 
+static void firefly_gmac_shutdown(struct platform_device *pdev)
+{
+    struct device *dev;
+    // printk("%s\n", __func__);
+
+    if (pdev != NULL) {
+        dev = &pdev->dev;
+        if (dev != NULL) {
+            stmmac_firefly_shutdown(dev);
+        }
+    }
+}
+
 static SIMPLE_DEV_PM_OPS(rk_gmac_pm_ops, rk_gmac_suspend, rk_gmac_resume);
 
 static const struct of_device_id rk_gmac_dwmac_match[] = {
@@ -2299,6 +2312,7 @@ MODULE_DEVICE_TABLE(of, rk_gmac_dwmac_match);
 
 static struct platform_driver rk_gmac_dwmac_driver = {
 	.probe  = rk_gmac_probe,
+	.shutdown = firefly_gmac_shutdown,
 	.remove = rk_gmac_remove,
 	.driver = {
 		.name           = "rk_gmac-dwmac",

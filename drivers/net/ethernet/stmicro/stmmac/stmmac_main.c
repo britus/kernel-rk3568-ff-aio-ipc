@@ -56,6 +56,9 @@
 #include "hwif.h"
 #include "dwmac-rk-tool.h"
 
+#define RTL_8211F_PHY_ID  0x001cc916
+#define RTL_8211FD_VX_PHY_ID  0x001cc859
+#define RTL_8211F_VD_CG_PHY_ID  0x001cc878
 #define	STMMAC_ALIGN(x)		ALIGN(ALIGN(x, SMP_CACHE_BYTES), 16)
 #define	TSO_MAX_BUFF_SIZE	(SZ_16K - 1)
 
@@ -4699,6 +4702,45 @@ int stmmac_resume(struct device *dev)
 	return 0;
 }
 EXPORT_SYMBOL_GPL(stmmac_resume);
+
+/*
+enable PMEB mode to set INTB/PMEB pin high, support RTL_8211F/RTL_8211FD_VX/RTL_8211F_VD
+*/
+static void stmmac_firefly_set_pmeb(struct phy_device *phydev)
+{
+    int value;
+
+    // printk("%s\n", __func__);
+    // printk("phy_id=0x%x\n", phydev->phy_id);
+
+    if (RTL_8211F_PHY_ID == phydev->phy_id ||
+            RTL_8211FD_VX_PHY_ID == phydev->phy_id ||
+            RTL_8211F_VD_CG_PHY_ID == phydev->phy_id) {
+        pr_info("enable PMEB\n");
+        // printk("enable PMEB\n");
+        mutex_lock(&phydev->lock);
+        phy_write(phydev, 31, 0x0d40);
+        value = phy_read(phydev, 22);
+        phy_write(phydev, 22, value | BIT(5));
+        phy_write(phydev, 31, 0xa42);
+        mutex_unlock(&phydev->lock);
+    }
+}
+
+void stmmac_firefly_shutdown(struct device *dev)
+{
+    struct net_device *ndev = dev_get_drvdata(dev);
+    struct phy_device *phydev = ndev->phydev;
+
+    printk("%s\n", __func__);
+    if(!phydev){
+        pr_warn("Cannot get  phy_device.\n");
+        return;
+    }
+
+    stmmac_firefly_set_pmeb(phydev);
+}
+EXPORT_SYMBOL_GPL(stmmac_firefly_shutdown);
 
 #ifndef MODULE
 static int __init stmmac_cmdline_opt(char *str)
