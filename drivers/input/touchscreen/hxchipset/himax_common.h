@@ -60,18 +60,11 @@
 /*#define HX_NEW_EVENT_STACK_FORMAT*/
 /*#define HX_AUTO_UPDATE_FW*/
 /*#define HX_SMART_WAKEUP*/
-/*#define HX_GESTURE_TRACK*/
+#define HX_GESTURE_TRACK
 #define HX_RESUME_SEND_CMD	/*Need to enable on TDDI chipset*/
-/*#define HX_HIGH_SENSE*/
+#define HX_HIGH_SENSE
 /*#define HX_PALM_REPORT*/
 /*#define HX_USB_DETECT_GLOBAL*/
-
-/* for MTK special platform.If turning on,
- * it will report to system by using specific format.
- */
-/*#define HX_PROTOCOL_A*/
-#define HX_PROTOCOL_B_3PA
-
 /*#define HX_ZERO_FLASH*/
 
 /*system suspend-chipset power off,
@@ -486,8 +479,9 @@ struct himax_debug {
 };
 
 enum input_protocol_type {
-	PROTOCOL_TYPE_A	= 0x00,
-	PROTOCOL_TYPE_B	= 0x01,
+	PROTOCOL_TYPE_A     = 0x00,
+	PROTOCOL_TYPE_B     = 0x01,
+	PROTOCOL_TYPE_B_3PA = 0x02,
 };
 
 #if defined(HX_HIGH_SENSE)
@@ -496,14 +490,15 @@ enum input_protocol_type {
 
 #if defined(HX_SMART_WAKEUP)
 void himax_set_SMWP_func(uint8_t SMWP_enable);
-
 #define GEST_PTLG_ID_LEN	(4)
 #define GEST_PTLG_HDR_LEN	(4)
 #define GEST_PTLG_HDR_ID1	(0xCC)
 #define GEST_PTLG_HDR_ID2	(0x44)
-#define GEST_PT_MAX_NUM		(128)
-
 extern uint8_t *wake_event_buffer;
+#endif
+
+#if defined(HX_GESTURE_TRACK)
+#define GEST_PT_MAX_NUM		(128)
 #endif
 
 extern int g_mmi_refcnt;

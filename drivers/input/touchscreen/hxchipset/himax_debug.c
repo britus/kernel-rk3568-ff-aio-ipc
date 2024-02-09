@@ -302,7 +302,7 @@ static ssize_t himax_int_en_write(char *buf, size_t len)
 	int ret = 0;
 
 	if (len >= 12) {
-		I("%s: no command exceeds 12 chars.\n", __func__);
+		D("%s: no command exceeds 12 chars.\n", __func__);
 		return -EFAULT;
 	}
 
@@ -354,7 +354,7 @@ static ssize_t himax_layout_write(char *buf, size_t len)
 	int layout[4] = {0};
 
 	if (len >= 80) {
-		I("%s: no command exceeds 80 chars.\n", __func__);
+		D("%s: no command exceeds 80 chars.\n", __func__);
 		return -EFAULT;
 	}
 
@@ -421,7 +421,7 @@ static ssize_t himax_debug_level_write(char *buf, size_t len)
 	ts = private_ts;
 
 	if (len >= 12) {
-		I("%s: no command exceeds 12 chars.\n", __func__);
+		D("%s: no command exceeds 12 chars.\n", __func__);
 		return -EFAULT;
 	}
 
@@ -438,10 +438,11 @@ static ssize_t himax_debug_level_write(char *buf, size_t len)
 		if (i != len - 1)
 			ts->debug_log_level <<= 4;
 	}
-	I("Now debug level value=%d\n", ts->debug_log_level);
+	D("%s: Now debug level value=%d\n", 
+		__func__, ts->debug_log_level);
 
 	if (ts->debug_log_level & BIT(4)) {
-		I("Turn on/Enable Debug Mode for Inspection!\n");
+		D("%s: Turn on/Enable Debug Mode for Inspection!\n", __func__);
 		goto END_FUNC;
 	}
 
@@ -467,7 +468,7 @@ static ssize_t himax_debug_level_write(char *buf, size_t len)
 				ts->useScreenRes = 0;
 			}
 		} else {
-			I("Enable finger debug with raw position mode!\n");
+			D("%s: Enable finger debug with raw position mode!\n", __func__);
 		}
 	} else {
 		ts->useScreenRes = 0;
@@ -525,7 +526,7 @@ static ssize_t himax_proc_register_write(char *buf, size_t len)
 	uint8_t count = 0;
 
 	if (len >= 80) {
-		I("%s: no command exceeds 80 chars.\n", __func__);
+		D("%s: no command exceeds 80 chars.\n", __func__);
 		return -EFAULT;
 	}
 
@@ -538,7 +539,7 @@ static ssize_t himax_proc_register_write(char *buf, size_t len)
 	&& buf[2] == 'x') {
 		length = strlen(buf);
 
-		/* I("%s: length = %d.\n", __func__,length); */
+		/* D("%s: length = %d.\n", __func__,length); */
 		for (loop_i = 0; loop_i < length; loop_i++) {
 			/* find postion of 'x' */
 			if (buf[loop_i] == 'x') {
@@ -548,7 +549,7 @@ static ssize_t himax_proc_register_write(char *buf, size_t len)
 		}
 
 		data_str = strrchr(buf, 'x');
-		I("%s: %s.\n", __func__, data_str);
+		D("%s: %s.\n", __func__, data_str);
 		length = strlen(data_str + 1);
 
 		switch (buf[0]) {
@@ -618,7 +619,7 @@ static ssize_t himax_proc_register_write(char *buf, size_t len)
 					buf + x_pos[loop_i] + 1,
 					byte_length);
 
-				/* I("%s: buff_tmp = %s\n",*/
+				/* D("%s: buff_tmp = %s\n",*/
 				/*	__func__, buff_tmp);*/
 				if (!kstrtoul(buff_tmp, 16, &result)) {
 					if (loop_i == 0)
@@ -632,7 +633,7 @@ static ssize_t himax_proc_register_write(char *buf, size_t len)
 					else
 						w_data[loop_i - 1] =
 						(uint8_t)(result);
-						/* I("%s: w_data[%d] =
+						/* D("%s: w_data[%d] =
 						 * %2X\n", __func__,
 						 * loop_i - 1,
 						 * w_data[loop_i - 1]);
@@ -1005,7 +1006,7 @@ static ssize_t himax_diag_cmd_write(char *buf, size_t len)
 	case 1:/*raw out select - diag,X*/
 		if (!kstrtoint(buf, 16, &rst)) {
 			ts->diag_cmd = rst;
-			I("%s: dsram_flag = %d\n", __func__, dsram_flag);
+			D("%s: dsram_flag = %d\n", __func__, dsram_flag);
 			if (dsram_flag) {
 				/*Cancal work queue and return to stack*/
 				process_type = 0;
@@ -1015,7 +1016,7 @@ static ssize_t himax_diag_cmd_write(char *buf, size_t len)
 				g_core_fp.fp_return_event_stack();
 			}
 			g_core_fp.fp_diag_register_set(ts->diag_cmd, 0, false);
-			I("%s: Set raw out select 0x%X.\n",
+			D("%s: Set raw out select 0x%X.\n",
 					__func__, ts->diag_cmd);
 		}
 		if (!ts->diag_cmd) {
@@ -1041,7 +1042,7 @@ static ssize_t himax_diag_cmd_write(char *buf, size_t len)
 				&ts->himax_diag_delay_wrok, 2 * HZ / 100);
 				dsram_flag = true;
 
-				I("%s: Start get raw data in DSRAM\n",
+				D("%s: Start get raw data in DSRAM\n",
 					__func__);
 			} else {
 				g_core_fp.fp_diag_register_set(ts->diag_cmd,
@@ -1071,7 +1072,7 @@ static ssize_t himax_diag_cmd_write(char *buf, size_t len)
 				&ts->himax_diag_delay_wrok, 2 * HZ / 100);
 				dsram_flag = true;
 
-				I("%s: Start get raw data in DSRAM\n",
+				D("%s: Start get raw data in DSRAM\n",
 					__func__);
 			} else {
 				g_core_fp.fp_diag_register_set(ts->diag_cmd,
@@ -1095,12 +1096,12 @@ static ssize_t himax_diag_cmd_write(char *buf, size_t len)
 					str_pw, end_pw);
 			}
 		} else {
-			I("%s: Can't find string [%s].\n",
+			D("%s: Can't find string [%s].\n",
 					__func__, dbg_map_str);
 		}
 		break;
 	default:
-		I("%s: Length is not correct.\n", __func__);
+		D("%s: Length is not correct.\n", __func__);
 	}
 	return len;
 }
@@ -1108,12 +1109,12 @@ static ssize_t himax_diag_cmd_write(char *buf, size_t len)
 static ssize_t himax_diag_arrange_write(char *buf, size_t len)
 {
 	if (len >= 80) {
-		I("%s: no command exceeds 80 chars.\n", __func__);
+		D("%s: no command exceeds 80 chars.\n", __func__);
 		return -EFAULT;
 	}
 
 	g_diag_arr_num = buf[0] - '0';
-	I("%s: g_diag_arr_num = %d\n", __func__, g_diag_arr_num);
+	D("%s: g_diag_arr_num = %d\n", __func__, g_diag_arr_num);
 	return len;
 }
 
@@ -1363,7 +1364,7 @@ bool himax_ts_diag_func(void)
 
 	memset(info_data, 0, total_size * sizeof(uint8_t));
 
-	I("%s: process type=%d!\n", __func__, process_type);
+	D("%s: process type=%d!\n", __func__, process_type);
 
 	g_core_fp.fp_burst_enable(1);
 
@@ -1628,7 +1629,7 @@ static const struct file_operations himax_proc_baseline_ops = {
 static ssize_t himax_reset_write(char *buf, size_t len)
 {
 	if (len >= 12) {
-		I("%s: no command exceeds 12 chars.\n", __func__);
+		D("%s: no command exceeds 12 chars.\n", __func__);
 		return -EFAULT;
 	}
 
@@ -1749,7 +1750,7 @@ static ssize_t himax_proc_DD_debug_write(char *buf, size_t len)
 	char buf_tmp2[4];
 
 	if (len >= 20) {
-		I("%s: no command exceeds 20 chars.\n", __func__);
+		D("%s: no command exceeds 20 chars.\n", __func__);
 		return -EFAULT;
 	}
 
@@ -1836,14 +1837,14 @@ static ssize_t himax_proc_flash_write(struct file *filp,
 	char buf[80] = {0};
 
 	if (len >= 80) {
-		I("%s: no command exceeds 80 chars.\n", __func__);
+		D("%s: no command exceeds 80 chars.\n", __func__);
 		return -EFAULT;
 	}
 
 	if (copy_from_user(buf, buff, len))
 		return -EFAULT;
 
-	I("%s: buf = %s\n", __func__, buf);
+	D("%s: buf = %s\n", __func__, buf);
 
 	if (g_flash_progress == ONGOING) {
 		E("%s: process is busy , return!\n", __func__);
@@ -1932,7 +1933,7 @@ void himax_ts_flash_func(void)
 	flash_dump_prog_set(ONGOING);
 
 	/*msleep(100);*/
-	I("%s: flash_command = %d enter.\n", __func__, flash_command);
+	D("%s: flash_command = %d enter.\n", __func__, flash_command);
 
 	if (flash_command == 1 || flash_command == 2) {
 		g_core_fp.fp_flash_dump_func(flash_command, Flash_Size,
@@ -1967,7 +1968,7 @@ void himax_ts_flash_func(void)
 static ssize_t himax_sense_on_off_write(char *buf, size_t len)
 {
 	if (len >= 80) {
-		I("%s: no command exceeds 80 chars.\n", __func__);
+		D("%s: no command exceeds 80 chars.\n", __func__);
 		return -EFAULT;
 	}
 
@@ -1994,7 +1995,7 @@ static ssize_t himax_esd_cnt_read(char *buf, size_t len)
 {
 	size_t ret = 0;
 
-	I("%s: enter, %d\n", __func__, __LINE__);
+	D("%s: enter, %d\n", __func__, __LINE__);
 
 		ret += snprintf(buf_tmp + ret, len - ret,
 			"EB_cnt = %d, EC_cnt = %d, ED_cnt = %d\n",
@@ -2010,7 +2011,7 @@ static ssize_t himax_esd_cnt_write(char *buf, size_t len)
 	int i = 0;
 
 	if (len >= 12) {
-		I("%s: no command exceeds 80 chars.\n", __func__);
+		D("%s: no command exceeds 80 chars.\n", __func__);
 		return -EFAULT;
 	}
 
@@ -2121,11 +2122,11 @@ END_FUNCTION:
 static ssize_t himax_proc_guest_info_write(char *buf, size_t len)
 {
 	if (len >= 80) {
-		I("%s: no command exceeds 80 chars.\n", __func__);
+		D("%s: no command exceeds 80 chars.\n", __func__);
 		return -EFAULT;
 	}
 
-	I("%s: buf = %s\n", __func__, buf);
+	D("%s: buf = %s\n", __func__, buf);
 	if (buf[0] == 'r') {
 		I("%s,Test to get", __func__);
 		queue_work(private_ts->guest_info_wq,
@@ -2388,14 +2389,12 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 	int fw_type = 0;
 	const struct firmware *fw = NULL;
 #endif
-
 	char *str_ptr = NULL;
 	int str_len = 0;
 	int i = 0;
 
-
 	if (len >= 80) {
-		I("%s: no command exceeds 80 chars.\n", __func__);
+		E("%s: Command exceeds 80 bytes.\n", __func__);
 		return -EFAULT;
 	}
 
@@ -2404,34 +2403,36 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 
 	buf[strlen(buf) - 1] = 0;/*remove \n*/
 
+	/* iterate knwon debug command and find in buf */
 	while (dbg_cmd_str[i]) {
 		str_ptr = strnstr(buf, dbg_cmd_str[i], len);
-		if (str_ptr) {
+		if (str_ptr) { /* found */
 			str_len = strlen(dbg_cmd_str[i]);
 			dbg_cmd_flag = i + 1;
 			debug_level_cmd = 0;
-			I("Cmd is correct :%s, dbg_cmd = %d\n",
-					str_ptr, dbg_cmd_flag);
+			D("%s: Cmd is correct: %s, dbg_cmd = %d\n",
+					__func__, str_ptr, dbg_cmd_flag);
 			break;
 		}
 		i++;
 	}
 	if (!str_ptr) {
-		I("Cmd is not correct\n");
+		E("%s: Cmd is not correct\n", __func__);
 		dbg_cmd_flag = 0;
 	}
 
 	if (buf[str_len] == ',') {
 		dbg_cmd_par = buf + str_len + 1;
+		/* write handler assigned to command ? */
 		if (dbg_func_ptr_w[dbg_cmd_flag])
-			/* 2 => '/n' + ','*/
+			/* 2 => '/n' + ',' to be removed */
 			dbg_func_ptr_w[dbg_cmd_flag](dbg_cmd_par,
 					len - str_len - 2);
 
-		I("string of paremeter is %s, dbg_cmd_par = %s\n",
-				buf + str_len + 1, dbg_cmd_par);
+		D("%s: string of paremeter is %s, dbg_cmd_par = %s\n",
+				__func__, buf + str_len + 1, dbg_cmd_par);
 	} else {
-		I("No paremeter of this cmd\n");
+		E("%s: No paremeter of this cmd\n", __func__);
 	}
 
 	if (dbg_cmd_flag)
@@ -2472,13 +2473,13 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 		&& buf[3] == 'b'
 		&& buf[4] == 'g') {
 			if (buf[5] == '1') {
-				I("Open Ts Debug!\n");
+				D("%s: Open Ts Debug!\n", __func__);
 				g_ts_dbg = 1;
 			} else if (buf[5] == '0') {
-				I("Close Ts Debug!\n");
+				D("%s: Close Ts Debug!\n", __func__);
 				g_ts_dbg = 0;
 			} else {
-				E("Parameter fault for ts debug\n");
+				E("%s: Parameter fault for ts debug\n", __func__);
 			}
 			goto ENDFUCTION;
 		}
@@ -2492,7 +2493,7 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 
 #if defined(HX_ZERO_FLASH)
 		I("NOW Running Zero flash update!\n");
-		I("%s: upgrade from file(%s) start!\n", __func__, fileName);
+		D("%s: upgrade from file(%s) start!\n", __func__, fileName);
 		result = g_core_fp.fp_0f_op_file_dirly(fileName);
 		if (result) {
 			fw_update_complete = false;
@@ -2504,13 +2505,13 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 		}
 		goto firmware_upgrade_done;
 #else
-		I("NOW Running common flow update!\n");
-		I("%s: upgrade from file(%s) start!\n", __func__, fileName);
+		D("%s: NOW Running common flow update!\n", __func__);
+		D("%s: upgrade from file(%s) start!\n", __func__, fileName);
 		result = request_firmware(&fw, fileName, private_ts->dev);
 
 		if (result < 0) {
-			I("fail to request_firmware fwpath: %s (ret:%d)\n",
-					fileName, result);
+			E("%s: fail to request_firmware fwpath: %s (ret:%d)\n",
+					__func__, fileName, result);
 			return result;
 		}
 
@@ -2518,9 +2519,11 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 				fw->data[0], fw->data[1],
 				fw->data[2], fw->data[3]);
 		fw_type = (fw->size) / 1024;
+
+		D("%s: Now FW size is : %dk\n", __func__, fw_type);
+
 		/*	start to upgrade */
 		himax_int_enable(0);
-		I("Now FW size is : %dk\n", fw_type);
 
 		switch (fw_type) {
 		case 32:
@@ -2530,7 +2533,7 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 						__func__, __LINE__);
 				fw_update_complete = false;
 			} else {
-				I("%s: TP upgrade OK, line: %d\n",
+				D("%s: TP upgrade OK, line: %d\n",
 						__func__, __LINE__);
 				fw_update_complete = true;
 			}
@@ -2543,7 +2546,7 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 						__func__, __LINE__);
 				fw_update_complete = false;
 			} else {
-				I("%s: TP upgrade OK, line: %d\n",
+				D("%s: TP upgrade OK, line: %d\n",
 						__func__, __LINE__);
 				fw_update_complete = true;
 			}
@@ -2556,7 +2559,7 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 						__func__, __LINE__);
 				fw_update_complete = false;
 			} else {
-				I("%s: TP upgrade OK, line: %d\n",
+				D("%s: TP upgrade OK, line: %d\n",
 						__func__, __LINE__);
 				fw_update_complete = true;
 			}
@@ -2569,7 +2572,7 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 						__func__, __LINE__);
 				fw_update_complete = false;
 			} else {
-				I("%s: TP upgrade OK, line: %d\n",
+				D("%s: TP upgrade OK, line: %d\n",
 						__func__, __LINE__);
 				fw_update_complete = true;
 			}
@@ -2582,7 +2585,7 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 						__func__, __LINE__);
 				fw_update_complete = false;
 			} else {
-				I("%s: TP upgrade OK, line: %d\n",
+				D("%s: TP upgrade OK, line: %d\n",
 						__func__, __LINE__);
 				fw_update_complete = true;
 			}

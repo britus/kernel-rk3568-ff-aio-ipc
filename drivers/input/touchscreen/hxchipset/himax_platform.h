@@ -30,21 +30,20 @@
 #define HIMAX_I2C_RETRY_TIMES 3
 
 #if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
-#define D(x...) pr_debug("[HXTP] " x)
-#define I(x...) pr_info("[HXTP] " x)
-#define W(x...) pr_warn("[HXTP][WARNING] " x)
-#define E(x...) pr_err("[HXTP][ERROR] " x)
+#define D(x...) pr_debug("[himax] " x)
+#define I(x...) pr_info("[himax] " x)
+#define W(x...) pr_warn("[himax] " x)
+#define E(x...) pr_err("[himax] " x)
 #define DIF(x...) \
 do { \
 	if (debug_flag) \
-		pr_debug("[HXTP][DEBUG] " x) \
+		pr_debug("[himax] " x) \
 	} while (0)
 #else
-
 #define D(x...)
-#define I(x...)
-#define W(x...)
-#define E(x...)
+#define I(x...) pr_info("[himax] " x)
+#define W(x...) pr_warn("[himax] " x)
+#define E(x...) pr_err("[himax] " x)
 #define DIF(x...)
 #endif
 
@@ -67,8 +66,8 @@ do { \
 
 #endif
 
-#define HIMAX_common_NAME			"himax_tp"
 #define HIMAX_I2C_ADDR				0x48
+#define HIMAX_common_NAME			"himax_tp"
 #define INPUT_DEV_NAME				"himax-touchscreen"
 
 struct himax_i2c_platform_data {
