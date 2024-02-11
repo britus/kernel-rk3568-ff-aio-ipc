@@ -158,7 +158,7 @@ static ssize_t himax_pen_ops_read(struct file *file, char *buf,
 		}
 
 		if (copy_to_user(buf, buf_tmp, (len > BUF_SIZE)?BUF_SIZE:len))
-			I("%s,here:%d\n", __func__, __LINE__);
+			D("%s: here:%d\n", __func__, __LINE__);
 
 		HX_PROC_SEND_FLAG = 1;
 	} else {
@@ -258,7 +258,7 @@ static ssize_t himax_vendor_read(struct file *file, char *buf,
 		HX_PROC_SEND_FLAG = 1;
 
 		if (copy_to_user(buf, buf_tmp, (len > BUF_SIZE)?BUF_SIZE:len))
-			I("%s,here:%d\n", __func__, __LINE__);
+			D("%s: here:%d\n", __func__, __LINE__);
 
 	} else {
 		HX_PROC_SEND_FLAG = 0;
@@ -296,6 +296,16 @@ static ssize_t himax_int_en_read(char *buf, size_t len)
 	return ret;
 }
 
+/* himax_platform.c */
+extern int himax_int_register_trigger(void);
+
+static int himax_int_en_set(void)
+{
+	dump_stack();
+	
+	return himax_int_register_trigger();
+}
+
 static ssize_t himax_int_en_write(char *buf, size_t len)
 {
 	struct himax_ts_data *ts = private_ts;
@@ -316,7 +326,6 @@ static ssize_t himax_int_en_write(char *buf, size_t len)
 		ts->irq_enabled = 0;
 	} else if (buf[0] == '3') {
 		ret = himax_int_en_set();
-
 		if (ret == 0) {
 			ts->irq_enabled = 1;
 			atomic_set(&ts->irq_state, 1);
@@ -354,7 +363,8 @@ static ssize_t himax_layout_write(char *buf, size_t len)
 	int layout[4] = {0};
 
 	if (len >= 80) {
-		D("%s: no command exceeds 80 chars.\n", __func__);
+		D("%s: no command exceeds 80 chars.\n", 
+			__func__);
 		return -EFAULT;
 	}
 
@@ -365,7 +375,8 @@ static ssize_t himax_layout_write(char *buf, size_t len)
 			if (i - j <= 5) {
 				memcpy(buf_tmp, buf + j, i - j);
 			} else {
-				I("buffer size is over 5 char\n");
+				D("%s: buffer size is over 5 char\n",
+					__func__);
 				return len;
 			}
 
@@ -383,15 +394,15 @@ static ssize_t himax_layout_write(char *buf, size_t len)
 		ts->pdata->abs_x_max = (layout[1] - 1);
 		ts->pdata->abs_y_min = layout[2];
 		ts->pdata->abs_y_max = (layout[3] - 1);
-		I("%d, %d, %d, %d\n",
-		ts->pdata->abs_x_min, ts->pdata->abs_x_max,
-		ts->pdata->abs_y_min, ts->pdata->abs_y_max);
+		D("%s: %d, %d, %d, %d\n", __func__,
+			ts->pdata->abs_x_min, ts->pdata->abs_x_max,
+			ts->pdata->abs_y_min, ts->pdata->abs_y_max);
 		input_unregister_device(ts->input_dev);
 		himax_input_register(ts);
 	} else {
-		I("ERR@%d, %d, %d, %d\n",
-		ts->pdata->abs_x_min, ts->pdata->abs_x_max,
-		ts->pdata->abs_y_min, ts->pdata->abs_y_max);
+		D("%s: ERR@%d, %d, %d, %d\n", __func__,
+			ts->pdata->abs_x_min, ts->pdata->abs_x_max,
+			ts->pdata->abs_y_min, ts->pdata->abs_y_max);
 	}
 
 	return len;
@@ -407,8 +418,8 @@ static ssize_t himax_debug_level_read(char *buf, size_t len)
 	ret += snprintf(buf_tmp + ret, sizeof(buf_tmp) - ret, "%d\n",
 			ts_data->debug_log_level);
 
-	if (copy_to_user(buf, buf_tmp, (len > BUF_SIZE)?BUF_SIZE:len))
-		I("%s,here:%d\n", __func__, __LINE__);
+	if (copy_to_user(buf, buf_tmp, (len > BUF_SIZE) ? BUF_SIZE : len))
+		D("%s(%d): copy_to_user failed:\n", __func__, __LINE__);
 
 	return ret;
 }
@@ -486,9 +497,10 @@ static ssize_t himax_proc_register_read(char *buf, size_t len)
 
 	memset(reg_read_data, 0x00, 128 * sizeof(uint8_t));
 
-	I("himax_register_show: %02X,%02X,%02X,%02X\n",
-			reg_cmd[3], reg_cmd[2],
-			reg_cmd[1], reg_cmd[0]);
+	D("%s: himax_register_show: %02X,%02X,%02X,%02X\n",
+		__func__,
+		reg_cmd[3], reg_cmd[2],
+		reg_cmd[1], reg_cmd[0]);
 	g_core_fp.fp_register_read(reg_cmd, 128,
 			reg_read_data, cfg_flag);
 
@@ -532,7 +544,7 @@ static ssize_t himax_proc_register_write(char *buf, size_t len)
 
 	memset(reg_cmd, 0x0, sizeof(reg_cmd));
 
-	I("himax %s\n", buf);
+	D("%s: himax %s\n", __func__, buf);
 
 	if ((buf[0] == 'r' || buf[0] == 'w')
 	&& buf[1] == ':'
@@ -623,21 +635,9 @@ static ssize_t himax_proc_register_write(char *buf, size_t len)
 				/*	__func__, buff_tmp);*/
 				if (!kstrtoul(buff_tmp, 16, &result)) {
 					if (loop_i == 0)
-						reg_cmd[loop_i] =
-						(uint8_t)(result);
-						/* I("%s:
-						 * reg_cmd
-						 * = %X\n", __func__,
-						 * reg_cmd[0]);
-						 */
+						reg_cmd[loop_i] = (uint8_t)(result);
 					else
-						w_data[loop_i - 1] =
-						(uint8_t)(result);
-						/* D("%s: w_data[%d] =
-						 * %2X\n", __func__,
-						 * loop_i - 1,
-						 * w_data[loop_i - 1]);
-						 */
+						w_data[loop_i - 1] = (uint8_t)(result);
 				}
 			}
 
@@ -812,35 +812,32 @@ void himax_log_touch_data(int start)
 
 		memcpy(buf, hx_touch_data->hx_coord_buf, print_size);
 	} else {
-		E("%s:cmd fault\n", __func__);
+		E("%s: cmd fault\n", __func__);
 		return;
 	}
 
 	for (loop_i = 0; loop_i < print_size; loop_i += 8) {
 		if ((loop_i + 7) >= print_size) {
-			I("P %2d = 0x%2.2X P %2d = 0x%2.2X ",
-				loop_i,
-				buf[loop_i],
-				loop_i + 1,
-				buf[loop_i + 1]);
-			I("P %2d = 0x%2.2X P %2d = 0x%2.2X\n",
-				loop_i + 2,
-				buf[loop_i + 2],
-				loop_i + 3,
-				buf[loop_i + 3]);
+			D("P %2d = 0x%2.2X P %2d = 0x%2.2X ",
+				loop_i,  buf[loop_i],
+				loop_i + 1, buf[loop_i + 1]);
+			D("P %2d = 0x%2.2X P %2d = 0x%2.2X\n",
+				loop_i + 2, buf[loop_i + 2],
+				loop_i + 3, buf[loop_i + 3]);
+			D("\n");
 			break;
 		}
-
-		I("P %2d = 0x%2.2X P %2d = 0x%2.2X ",
+		D("P %2d = 0x%2.2X P %2d = 0x%2.2X ",
 		  loop_i, buf[loop_i], loop_i + 1, buf[loop_i + 1]);
-		I("P %2d = 0x%2.2X P %2d = 0x%2.2X ",
+		D("P %2d = 0x%2.2X P %2d = 0x%2.2X ",
 		  loop_i + 2, buf[loop_i + 2], loop_i + 3, buf[loop_i + 3]);
-		I("P %2d = 0x%2.2X P %2d = 0x%2.2X ",
+		D("P %2d = 0x%2.2X P %2d = 0x%2.2X ",
 		  loop_i + 4, buf[loop_i + 4], loop_i + 5, buf[loop_i + 5]);
-		I("P %2d = 0x%2.2X P %2d = 0x%2.2X ",
+		D("P %2d = 0x%2.2X P %2d = 0x%2.2X ",
 		  loop_i + 6, buf[loop_i + 6], loop_i + 7, buf[loop_i + 7]);
-		I("\n");
+		D("\n");
 	}
+
 	kfree(buf);
 }
 
@@ -873,33 +870,29 @@ void himax_log_touch_event(struct himax_ts_data *ts, int start)
 		}
 	} else if (g_target_report_data->finger_on == 0
 	&& g_target_report_data->finger_num == 0) {
-		I("All Finger leave\n");
+		D("%s: All Finger leave\n", __func__);
 	} else {
-		I("%s : wrong input!\n", __func__);
+		D("%s: wrong input!\n", __func__);
 	}
 }
 void himax_log_touch_int_devation(int touched)
 {
 	if (touched == HX_FINGER_ON) {
 		getnstimeofday(&timeStart);
-		/* I(" Irq start time = %ld.%06ld s\n",
-		 * timeStart.tv_sec, timeStart.tv_nsec/1000);
-		 */
 	} else if (touched == HX_FINGER_LEAVE) {
 		getnstimeofday(&timeEnd);
 		timeDelta.tv_nsec =
 		  (timeEnd.tv_sec * 1000000000 + timeEnd.tv_nsec) -
 		  (timeStart.tv_sec * 1000000000 + timeStart.tv_nsec);
-		/*  I("Irq finish time = %ld.%06ld s\n",
-		 *	timeEnd.tv_sec, timeEnd.tv_nsec/1000);
-		 */
-		I("Touch latency = %ld us\n", timeDelta.tv_nsec / 1000);
-		I("bus_speed = %d kHz\n", private_ts->bus_speed);
+		D("%s: Touch latency = %ld us\n", __func__,
+			timeDelta.tv_nsec / 1000);
+		D("%s: bus_speed = %d kHz\n", __func__,
+			private_ts->bus_speed);
 		if (g_target_report_data->finger_on == 0
 		&& g_target_report_data->finger_num == 0)
-			I("All Finger leave\n");
+			D("%s: All Finger leave\n", __func__);
 	} else {
-		I("%s : wrong input!\n", __func__);
+		D("%s: wrong input!\n", __func__);
 	}
 }
 
@@ -930,12 +923,6 @@ void himax_log_touch_event_detail(struct himax_ts_data *ts, int start)
 				I(RAW_UP_STATUS, loop_i + 1,
 					ts->pre_finger_data[loop_i][0],
 					ts->pre_finger_data[loop_i][1]);
-			} else {
-				/* I("dbg hx_point_num=%d, old_finger=0x%02X,"
-				 * " pre_finger_mask=0x%02X\n",
-				 * ts->hx_point_num, ts->old_finger,
-				 * ts->pre_finger_mask);
-				 */
 			}
 		}
 	}
@@ -944,19 +931,15 @@ void himax_log_touch_event_detail(struct himax_ts_data *ts, int start)
 void himax_ts_dbg_func(struct himax_ts_data *ts, int start)
 {
 	if (ts->debug_log_level & BIT(0)) {
-		/* I("debug level 1\n"); */
 		himax_log_touch_data(start);
 	}
 	if (ts->debug_log_level & BIT(1)) {
-		/* I("debug level 2\n"); */
 		himax_log_touch_event(ts, start);
 	}
 	if (ts->debug_log_level & BIT(2)) {
-		/* I("debug level 4\n"); */
 		himax_log_touch_int_devation(start);
 	}
 	if (ts->debug_log_level & BIT(3)) {
-		/* I("debug level 8\n"); */
 		himax_log_touch_event_detail(ts, start);
 	}
 }
@@ -968,6 +951,7 @@ static int himax_change_mode(uint8_t str_pw, uint8_t end_pw)
 
 	/*sense off*/
 	g_core_fp.fp_sense_off(true);
+
 	/*mode change*/
 	data[1] = str_pw; data[0] = str_pw;
 	if (g_core_fp.fp_assign_sorting_mode != NULL)
@@ -975,6 +959,7 @@ static int himax_change_mode(uint8_t str_pw, uint8_t end_pw)
 
 	/*sense on*/
 	g_core_fp.fp_sense_on(1);
+
 	/*wait mode change*/
 	do {
 		if (g_core_fp.fp_check_sorting_mode != NULL)
@@ -982,7 +967,8 @@ static int himax_change_mode(uint8_t str_pw, uint8_t end_pw)
 		if ((data[0] == end_pw) && (data[1] == end_pw))
 			return 0;
 
-		I("Now retry %d times!\n", count);
+		D("%s: Now retry %d times!\n", 
+			__func__, count);
 		count++;
 		msleep(50);
 	} while (count < 50);
@@ -1052,11 +1038,11 @@ static ssize_t himax_diag_cmd_write(char *buf, size_t len)
 		break;
 	case 4:/*data processing + rawout select - diag,XXYY*/
 		/*ex:XXYY=010A=dsram rawdata*/
-		I("%s, now case 4\n", __func__);
+		D("%s:  now case 4\n", __func__);
 		if (!kstrtoint(buf, 16, &rst)) {
 			process_type = (rst >> 8) & 0xFF;
 			ts->diag_cmd = rst & 0xFF;
-			I("%s:process_type=0x%02X, diag_cmd=0x%02X\n",
+			D("%s: process_type=0x%02X, diag_cmd=0x%02X\n",
 			__func__, process_type, ts->diag_cmd);
 		}
 		if (process_type <= 0 || ts->diag_cmd <= 0)
@@ -1770,8 +1756,8 @@ static ssize_t himax_proc_DD_debug_write(char *buf, size_t len)
 			cnt--;
 		}
 
-		I("cmd_set[2] = %02X, cmd_set[1] = %02X, cmd_set[0] = %02X\n",
-			cmd_set[2], cmd_set[1], cmd_set[0]);
+		D("%s: cmd_set[2] = %02X, cmd_set[1] = %02X, cmd_set[0] = %02X\n",
+			__func__, cmd_set[2], cmd_set[1], cmd_set[0]);
 	} else {
 		mutual_set_flag = 0;
 	}
@@ -2128,7 +2114,7 @@ static ssize_t himax_proc_guest_info_write(char *buf, size_t len)
 
 	D("%s: buf = %s\n", __func__, buf);
 	if (buf[0] == 'r') {
-		I("%s,Test to get", __func__);
+		D("%s: Test to get", __func__);
 		queue_work(private_ts->guest_info_wq,
 				&private_ts->guest_info_work);
 	}
@@ -2144,7 +2130,7 @@ static ssize_t himax_debug_read(struct file *file, char *buf,
 	int i = 0;
 
 	if (!HX_PROC_SEND_FLAG) {
-		I("%s, Enter\n", __func__);
+		D("%s:  Enter\n", __func__);
 
 		memset(buf_tmp, 0, sizeof(buf_tmp));
 		if (dbg_cmd_flag) {
@@ -2369,7 +2355,7 @@ static ssize_t himax_debug_read(struct file *file, char *buf,
 
 END_FUNC_R:
 		if (copy_to_user(buf, buf_tmp, (len > BUF_SIZE)?BUF_SIZE:len))
-			I("%s,here:%d\n", __func__, __LINE__);
+			D("%s: here:%d\n", __func__, __LINE__);
 
 		HX_PROC_SEND_FLAG = 1;
 	} else {
@@ -2515,7 +2501,7 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 			return result;
 		}
 
-		I("%s: FW image: %02X, %02X, %02X, %02X\n", __func__,
+		D("%s: FW image: %02X, %02X, %02X, %02X\n", __func__,
 				fw->data[0], fw->data[1],
 				fw->data[2], fw->data[3]);
 		fw_type = (fw->size) / 1024;
@@ -2840,7 +2826,7 @@ int himax_debug_init(void)
 {
 	struct himax_ts_data *ts = private_ts;
 
-	I("%s:Enter\n", __func__);
+	D("%s: Enter\n", __func__);
 
 	if (ts == NULL) {
 		E("%s: ts struct is NULL\n", __func__);

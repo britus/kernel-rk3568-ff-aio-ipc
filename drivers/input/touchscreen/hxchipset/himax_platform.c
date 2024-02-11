@@ -102,11 +102,14 @@ void himax_vk_parser(struct device_node *dt,
 
 		pdata->virtual_key = vk;
 
+#if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
 		for (i = 0; i < cnt; i++)
-			I(" vk[%d] idx:%d x_min:%d, y_max:%d\n", i,
+			D("%s: vk[%d] idx:%d x_min:%d, y_max:%d\n", 
+					__func__, i,
 					pdata->virtual_key[i].index,
 					pdata->virtual_key[i].x_range_min,
 					pdata->virtual_key[i].y_range_max);
+#endif
 	}
 }
 
@@ -376,7 +379,7 @@ static int himax_regulator_configure(struct himax_i2c_platform_data *pdata)
 
 static void himax_regulator_deinit(struct himax_i2c_platform_data *pdata)
 {
-	I("%s: entered.\n", __func__);
+	D("%s: entered.\n", __func__);
 
 	if (!IS_ERR(pdata->vcc_ana))
 		regulator_put(pdata->vcc_ana);
@@ -384,7 +387,7 @@ static void himax_regulator_deinit(struct himax_i2c_platform_data *pdata)
 	if (!IS_ERR(pdata->vcc_dig))
 		regulator_put(pdata->vcc_dig);
 
-	I("%s: regulator put, completed.\n", __func__);
+	D("%s: regulator put, completed.\n", __func__);
 };
 
 static int himax_power_on(struct himax_i2c_platform_data *pdata, bool on)
@@ -423,11 +426,10 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 	int error;
 	struct i2c_client *client = private_ts->client;
 
-
 	error = himax_regulator_configure(pdata);
-
 	if (error) {
-		E("Failed to intialize hardware\n");
+		E("%s: Failed to intialize hardware\n",
+			__func__);
 		goto err_regulator_not_on;
 	}
 
@@ -436,51 +438,48 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 	if (gpio_is_valid(pdata->gpio_reset)) {
 		/* configure touchscreen reset out gpio */
 		error = gpio_request(pdata->gpio_reset, "hmx_reset_gpio");
-
 		if (error) {
-			E("unable to request gpio [%d]\n", pdata->gpio_reset);
+			E("%s: unable to request gpio [%d]\n", 
+				__func__, pdata->gpio_reset);
 			goto err_regulator_on;
 		}
 
 		error = gpio_direction_output(pdata->gpio_reset, 0);
 
 		if (error) {
-			E("unable to set direction for gpio [%d]\n",
-			  pdata->gpio_reset);
+			E("%s: unable to set direction for gpio [%d]\n",
+			  __func__, pdata->gpio_reset);
 			goto err_gpio_reset_req;
 		}
 	}
 
 #endif
 	error = himax_power_on(pdata, true);
-
 	if (error) {
-		E("Failed to power on hardware\n");
+		E("%s: Failed to power on hardware\n", __func__);
 		goto err_power_on;
 	}
 
 	if (gpio_is_valid(pdata->gpio_irq)) {
 		/* configure touchscreen irq gpio */
 		error = gpio_request(pdata->gpio_irq, "hmx_gpio_irq");
-
 		if (error) {
-			E("unable to request gpio [%d]\n",
-			  pdata->gpio_irq);
+			E("%s: unable to request gpio [%d]\n",
+			  __func__, pdata->gpio_irq);
 			goto err_req_irq_gpio;
 		}
 
 		error = gpio_direction_input(pdata->gpio_irq);
-
 		if (error) {
-			E("unable to set direction for gpio [%d]\n",
-			  pdata->gpio_irq);
+			E("%s: unable to set direction for gpio [%d]\n",
+			  __func__, pdata->gpio_irq);
 			goto err_set_gpio_irq;
 		}
 
 		client->irq = gpio_to_irq(pdata->gpio_irq);
 		private_ts->hx_irq = client->irq;
 	} else {
-		E("irq gpio not provided\n");
+		E("%s: irq gpio not provided\n", __func__);
 		goto err_req_irq_gpio;
 	}
 
@@ -490,7 +489,6 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 
 	if (gpio_is_valid(pdata->gpio_reset)) {
 		error = gpio_direction_output(pdata->gpio_reset, 1);
-
 		if (error) {
 			E("unable to set direction for gpio [%d]\n",
 			  pdata->gpio_reset);
@@ -529,17 +527,14 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 
 	if (pdata->gpio_reset >= 0) {
 		error = gpio_request(pdata->gpio_reset, "himax-reset");
-
 		if (error < 0) {
 			E("%s: request reset pin failed\n", __func__);
 			goto err_gpio_reset_req;
 		}
-
 		error = gpio_direction_output(pdata->gpio_reset, 0);
-
 		if (error) {
-			E("unable to set direction for gpio [%d]\n",
-			  pdata->gpio_reset);
+			E("%s: unable to set direction for gpio [%d]\n",
+			  __func__, pdata->gpio_reset);
 			goto err_gpio_reset_dir;
 		}
 	}
@@ -549,21 +544,19 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 #if defined(HX_PON_PIN_SUPPORT)
 	if (gpio_is_valid(pdata->gpio_pon)) {
 		error = gpio_request(pdata->gpio_pon, "hmx_pon_gpio");
-
 		if (error) {
-			E("unable to request scl gpio [%d]\n", pdata->gpio_pon);
+			E("%s: unable to request scl gpio [%d]\n",
+				__func__, pdata->gpio_pon);
 			goto err_gpio_pon_req;
 		}
 
 		error = gpio_direction_output(pdata->gpio_pon, 0);
-
-		I("gpio_pon LOW [%d]\n", pdata->gpio_pon);
-
 		if (error) {
-			E("unable to set direction for pon gpio [%d]\n",
-				pdata->gpio_pon);
+			E("%s: unable to set direction for pon gpio [%d]\n",
+				__func__, pdata->gpio_pon);
 			goto err_gpio_pon_dir;
 		}
+		D("%s: gpio_pon LOW [%d]\n", __func__, pdata->gpio_pon);
 	}
 #endif
 
@@ -576,8 +569,8 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 			goto err_gpio_3v3_req;
 		}
 		gpio_direction_output(pdata->gpio_3v3_en, 1);
-		I("himax-3v3_en set 1 get pin = %d\n",
-			gpio_get_value(pdata->gpio_3v3_en));
+		D("%s: himax-3v3_en set 1 get pin = %d\n",
+			__func__, gpio_get_value(pdata->gpio_3v3_en));
 	}
 
 	if (gpio_is_valid(pdata->gpio_irq)) {
@@ -720,27 +713,17 @@ int himax_int_register_trigger(void)
 	struct i2c_client *client = private_ts->client;
 
 	if (ic_data->HX_INT_IS_EDGE) {
-		I("%s edge triiger falling\n ", __func__);
+		D("%s: edge triiger falling\n ", __func__);
 		ret = request_threaded_irq(client->irq, NULL, himax_ts_thread,
 			IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 			client->name, ts);
 	}
 	else {
-		I("%s level trigger low\n ", __func__);
+		D("%s: level trigger low\n ", __func__);
 		ret = request_threaded_irq(client->irq, NULL, himax_ts_thread,
 			IRQF_TRIGGER_LOW | IRQF_ONESHOT, client->name, ts);
 	}
 
-	return ret;
-}
-
-int himax_int_en_set(void)
-{
-	int ret = NO_ERR;
-
-	dump_stack();
-
-	ret = himax_int_register_trigger();
 	return ret;
 }
 
@@ -749,7 +732,6 @@ int himax_ts_register_interrupt(void)
 	struct himax_ts_data *ts = private_ts;
 	struct i2c_client *client = private_ts->client;
 	int ret = 0;
-
 
 	ts->irq_enabled = 0;
 
@@ -761,7 +743,7 @@ int himax_ts_register_interrupt(void)
 		if (ret == 0) {
 			ts->irq_enabled = 1;
 			atomic_set(&ts->irq_state, 1);
-			I("%s: irq enabled at gpio: %d\n", __func__,
+			D("%s: irq enabled at gpio: %d\n", __func__,
 				client->irq);
 #if defined(HX_SMART_WAKEUP)
 			irq_set_irq_wake(client->irq, 1);
@@ -771,7 +753,7 @@ int himax_ts_register_interrupt(void)
 			E("%s: request_irq failed\n", __func__);
 		}
 	} else {
-		I("%s: client->irq is empty, use polling mode.\n", __func__);
+		D("%s: client->irq is empty, use polling mode.\n", __func__);
 	}
 
 	/*if use polling mode need to disable HX_ESD_RECOVERY function*/
@@ -781,7 +763,7 @@ int himax_ts_register_interrupt(void)
 		hrtimer_init(&ts->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 		ts->timer.function = himax_ts_timer_func;
 		hrtimer_start(&ts->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
-		I("%s: polling mode enabled\n", __func__);
+		D("%s: polling mode enabled\n", __func__);
 	}
 
 	return ret;
@@ -792,8 +774,7 @@ int himax_ts_unregister_interrupt(void)
 	struct himax_ts_data *ts = private_ts;
 	int ret = 0;
 
-
-	I("%s: entered.\n", __func__);
+	D("%s: enter\n", __func__);
 
 	/* Work functon */
 	if (private_ts->hx_irq && ts->use_irq) {/*INT mode*/
@@ -801,7 +782,7 @@ int himax_ts_unregister_interrupt(void)
 		irq_set_irq_wake(ts->hx_irq, 0);
 #endif
 		free_irq(ts->hx_irq, ts);
-		I("%s: irq disabled at qpio: %d\n", __func__,
+		D("%s: irq disabled at qpio: %d\n", __func__,
 			private_ts->hx_irq);
 	}
 
@@ -811,7 +792,7 @@ int himax_ts_unregister_interrupt(void)
 		cancel_work_sync(&ts->work);
 		if (ts->himax_wq != NULL)
 			destroy_workqueue(ts->himax_wq);
-		I("%s: polling mode destroyed", __func__);
+		D("%s: polling mode destroyed", __func__);
 	}
 
 	return ret;
@@ -821,7 +802,7 @@ static int himax_common_suspend(struct device *dev)
 {
 	struct himax_ts_data *ts = dev_get_drvdata(dev);
 
-	I("%s: enter\n", __func__);
+	D("%s: enter\n", __func__);
 #if defined(HX_CONFIG_DRM) && !defined(HX_CONFIG_FB)
 	if (!ts->initialized)
 		return -ECANCELED;
@@ -834,7 +815,7 @@ static int himax_common_resume(struct device *dev)
 {
 	struct himax_ts_data *ts = dev_get_drvdata(dev);
 
-	I("%s: enter\n", __func__);
+	D("%s: enter\n", __func__);
 #if defined(HX_CONFIG_DRM) && !defined(HX_CONFIG_FB)
 	/*
 	 *	wait until device resume for TDDI
@@ -858,7 +839,7 @@ int fb_notifier_callback(struct notifier_block *self,
 	    container_of(self, struct himax_ts_data, fb_notif);
 
 
-	I(" %s\n", __func__);
+	D("%s: FB notifier\n", __func__);
 
 	if (evdata
 	&& evdata->data
@@ -894,7 +875,7 @@ int drm_notifier_callback(struct notifier_block *self,
 	if (!evdata || (evdata->id != 0))
 		return 0;
 
-	D("DRM  %s\n", __func__);
+	D("%s DRM notifier\n", __func__);
 
 	if (evdata->data
 	&& event == MSM_DRM_EARLY_EVENT_BLANK
@@ -932,7 +913,7 @@ int himax_chip_common_probe(struct i2c_client *client,
 	int ret = 0;
 	struct himax_ts_data *ts;
 
-	D("%s:Enter\n", __func__);
+	D("%s: enter\n", __func__);
 
 	/* Check I2C functionality */
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
@@ -957,7 +938,8 @@ int himax_chip_common_probe(struct i2c_client *client,
 	ret = himax_chip_common_init();
 	if (ret < 0)
 		goto err_common_init_failed;
-
+	
+	I("%s: driver ready to use.\n", __func__);
 	return ret;
 
 err_common_init_failed:
@@ -1012,14 +994,11 @@ static struct i2c_driver himax_common_driver = {
 
 static int __init himax_common_init(void)
 {
-	I("Himax common touch panel driver init\n");
-	D("Himax check double loading\n");
-	
 	if (g_mmi_refcnt++ > 0) {
-		I("Himax driver has been loaded! ignoring....\n");
+		W("%s: Himax driver has been already loaded! ignoring....\n",
+			__func__);
 		return 0;
 	}
-
 	i2c_add_driver(&himax_common_driver);
 	return 0;
 }

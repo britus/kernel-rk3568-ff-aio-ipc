@@ -50,7 +50,7 @@ static void himax_mcu_burst_enable(uint8_t auto_add_4_byte)
 	uint8_t tmp_data[DATA_LEN_4];
 	int ret;
 
-	/*I("%s,Entering\n", __func__);*/
+	/*D("%s: Entering\n", __func__);*/
 	tmp_data[0] = pic_op->data_conti[0];
 
 	ret = himax_bus_write(pic_op->addr_conti[0], tmp_data, 1,
@@ -78,7 +78,7 @@ static int himax_mcu_register_read(uint8_t *read_addr, uint32_t read_length,
 	int address = 0;
 	int ret = 0;
 
-	/*I("%s,Entering\n",__func__);*/
+	/*D("%s: Entering\n",__func__);*/
 
 	if (cfg_flag == false) {
 		if (read_length > FLASH_RW_MAX_LEN) {
@@ -181,7 +181,7 @@ static int himax_mcu_register_write(uint8_t *write_addr, uint32_t write_length,
 	int i = 0;
 	int ret = 0;
 
-	/*I("%s,Entering\n", __func__);*/
+	/*D("%s: Entering\n", __func__);*/
 	if (cfg_flag == 0) {
 		total_size_temp = write_length;
 #if defined(HX_ZERO_FLASH)
@@ -206,16 +206,6 @@ static int himax_mcu_register_write(uint8_t *write_addr, uint32_t write_length,
 			g_core_fp.fp_burst_enable(0);
 
 		for (i = 0; i < (total_read_times); i++) {
-			/* I("[log]write %d time start!\n", i);
-			 * I("[log]addr[3]=0x%02X, addr[2]=0x%02X,
-				addr[1]=0x%02X,	addr[0]=0x%02X!\n",
-				tmp_addr[3], tmp_addr[2],
-				tmp_addr[1], tmp_addr[0]);
-			 * I("%s, write addr = 0x%02X%02X%02X%02X\n",
-				__func__, tmp_addr[3], tmp_addr[2],
-				tmp_addr[1], tmp_addr[0]);
-			 */
-
 			if (total_size_temp >= max_bus_size) {
 				tmp_data = write_data+(i * max_bus_size);
 
@@ -224,27 +214,23 @@ static int himax_mcu_register_write(uint8_t *write_addr, uint32_t write_length,
 					tmp_data,
 					max_bus_size);
 				if (ret < 0) {
-					I("%s: i2c access fail!\n", __func__);
+					D("%s: i2c access fail!\n", __func__);
 					return I2C_FAIL;
 				}
 				total_size_temp = total_size_temp
 					- max_bus_size;
 			} else {
 				tmp_data = write_data+(i * max_bus_size);
-				/* I("last total_size_temp=%d\n",
-				 *	total_size_temp % max_bus_size);
-				 */
 				ret = himax_mcu_flash_write_burst_lenth(
 					tmp_addr,
 					tmp_data,
 					total_size_temp);
 				if (ret < 0) {
-					I("%s: i2c access fail!\n", __func__);
+					D("%s: i2c access fail!\n", __func__);
 					return I2C_FAIL;
 				}
 			}
 
-			/*I("[log]write %d time end!\n", i);*/
 			address = ((i+1) * max_bus_size);
 			tmp_addr[0] = write_addr[0]
 				+ (uint8_t) ((address) & 0x00FF);
@@ -281,7 +267,7 @@ static int himax_write_read_reg(uint8_t *tmp_addr, uint8_t *tmp_data,
 		g_core_fp.fp_register_write(tmp_addr, DATA_LEN_4, tmp_data, 0);
 		usleep_range(10000, 11000);
 		g_core_fp.fp_register_read(tmp_addr, DATA_LEN_4, tmp_data, 0);
-		/* I("%s:Now tmp_data[0]=0x%02X,[1]=0x%02X,
+		/* D("%s: Now tmp_data[0]=0x%02X,[1]=0x%02X,
 		 *	[2]=0x%02X,[3]=0x%02X\n",
 		 *	__func__, tmp_data[0],
 		 *	tmp_data[1], tmp_data[2], tmp_data[3]);
@@ -291,8 +277,9 @@ static int himax_write_read_reg(uint8_t *tmp_addr, uint8_t *tmp_data,
 	if (cnt >= 100)
 		return HX_RW_REG_FAIL;
 
-	I("Now register 0x%08X : high byte=0x%02X,low byte=0x%02X\n",
-			tmp_addr[3], tmp_data[1], tmp_data[0]);
+	D("%s: Now register 0x%08X : high byte=0x%02X,low byte=0x%02X\n",
+		__func__, tmp_addr[3], tmp_data[1], tmp_data[0]);
+
 	return NO_ERR;
 }
 
@@ -344,7 +331,7 @@ static void himax_mcu_interface_on(void)
 	} while (++cnt < 10);
 
 	if (cnt > 0)
-		I("%s:Polling burst mode: %d times\n", __func__, cnt);
+		D("%s: Polling burst mode: %d times\n", __func__, cnt);
 }
 
 #define WIP_PRT_LOG "%s: retry:%d, bf[0]=%d, bf[1]=%d,bf[2]=%d, bf[3]=%d\n"
@@ -399,10 +386,10 @@ static void himax_mcu_sense_on(uint8_t FlashMode)
 	int retry = 0;
 	int ret = 0;
 
-	I("Enter %s\n", __func__);
 	g_core_fp.fp_interface_on();
 	g_core_fp.fp_register_write(pfw_op->addr_ctrl_fw_isr,
 		sizeof(pfw_op->data_clear), pfw_op->data_clear, 0);
+
 	/*msleep(20);*/
 	usleep_range(10000, 11000);
 	if (!FlashMode) {
@@ -425,7 +412,7 @@ static void himax_mcu_sense_on(uint8_t FlashMode)
 				DATA_LEN_4,
 				tmp_data,
 				0);
-			I("%s:Read status from IC = %X,%X\n", __func__,
+			D("%s: Read status from IC = %X,%X\n", __func__,
 				tmp_data[0], tmp_data[1]);
 		} while ((tmp_data[1] != 0x01
 			|| tmp_data[0] != 0x00)
@@ -439,7 +426,7 @@ static void himax_mcu_sense_on(uint8_t FlashMode)
 			g_core_fp.fp_system_reset();
 #endif
 		} else {
-			I("%s:OK and Read status from IC = %X,%X\n",
+			D("%s: OK and Read status from IC = %X,%X\n",
 					__func__, tmp_data[0], tmp_data[1]);
 			/* reset code*/
 			tmp_data[0] = 0x00;
@@ -490,7 +477,7 @@ static bool himax_mcu_sense_off(bool check_en)
 
 		g_core_fp.fp_register_read(pic_op->addr_cs_central_state,
 				ADDR_LEN_4, tmp_data, 0);
-		I("%s: Check enter_save_mode data[0]=%X\n", __func__,
+		D("%s: Check enter_save_mode data[0]=%X\n", __func__,
 			tmp_data[0]);
 
 		if (tmp_data[0] == 0x0C) {
@@ -535,7 +522,7 @@ static void himax_mcu_init_psl(void)
 	g_core_fp.fp_register_write(pic_op->addr_psl,
 			sizeof(pic_op->data_rst),
 			pic_op->data_rst, 0);
-	I("%s: power saving level reset OK!\n", __func__);
+	D("%s: power saving level reset OK!\n", __func__);
 }
 
 static void himax_mcu_resume_ic_action(void)
@@ -550,7 +537,7 @@ static void himax_mcu_suspend_ic_action(void)
 
 static void himax_mcu_power_on_init(void)
 {
-	I("%s:\n", __func__);
+	D("%s: \n", __func__);
 	g_core_fp.fp_touch_information();
 	/*RawOut select initial*/
 	g_core_fp.fp_register_write(pfw_op->addr_raw_out_sel,
@@ -690,8 +677,8 @@ static bool himax_mcu_ic_id_read(void)
 		g_core_fp.fp_dd_reg_write(0xBB, 4, 1, data, 0);
 		g_core_fp.fp_dd_reg_read(0xBB, 5, 1, data, 0);
 		ic_data->vendor_ic_id[i] = data[0];
-		I("ic_data->vendor_ic_id[%d] = %02X\n", i,
-			ic_data->vendor_ic_id[i]);
+		D("%s: ic_data->vendor_ic_id[%d] = %02X\n", 
+			__func__, i, ic_data->vendor_ic_id[i]);
 	}
 
 	g_core_fp.fp_dd_clk_set(false);
@@ -721,13 +708,6 @@ static void diag_mcu_parse_raw_data(struct himax_report_data *hx_touch_data,
 		RawDataLen_word = hx_touch_data->rawdata_size / 2;
 		index = (hx_touch_data->hx_rawdata_buf[2] - 1)
 			* RawDataLen_word;
-
-		/* I("Header[%d]: %x, %x, %x, %x, mutual: %d, self: %d\n",index,
-		 *	buf[56], buf[57], buf[58], buf[59], mul_num, self_num);
-		 * I("RawDataLen=%d , RawDataLen_word=%d ,
-		 *	hx_touch_info_size=%d\n",
-		 *	RawDataLen, RawDataLen_word, hx_touch_info_size);
-		 */
 		for (i = 0; i < RawDataLen_word; i++) {
 			temp1 = index + i;
 
@@ -807,7 +787,7 @@ static void himax_mcu_system_reset(void)
 
 		g_core_fp.fp_register_read(pfw_op->addr_flag_reset_event,
 				DATA_LEN_4, tmp_data, 0);
-		I("%s:Read status from IC = %X,%X\n", __func__,
+		D("%s: Read status from IC = %X,%X\n", __func__,
 				tmp_data[0], tmp_data[1]);
 	} while ((tmp_data[1] != 0x02 || tmp_data[0] != 0x00) && retry++ < 5);
 #endif
@@ -887,7 +867,7 @@ static uint32_t himax_mcu_check_CRC(uint8_t *start_addr, int reload_length)
 				E("%s: i2c access fail!\n", __func__);
 				return HW_CRC_FAIL;
 			}
-			I("%s:data[3]=%X,data[2]=%X,data[1]=%X,data[0]=%X\n",
+			D("%s: data[3]=%X,data[2]=%X,data[1]=%X,data[0]=%X\n",
 				__func__,
 				tmp_data[3],
 				tmp_data[2],
@@ -899,7 +879,6 @@ static uint32_t himax_mcu_check_CRC(uint8_t *start_addr, int reload_length)
 					+ tmp_data[0]);
 			goto END;
 		} else {
-			I("Waiting for HW ready!\n");
 			usleep_range(1000, 1100);
 		}
 
@@ -933,28 +912,28 @@ static int himax_mcu_ulpm_in(void)
 	int rtimes = 0;
 	int ret = 0;
 
-	I("%s:entering\n", __func__);
+	D("%s: entering\n", __func__);
 
 	/* 34 -> 11 */
 	do {
 		if (rtimes > 10) {
-			I("%s:1/7 retry over 10 times!\n", __func__);
+			D("%s: 1/7 retry over 10 times!\n", __func__);
 			return false;
 		}
 		ret = himax_bus_write(pfw_op->addr_ulpm_34[0],
 			pfw_op->data_ulpm_11, 1, HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi write fail!\n", __func__);
+			D("%s: spi write fail!\n", __func__);
 			continue;
 		}
 		ret = himax_bus_read(pfw_op->addr_ulpm_34[0],
 			tmp_data, 1, HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi read fail!\n", __func__);
+			D("%s: spi read fail!\n", __func__);
 			continue;
 		}
 
-		I("%s:retry times %d,addr=0x34,correct 0x11=current 0x%2.2X\n",
+		D("%s: retry times %d,addr=0x34,correct 0x11=current 0x%2.2X\n",
 				__func__, rtimes, tmp_data[0]);
 		rtimes++;
 	} while (tmp_data[0] != pfw_op->data_ulpm_11[0]);
@@ -963,23 +942,23 @@ static int himax_mcu_ulpm_in(void)
 	/* 34 -> 11 */
 	do {
 		if (rtimes > 10) {
-			I("%s:2/7 retry over 10 times!\n", __func__);
+			D("%s: 2/7 retry over 10 times!\n", __func__);
 			return false;
 		}
 		ret = himax_bus_write(pfw_op->addr_ulpm_34[0],
 			pfw_op->data_ulpm_11, 1, HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi write fail!\n", __func__);
+			D("%s: spi write fail!\n", __func__);
 			continue;
 		}
 		ret = himax_bus_read(pfw_op->addr_ulpm_34[0], tmp_data, 1,
 				HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi read fail!\n", __func__);
+			D("%s: spi read fail!\n", __func__);
 			continue;
 		}
 
-		I("%s:retry times %d,addr=0x34,correct 0x11=current 0x%2.2X\n",
+		D("%s: retry times %d,addr=0x34,correct 0x11=current 0x%2.2X\n",
 				__func__, rtimes, tmp_data[0]);
 		rtimes++;
 	} while (tmp_data[0] != pfw_op->data_ulpm_11[0]);
@@ -988,23 +967,23 @@ static int himax_mcu_ulpm_in(void)
 	rtimes = 0;
 	do {
 		if (rtimes > 10) {
-			I("%s:3/7 retry over 10 times!\n", __func__);
+			D("%s: 3/7 retry over 10 times!\n", __func__);
 			return false;
 		}
 		ret = himax_bus_write(pfw_op->addr_ulpm_33[0],
 			pfw_op->data_ulpm_33, 1, HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi write fail!\n", __func__);
+			D("%s: spi write fail!\n", __func__);
 			continue;
 		}
 		ret = himax_bus_read(pfw_op->addr_ulpm_33[0], tmp_data, 1,
 				HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi read fail!\n", __func__);
+			D("%s: spi read fail!\n", __func__);
 			continue;
 		}
 
-		I("%s:retry times %d,addr=0x33,correct 0x33=current 0x%2.2X\n",
+		D("%s: retry times %d,addr=0x33,correct 0x33=current 0x%2.2X\n",
 			__func__, rtimes, tmp_data[0]);
 		rtimes++;
 	} while (tmp_data[0] != pfw_op->data_ulpm_33[0]);
@@ -1013,23 +992,23 @@ static int himax_mcu_ulpm_in(void)
 	rtimes = 0;
 	do {
 		if (rtimes > 10) {
-			I("%s:4/7 retry over 10 times!\n", __func__);
+			D("%s: 4/7 retry over 10 times!\n", __func__);
 			return false;
 		}
 		ret = himax_bus_write(pfw_op->addr_ulpm_34[0],
 			pfw_op->data_ulpm_22, 1, HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi write fail!\n", __func__);
+			D("%s: spi write fail!\n", __func__);
 			continue;
 		}
 		ret = himax_bus_read(pfw_op->addr_ulpm_34[0], tmp_data, 1,
 				HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi read fail!\n", __func__);
+			D("%s: spi read fail!\n", __func__);
 			continue;
 		}
 
-		I("%s:retry times %d,addr=0x34,correct 0x22=current 0x%2.2X\n",
+		D("%s: retry times %d,addr=0x34,correct 0x22=current 0x%2.2X\n",
 			__func__, rtimes, tmp_data[0]);
 		rtimes++;
 	} while (tmp_data[0] != pfw_op->data_ulpm_22[0]);
@@ -1038,23 +1017,23 @@ static int himax_mcu_ulpm_in(void)
 	rtimes = 0;
 	do {
 		if (rtimes > 10) {
-			I("%s:5/7 retry over 10 times!\n", __func__);
+			D("%s: 5/7 retry over 10 times!\n", __func__);
 			return false;
 		}
 		ret = himax_bus_write(pfw_op->addr_ulpm_33[0],
 			pfw_op->data_ulpm_aa, 1, HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi write fail!\n", __func__);
+			D("%s: spi write fail!\n", __func__);
 			continue;
 		}
 		ret = himax_bus_read(pfw_op->addr_ulpm_33[0], tmp_data, 1,
 				HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi read fail!\n", __func__);
+			D("%s: spi read fail!\n", __func__);
 			continue;
 		}
 
-		I("%s:retry times %d,addr=0x33, correct 0xAA=current 0x%2.2X\n",
+		D("%s: retry times %d,addr=0x33, correct 0xAA=current 0x%2.2X\n",
 			__func__, rtimes, tmp_data[0]);
 		rtimes++;
 	} while (tmp_data[0] != pfw_op->data_ulpm_aa[0]);
@@ -1063,23 +1042,23 @@ static int himax_mcu_ulpm_in(void)
 	rtimes = 0;
 	do {
 		if (rtimes > 10) {
-			I("%s:6/7 retry over 10 times!\n", __func__);
+			D("%s: 6/7 retry over 10 times!\n", __func__);
 			return false;
 		}
 		ret = himax_bus_write(pfw_op->addr_ulpm_33[0],
 			pfw_op->data_ulpm_33, 1, HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi write fail!\n", __func__);
+			D("%s: spi write fail!\n", __func__);
 			continue;
 		}
 		ret = himax_bus_read(pfw_op->addr_ulpm_33[0], tmp_data, 1,
 				HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi read fail!\n", __func__);
+			D("%s: spi read fail!\n", __func__);
 			continue;
 		}
 
-		I("%s:retry times %d,addr=0x33,correct 0x33=current 0x%2.2X\n",
+		D("%s: retry times %d,addr=0x33,correct 0x33=current 0x%2.2X\n",
 			__func__, rtimes, tmp_data[0]);
 		rtimes++;
 	} while (tmp_data[0] != pfw_op->data_ulpm_33[0]);
@@ -1088,28 +1067,28 @@ static int himax_mcu_ulpm_in(void)
 	rtimes = 0;
 	do {
 		if (rtimes > 10) {
-			I("%s:7/7 retry over 10 times!\n", __func__);
+			D("%s: 7/7 retry over 10 times!\n", __func__);
 			return false;
 		}
 		ret = himax_bus_write(pfw_op->addr_ulpm_33[0],
 			pfw_op->data_ulpm_aa, 1, HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi write fail!\n", __func__);
+			D("%s: spi write fail!\n", __func__);
 			continue;
 		}
 		ret = himax_bus_read(pfw_op->addr_ulpm_33[0], tmp_data, 1,
 				HIMAX_I2C_RETRY_TIMES);
 		if (ret < 0) {
-			I("%s: spi read fail!\n", __func__);
+			D("%s: spi read fail!\n", __func__);
 			continue;
 		}
 
-		I("%s:retry times %d,addr=0x33,correct 0xAA=current 0x%2.2X\n",
+		D("%s: retry times %d,addr=0x33,correct 0xAA=current 0x%2.2X\n",
 			__func__, rtimes, tmp_data[0]);
 		rtimes++;
 	} while (tmp_data[0] != pfw_op->data_ulpm_aa[0]);
 
-	I("%s:END\n", __func__);
+	D("%s: END\n", __func__);
 	return true;
 }
 
@@ -1117,7 +1096,7 @@ static int himax_mcu_black_gest_ctrl(bool enable)
 {
 	int ret = 0;
 
-	I("%s:enable=%d, ts->is_suspended=%d\n", __func__,
+	D("%s: enable=%d, ts->is_suspended=%d\n", __func__,
 			enable, private_ts->suspended);
 
 	if (private_ts->suspended) {
@@ -1125,7 +1104,7 @@ static int himax_mcu_black_gest_ctrl(bool enable)
 #if defined(HX_RST_PIN_FUNC)
 			g_core_fp.fp_ic_reset(false, false);
 #else
-			I("%s: Please enable TP reset define\n", __func__);
+			D("%s: Please enable TP reset define\n", __func__);
 #endif
 		} else {
 			g_core_fp.fp_ulpm_in();
@@ -1168,7 +1147,7 @@ static void himax_mcu_set_SMWP_enable(uint8_t SMWP_enable, bool suspended)
 
 		g_core_fp.fp_register_read(pfw_op->addr_smwp_enable, DATA_LEN_4,
 				tmp_data, 0);
-		/*I("%s: tmp_data[0]=%d, SMWP_enable=%d, retry_cnt=%d\n",
+		/*D("%s: tmp_data[0]=%d, SMWP_enable=%d, retry_cnt=%d\n",
 		 *	__func__, tmp_data[0],SMWP_enable,retry_cnt);
 		 */
 		retry_cnt++;
@@ -1210,7 +1189,7 @@ static void himax_mcu_set_HSEN_enable(uint8_t HSEN_enable, bool suspended)
 
 		g_core_fp.fp_register_read(pfw_op->addr_hsen_enable,
 			DATA_LEN_4, tmp_data, 0);
-		/*I("%s: tmp_data[0]=%d, HSEN_enable=%d, retry_cnt=%d\n",
+		/*D("%s: tmp_data[0]=%d, HSEN_enable=%d, retry_cnt=%d\n",
 		 *	__func__, tmp_data[0],HSEN_enable,retry_cnt);
 		 */
 		retry_cnt++;
@@ -1235,7 +1214,7 @@ static void himax_mcu_usb_detect_set(uint8_t *cable_config)
 				DATA_LEN_4, tmp_data, 0);
 			himax_parse_assign_cmd(fw_func_handshaking_pwd,
 				back_data, 4);
-			I("%s: USB detect status IN!\n", __func__);
+			D("%s: USB detect status IN!\n", __func__);
 		} else {
 			himax_parse_assign_cmd(
 				fw_data_safe_mode_release_pw_reset,
@@ -1247,12 +1226,12 @@ static void himax_mcu_usb_detect_set(uint8_t *cable_config)
 				fw_data_safe_mode_release_pw_reset,
 				back_data,
 				4);
-			I("%s: USB detect status OUT!\n", __func__);
+			D("%s: USB detect status OUT!\n", __func__);
 		}
 
 		g_core_fp.fp_register_read(pfw_op->addr_usb_detect, DATA_LEN_4,
 				tmp_data, 0);
-		/*I("%s: tmp_data[0]=%d, USB detect=%d, retry_cnt=%d\n",
+		/*D("%s: tmp_data[0]=%d, USB detect=%d, retry_cnt=%d\n",
 		 *	__func__, tmp_data[0],cable_config[1] ,retry_cnt);
 		 */
 		retry_cnt++;
@@ -1275,7 +1254,10 @@ static void himax_mcu_diag_register_set(uint8_t diag_command,
 		tmp_data[0] = diag_command + 0x08;
 	else
 		tmp_data[0] = diag_command;
-	I("diag_command = %d, tmp_data[0] = %X\n", diag_command, tmp_data[0]);
+
+	D("%s: diag_command = %d, tmp_data[0] = %X\n", 
+		__func__, diag_command, tmp_data[0]);
+
 	g_core_fp.fp_interface_on();
 	tmp_data[3] = 0x00; tmp_data[2] = 0x00; tmp_data[1] = 0x00;
 	do {
@@ -1332,7 +1314,7 @@ static int himax_mcu_chip_self_test(struct seq_file *s, void *v)
 	for (i = 0; i < 1000; i++) {
 		g_core_fp.fp_register_read(pfw_op->addr_selftest_addr_en, 4,
 				tmp_data, 0);
-		I("%s:data0=0x%2X,data1=0x%2X,data2=0x%2X,data3=0x%2X cnt=%d\n",
+		D("%s: data0=0x%2X,data1=0x%2X,data2=0x%2X,data3=0x%2X cnt=%d\n",
 			__func__,
 			tmp_data[0],
 			tmp_data[1],
@@ -1343,7 +1325,7 @@ static int himax_mcu_chip_self_test(struct seq_file *s, void *v)
 
 		if (tmp_data[1] == pfw_op->data_selftest_ack_hb[0]
 		&& tmp_data[0] == pfw_op->data_selftest_ack_lb[0]) {
-			I("%s Data ready goto moving data\n", __func__);
+			D("%s: Data ready goto moving data\n", __func__);
 			break;
 		}
 	}
@@ -1356,33 +1338,27 @@ static int himax_mcu_chip_self_test(struct seq_file *s, void *v)
 	g_core_fp.fp_register_read(pfw_op->addr_selftest_result_addr, 20,
 			self_test_info, 0);
 	test_result_id = self_test_info[0];
-	I("%s: check test result, test_result_id=%x, test_result=%x\n",
+
+	D("%s: check test result, test_result_id=%x, test_result=%x\n",
 		__func__, test_result_id, self_test_info[0]);
-	I("raw top 1 = %d\n", self_test_info[3] * 256 + self_test_info[2]);
-	I("raw top 2 = %d\n", self_test_info[5] * 256 + self_test_info[4]);
-	I("raw top 3 = %d\n", self_test_info[7] * 256 + self_test_info[6]);
-	I("raw last 1 = %d\n", self_test_info[9] * 256 + self_test_info[8]);
-	I("raw last 2 = %d\n", self_test_info[11] * 256 + self_test_info[10]);
-	I("raw last 3 = %d\n", self_test_info[13] * 256 + self_test_info[12]);
-	I("raw key 1 = %d\n", self_test_info[15] * 256 + self_test_info[14]);
-	I("raw key 2 = %d\n", self_test_info[17] * 256 + self_test_info[16]);
-	I("raw key 3 = %d\n", self_test_info[19] * 256 + self_test_info[18]);
+	
+	D("raw top 1 = %d\n", self_test_info[3] * 256 + self_test_info[2]);
+	D("raw top 2 = %d\n", self_test_info[5] * 256 + self_test_info[4]);
+	D("raw top 3 = %d\n", self_test_info[7] * 256 + self_test_info[6]);
+	D("raw last 1 = %d\n", self_test_info[9] * 256 + self_test_info[8]);
+	D("raw last 2 = %d\n", self_test_info[11] * 256 + self_test_info[10]);
+	D("raw last 3 = %d\n", self_test_info[13] * 256 + self_test_info[12]);
+	D("raw key 1 = %d\n", self_test_info[15] * 256 + self_test_info[14]);
+	D("raw key 2 = %d\n", self_test_info[17] * 256 + self_test_info[16]);
+	D("raw key 3 = %d\n", self_test_info[19] * 256 + self_test_info[18]);
 
 	if (test_result_id == pfw_op->data_selftest_pass[0]) {
-		I("[Himax]: self-test pass\n");
+		D("%s: self-test pass\n", __func__);
 		seq_puts(s, "Self_Test Pass:\n");
 		pf_value = 0x0;
 	} else {
-		E("[Himax]: self-test fail\n");
+		E("%s: self-test fail\n", __func__);
 		seq_puts(s, "Self_Test Fail:\n");
-		/*  E("[Himax]: bank_avg = %d, bank_max = %d,%d,%d, bank_min =
-		 *	%d,%d,%d, key = %d,%d,%d\n",
-		 *	tmp_data[1], tmp_data[2],
-		 *	tmp_data[3], tmp_data[4],
-		 *	tmp_data[5], tmp_data[6],
-		 *	tmp_data[7], tmp_data[8],
-		 *	tmp_data[9], tmp_data[10]);
-		 */
 		pf_value = 0x1;
 	}
 
@@ -1405,10 +1381,10 @@ static void himax_mcu_idle_mode(int disable)
 	uint8_t tmp_data[DATA_LEN_4];
 	uint8_t switch_cmd = 0x00;
 
-	I("%s:entering\n", __func__);
+	D("%s: entering\n", __func__);
 
 	do {
-		I("%s,now %d times!\n", __func__, retry);
+		D("%s: now %d times!\n", __func__, retry);
 		g_core_fp.fp_register_read(pfw_op->addr_fw_mode_status,
 				DATA_LEN_4, tmp_data, 0);
 
@@ -1434,12 +1410,12 @@ static void himax_mcu_idle_mode(int disable)
 		usleep_range(10000, 11000);
 	} while ((tmp_data[0] != switch_cmd) && retry > 0);
 
-	I("%s: setting OK!\n", __func__);
+	D("%s: setting OK!\n", __func__);
 }
 
 static void himax_mcu_reload_disable(int disable)
 {
-	I("%s:entering\n", __func__);
+	D("%s: entering\n", __func__);
 
 	if (disable) { /*reload disable*/
 		g_core_fp.fp_register_write(
@@ -1455,7 +1431,7 @@ static void himax_mcu_reload_disable(int disable)
 			0);
 	}
 
-	I("%s: setting OK!\n", __func__);
+	D("%s: setting OK!\n", __func__);
 }
 
 static bool himax_mcu_check_chip_version(void)
@@ -1467,7 +1443,7 @@ static bool himax_mcu_check_chip_version(void)
 	for (i = 0; i < 5; i++) {
 		g_core_fp.fp_register_read(pfw_op->addr_icid_addr, DATA_LEN_4,
 				tmp_data, 0);
-		I("%s:Read driver IC ID = %X,%X,%X\n", __func__,
+		D("%s: Read driver IC ID = %X,%X,%X\n", __func__,
 				tmp_data[3], tmp_data[2], tmp_data[1]);
 
 		if ((tmp_data[3] == 0x83)
@@ -1527,12 +1503,12 @@ static void himax_mcu_read_FW_ver(void)
 			0);
 
 		if ((data[1] == 0x3A && data[0] == 0xA3)
-		|| (data_2[1] == 0x72 && data_2[0] == 0xC0)) {
-			I("reload OK!\n");
+			|| (data_2[1] == 0x72 && data_2[0] == 0xC0)) {
 			reload_status = 1;
 			break;
 		} else if (retry == 0) {
-			E("reload 20 times! fail,Maybe no or wrong FW in IC\n");
+			E("%s: reload 20 times! fail,Maybe no or wrong FW in IC\n",
+				__func__);
 			ic_data->vendor_panel_ver = 0;
 			ic_data->vendor_fw_ver = 0;
 			ic_data->vendor_config_ver = 0;
@@ -1545,13 +1521,15 @@ static void himax_mcu_read_FW_ver(void)
 			retry--;
 			usleep_range(10000, 11000);
 			if (retry % 10 == 0)
-				I("reload fail ,delay 10ms retry=%d\n", retry);
+				D("%s: reload fail ,delay 10ms retry=%d\n", 
+					__func__, retry);
 		}
 	}
 
-	I("%s:data[0]=0x%2.2X,data[1]=0x%2.2X\n", __func__, data[0], data[1]);
-	I("%s:data_2[0]=0x%2.2X,data_2[1]=0x%2.2X,reload_status=%d\n", __func__,
+	D("%s: data[0]=0x%2.2X,data[1]=0x%2.2X\n", __func__, data[0], data[1]);
+	D("%s: data_2[0]=0x%2.2X,data_2[1]=0x%2.2X,reload_status=%d\n", __func__,
 		data_2[0], data_2[1], reload_status);
+
 	/**
 	 * Read FW version
 	 */
@@ -1560,28 +1538,36 @@ static void himax_mcu_read_FW_ver(void)
 		data, 0);
 	ic_data->vendor_panel_ver =  data[0];
 	ic_data->vendor_fw_ver = data[1] << 8 | data[2];
-	I("PANEL_VER : %X\n", ic_data->vendor_panel_ver);
-	I("FW_VER : %X\n", ic_data->vendor_fw_ver);
+	I("%s: PANEL_VER : %X\n", __func__, 
+		ic_data->vendor_panel_ver);
+	I("%s: FW_VER : %X\n", __func__, 
+		ic_data->vendor_fw_ver);
 	g_core_fp.fp_register_read(pfw_op->addr_fw_cfg_addr, DATA_LEN_4,
 		data, 0);
 	ic_data->vendor_config_ver = data[2] << 8 | data[3];
-	/*I("CFG_VER : %X\n",ic_data->vendor_config_ver);*/
+	I("%s: CFG_VER : %X\n", __func__, 
+		ic_data->vendor_config_ver);
 	ic_data->vendor_touch_cfg_ver = data[2];
-	I("TOUCH_VER : %X\n", ic_data->vendor_touch_cfg_ver);
+	I("%s: TOUCH_VER : %X\n", __func__, 
+		ic_data->vendor_touch_cfg_ver);
 	ic_data->vendor_display_cfg_ver = data[3];
-	I("DISPLAY_VER : %X\n", ic_data->vendor_display_cfg_ver);
+	I("%s: DISPLAY_VER : %X\n", __func__, 
+		ic_data->vendor_display_cfg_ver);
 	g_core_fp.fp_register_read(pfw_op->addr_fw_vendor_addr,
 			DATA_LEN_4, data, 0);
 	ic_data->vendor_cid_maj_ver = data[2];
 	ic_data->vendor_cid_min_ver = data[3];
-	I("CID_VER : %X\n", (ic_data->vendor_cid_maj_ver << 8
-			| ic_data->vendor_cid_min_ver));
+	I("%s: CID_VER : %X\n", __func__, 
+		(ic_data->vendor_cid_maj_ver << 8
+		 | ic_data->vendor_cid_min_ver));
 	g_core_fp.fp_register_read(pfw_op->addr_cus_info, 12, data, 0);
 	memcpy(ic_data->vendor_cus_info, data, 12);
-	I("Cusomer ID = %s\n", ic_data->vendor_cus_info);
+	I("%s: Cusomer ID = %s\n", __func__,
+		ic_data->vendor_cus_info);
 	g_core_fp.fp_register_read(pfw_op->addr_proj_info, 12, data, 0);
 	memcpy(ic_data->vendor_proj_info, data, 12);
-	I("Project ID = %s\n", ic_data->vendor_proj_info);
+	I("%s: Project ID = %s\n", __func__, 
+		ic_data->vendor_proj_info);
 
 END:
 	return;
@@ -1638,10 +1624,10 @@ static void himax_mcu_return_event_stack(void)
 	int retry = 20, i;
 	uint8_t tmp_data[DATA_LEN_4];
 
-	I("%s:entering\n", __func__);
+	D("%s: entering\n", __func__);
 
 	do {
-		I("now %d times!\n", retry);
+		D("%s: now %d times!\n", __func__, retry);
 
 		for (i = 0; i < DATA_LEN_4; i++)
 			tmp_data[i] = psram_op->addr_rawdata_end[i];
@@ -1656,7 +1642,7 @@ static void himax_mcu_return_event_stack(void)
 		&& tmp_data[0] != psram_op->addr_rawdata_end[0])
 		&& retry > 0);
 
-	I("%s: End of setting!\n", __func__);
+	D("%s: End of setting!\n", __func__);
 }
 
 static bool himax_mcu_calculateChecksum(bool change_iref, uint32_t size)
@@ -1664,7 +1650,7 @@ static bool himax_mcu_calculateChecksum(bool change_iref, uint32_t size)
 	uint8_t CRC_result = 0, i;
 	uint8_t tmp_data[DATA_LEN_4];
 
-	I("%s:Now size=%d\n", __func__, size);
+	D("%s: Now size=%d\n", __func__, size);
 	for (i = 0; i < DATA_LEN_4; i++)
 		tmp_data[i] = psram_op->addr_rawdata_end[i];
 
@@ -1672,7 +1658,7 @@ static bool himax_mcu_calculateChecksum(bool change_iref, uint32_t size)
 	msleep(50);
 
 	if (CRC_result != 0)
-		I("%s: CRC Fail=%d\n", __func__, CRC_result);
+		D("%s: CRC Fail=%d\n", __func__, CRC_result);
 
 	return (CRC_result == 0) ? true : false;
 }
@@ -1730,7 +1716,7 @@ static void himax_mcu_irq_switch(int switch_on)
 
 static int himax_mcu_assign_sorting_mode(uint8_t *tmp_data)
 {
-	I("%s:Now data[3]=0x%2X,data[2]=0x%2X,data[1]=0x%2X,data[0]=0x%2X\n",
+	D("%s: Now data[3]=0x%2X,data[2]=0x%2X,data[1]=0x%2X,data[0]=0x%2X\n",
 		__func__, tmp_data[3], tmp_data[2], tmp_data[1], tmp_data[0]);
 
 	g_core_fp.fp_register_write(pfw_op->addr_sorting_mode_en,
@@ -1744,7 +1730,7 @@ static int himax_mcu_check_sorting_mode(uint8_t *tmp_data)
 
 	g_core_fp.fp_register_read(pfw_op->addr_sorting_mode_en,
 			DATA_LEN_4, tmp_data, 0);
-	I("%s: tmp_data[0]=%x,tmp_data[1]=%x\n", __func__,
+	D("%s: tmp_data[0]=%x,tmp_data[1]=%x\n", __func__,
 			tmp_data[0], tmp_data[1]);
 
 	return NO_ERR;
@@ -1758,7 +1744,7 @@ static uint8_t himax_mcu_read_DD_status(uint8_t *cmd_set, uint8_t *tmp_data)
 	cmd_set[3] = pfw_op->data_dd_request[0];
 	g_core_fp.fp_register_write(pfw_op->addr_dd_handshak_addr,
 			DATA_LEN_4, cmd_set, 0);
-	I("%s:cmd set[0]=0x%2X,set[1]=0x%2X,set[2]=0x%2X,set[3]=0x%2X\n",
+	D("%s: cmd set[0]=0x%2X,set[1]=0x%2X,set[2]=0x%2X,set[3]=0x%2X\n",
 		__func__, cmd_set[0], cmd_set[1], cmd_set[2], cmd_set[3]);
 
 	/* Doing hand shaking 0xAA -> 0xBB */
@@ -1768,11 +1754,11 @@ static uint8_t himax_mcu_read_DD_status(uint8_t *cmd_set, uint8_t *tmp_data)
 		usleep_range(10000, 11000);
 
 		if (tmp_data[3] == pfw_op->data_dd_ack[0]) {
-			I("%s Data ready goto moving data\n", __func__);
+			D("%s: Data ready goto moving data\n", __func__);
 			goto FINALIZE;
 		} else {
 			if (cnt >= 99) {
-				I("%s Data not ready in FW\n", __func__);
+				D("%s: Data not ready in FW\n", __func__);
 				return FW_NOT_READY;
 			}
 		}
@@ -1789,14 +1775,14 @@ static int hx_mcu_diff_overlay_bin(void)
 	int diff_val = 0;
 
 	diff_val = g_i_FW_VER;
-	I("%s:Now fw ID is 0x%04X\n", __func__, diff_val);
+	D("%s: Now fw ID is 0x%04X\n", __func__, diff_val);
 	diff_val = (diff_val >> 12);
-	I("%s:Now diff value=0x%04X\n", __func__, diff_val);
+	D("%s: Now diff value=0x%04X\n", __func__, diff_val);
 
 	if (diff_val == 1)
-		I("%s:Now size should be 128K!\n", __func__);
+		D("%s: Now size should be 128K!\n", __func__);
 	else
-		I("%s:Now size should be 64K!\n", __func__);
+		D("%s: Now size should be 64K!\n", __func__);
 	rslt = diff_val;
 	return rslt;
 }
@@ -1873,7 +1859,7 @@ static bool himax_mcu_block_erase(int start_addr, int length)
 		}
 	}
 
-	I("%s:END\n", __func__);
+	D("%s: END\n", __func__);
 	return true;
 }
 
@@ -2112,15 +2098,10 @@ static bool himax_mcu_flash_lastdata_check(uint32_t size)
 
 	/* In order to match other size of fw */
 	start_addr = size - flash_page_len;
-	I("%s: Now size is %d, the start_addr is 0x%04X\n",
+	D("%s: Now size is %d, the start_addr is 0x%04X\n",
 			__func__, size, start_addr);
 	for (temp_addr = start_addr; temp_addr < (start_addr + flash_page_len);
 	temp_addr = temp_addr + flash_page_len) {
-		/*I("temp_addr=%d,tmp_addr[0]=0x%2X, tmp_addr[1]=0x%2X,
-		 *	tmp_addr[2]=0x%2X,tmp_addr[3]=0x%2X\n",
-		 *	temp_addr,tmp_addr[0], tmp_addr[1],
-		 *	tmp_addr[2],tmp_addr[3]);
-		 */
 		tmp_addr[0] = temp_addr % 0x100;
 		tmp_addr[1] = (temp_addr >> 8) % 0x100;
 		tmp_addr[2] = (temp_addr >> 16) % 0x100;
@@ -2133,8 +2114,9 @@ static bool himax_mcu_flash_lastdata_check(uint32_t size)
 	&& (!flash_tmp_buffer[flash_page_len-3])
 	&& (!flash_tmp_buffer[flash_page_len-2])
 	&& (!flash_tmp_buffer[flash_page_len-1])) {
-		I("Fail, Last four Bytes are:\n");
-		I("fbuf[FFFC]=0x%2X,[FFFD]=0x%2X,[FFFE]=0x%2X,[FFFF]=0x%2X\n",
+		E("%s: Fail, Last four Bytes are:\n", __func__);
+		E("%s: fbuf[FFFC]=0x%2X,[FFFD]=0x%2X,[FFFE]=0x%2X,[FFFF]=0x%2X\n",
+			__func__,
 			flash_tmp_buffer[flash_page_len-4],
 			flash_tmp_buffer[flash_page_len-3],
 			flash_tmp_buffer[flash_page_len-2],
@@ -2144,15 +2126,17 @@ static bool himax_mcu_flash_lastdata_check(uint32_t size)
 	&& (flash_tmp_buffer[flash_page_len-3] == 0xFF)
 	&& (flash_tmp_buffer[flash_page_len-2] == 0xFF)
 	&& (flash_tmp_buffer[flash_page_len-1] == 0xFF)) {
-		I("Fail, Last four Bytes are:\n");
-		I("fbuf[FFFC]=0x%2X,[FFFD]=0x%2X,[FFFE]=0x%2X,[FFFF]=0x%2X\n",
+		E("%s: Fail, Last four Bytes are:\n", __func__);
+		E("%s: fbuf[FFFC]=0x%2X,[FFFD]=0x%2X,[FFFE]=0x%2X,[FFFF]=0x%2X\n",
+			__func__,
 			flash_tmp_buffer[flash_page_len-4],
 			flash_tmp_buffer[flash_page_len-3],
 			flash_tmp_buffer[flash_page_len-2],
 			flash_tmp_buffer[flash_page_len-1]);
 		goto FAIL;
 	} else {
-		I("fbuf[FFFC]=0x%2X,[FFFD]=0x%2X,[FFFE]=0x%2X,[FFFF]=0x%2X\n",
+		E("%s: fbuf[FFFC]=0x%2X,[FFFD]=0x%2X,[FFFE]=0x%2X,[FFFF]=0x%2X\n",
+			__func__,
 			flash_tmp_buffer[flash_page_len-4],
 			flash_tmp_buffer[flash_page_len-3],
 			flash_tmp_buffer[flash_page_len-2],
@@ -2169,14 +2153,14 @@ static int hx_mcu_diff_overlay_flash(void)
 	int diff_val = 0;
 
 	diff_val = (ic_data->vendor_fw_ver);
-	I("%s:Now fw ID is 0x%04X\n", __func__, diff_val);
+	D("%s: Now fw ID is 0x%04X\n", __func__, diff_val);
 	diff_val = (diff_val >> 12);
-	I("%s:Now diff value=0x%04X\n", __func__, diff_val);
+	D("%s: Now diff value=0x%04X\n", __func__, diff_val);
 
 	if (diff_val == 1)
-		I("%s:Now size should be 128K!\n", __func__);
+		D("%s: Now size should be 128K!\n", __func__);
 	else
-		I("%s:Now size should be 64K!\n", __func__);
+		D("%s: Now size should be 64K!\n", __func__);
 	rslt = diff_val;
 	return rslt;
 }
@@ -2221,7 +2205,7 @@ static bool himax_mcu_get_DSRAM_data(uint8_t *info_data, bool DSRAM_Flag)
 	}
 	/* 1. Read number of MKey R100070E8H to determin data size */
 	/* m_key_num = ic_data->HX_BT_NUM; */
-	/* I("%s,m_key_num=%d\n",__func__ ,m_key_num); */
+	/* D("%s: m_key_num=%d\n",__func__ ,m_key_num); */
 	/* total_size += m_key_num * 2; */
 	/* 2. Start DSRAM Rawdata and Wait Data Ready */
 	tmp_data[3] = 0x00; tmp_data[2] = 0x00;
@@ -2233,13 +2217,13 @@ static bool himax_mcu_get_DSRAM_data(uint8_t *info_data, bool DSRAM_Flag)
 			psram_op->passwrd_end[0]);
 
 	if (fw_run_flag < 0) {
-		I("%s Data NOT ready => bypass\n", __func__);
+		D("%s: Data NOT ready => bypass\n", __func__);
 		goto FAIL;
 	}
 
 	/* 3. Read RawData */
 	total_size_temp = total_size;
-	I("%s:data[0]=0x%2X,data[1]=0x%2X,data[2]=0x%2X,data[3]=0x%2X\n",
+	D("%s: data[0]=0x%2X,data[1]=0x%2X,data[2]=0x%2X,data[3]=0x%2X\n",
 		__func__,
 		psram_op->addr_rawdata_addr[0],
 		psram_op->addr_rawdata_addr[1],
@@ -2262,7 +2246,6 @@ static bool himax_mcu_get_DSRAM_data(uint8_t *info_data, bool DSRAM_Flag)
 				+ (psram_op->addr_rawdata_addr[1] << 8)
 				+ psram_op->addr_rawdata_addr[0]
 				+ i * max_i2c_size;
-		/*I("%s address = %08X\n", __func__, address);*/
 
 		tmp_addr[3] = (uint8_t)((address >> 24) & 0x00FF);
 		tmp_addr[2] = (uint8_t)((address >> 16) & 0x00FF);
@@ -2274,7 +2257,6 @@ static bool himax_mcu_get_DSRAM_data(uint8_t *info_data, bool DSRAM_Flag)
 					&temp_info_data[i * max_i2c_size], 0);
 			total_size_temp = total_size_temp - max_i2c_size;
 		} else {
-			/*I("last total_size_temp=%d\n",total_size_temp);*/
 			g_core_fp.fp_register_read(tmp_addr,
 					total_size_temp % max_i2c_size,
 					&temp_info_data[i * max_i2c_size], 0);
@@ -2295,12 +2277,11 @@ static bool himax_mcu_get_DSRAM_data(uint8_t *info_data, bool DSRAM_Flag)
 			+ temp_info_data[i]);
 
 	if (check_sum_cal % 0x10000 != 0) {
-		I("%s check_sum_cal fail=%2X\n", __func__, check_sum_cal);
+		D("%s: check_sum_cal fail=%2X\n", __func__, check_sum_cal);
 		goto FAIL;
 	} else {
 		memcpy(info_data, &temp_info_data[4],
 				total_data_size * sizeof(uint8_t));
-		/*I("%s checksum PASS\n", __func__);*/
 	}
 	kfree(temp_info_data);
 	return true;
@@ -2315,15 +2296,15 @@ FAIL:
 
 static void himax_mcu_init_ic(void)
 {
-	I("%s: use default incell init.\n", __func__);
+	D("%s: use default incell init.\n", __func__);
 }
 
 #if defined(HX_AUTO_UPDATE_FW)
 static int himax_mcu_fw_ver_bin(void)
 {
-	I("%s: use default incell address.\n", __func__);
+	D("%s: use default incell address.\n", __func__);
 	if (i_CTPM_FW != NULL) {
-		I("Catch fw version in bin file!\n");
+		D("%s: Catch fw version in bin file!\n", __func__);
 		g_i_FW_VER = (i_CTPM_FW[FW_VER_MAJ_FLASH_ADDR] << 8)
 				| i_CTPM_FW[FW_VER_MIN_FLASH_ADDR];
 		g_i_CFG_VER = (i_CTPM_FW[CFG_VER_MAJ_FLASH_ADDR] << 8)
@@ -2331,7 +2312,7 @@ static int himax_mcu_fw_ver_bin(void)
 		g_i_CID_MAJ = i_CTPM_FW[CID_VER_MAJ_FLASH_ADDR];
 		g_i_CID_MIN = i_CTPM_FW[CID_VER_MIN_FLASH_ADDR];
 	} else {
-		I("FW data is null!\n");
+		E("%s: FW data is null!\n", __func__);
 		return 1;
 	}
 	return NO_ERR;
@@ -2342,7 +2323,7 @@ static int himax_mcu_fw_ver_bin(void)
 #if defined(HX_RST_PIN_FUNC)
 static void himax_mcu_pin_reset(void)
 {
-	I("%s: Now reset the Touch chip.\n", __func__);
+	D("%s: Now reset the Touch chip.\n", __func__);
 	himax_rst_gpio_set(private_ts->rst_gpio, 0);
 	msleep(20);
 	himax_rst_gpio_set(private_ts->rst_gpio, 1);
@@ -2354,7 +2335,7 @@ static void himax_mcu_ic_reset(uint8_t loadconfig, uint8_t int_off)
 	struct himax_ts_data *ts = private_ts;
 
 	HX_HW_RESET_ACTIVATE = 0;
-	I("%s,status: loadconfig=%d,int_off=%d\n", __func__,
+	D("%s: status: loadconfig=%d,int_off=%d\n", __func__,
 			loadconfig, int_off);
 
 	if (ts->rst_gpio >= 0) {
@@ -2427,14 +2408,10 @@ static void himax_mcu_touch_information(void)
 	ic_data->HX_RX_NUM = data[2];
 	ic_data->HX_TX_NUM = data[3];
 	ic_data->HX_MAX_PT = data[4];
-	/*I("%s : HX_RX_NUM=%d,ic_data->HX_TX_NUM=%d,ic_data->HX_MAX_PT=%d\n",
-	 *	__func__,ic_data->HX_RX_NUM,
-	 *	ic_data->HX_TX_NUM,ic_data->HX_MAX_PT);
-	 */
+
 	g_core_fp.fp_register_read(pdriver_op->addr_fw_define_xy_res_enable,
 			DATA_LEN_4, data, 0);
 
-	/*I("%s : c_data->HX_XY_REVERSE=0x%2.2X\n",__func__,data[1]);*/
 	if ((data[1] & 0x04) == 0x04)
 		ic_data->HX_XY_REVERSE = true;
 	else
@@ -2444,16 +2421,10 @@ static void himax_mcu_touch_information(void)
 			DATA_LEN_4, data, 0);
 	ic_data->HX_Y_RES = data[0] * 256 + data[1];
 	ic_data->HX_X_RES = data[2] * 256 + data[3];
-	/*I("%s : ic_data->HX_Y_RES=%d,ic_data->HX_X_RES=%d\n",__func__,
-	 *	ic_data->HX_Y_RES,ic_data->HX_X_RES);
-	 */
 
 	g_core_fp.fp_register_read(pdriver_op->addr_fw_define_int_is_edge,
 			DATA_LEN_4, data, 0);
-	/*I("%s : data[0]=0x%2.2X,data[1]=0x%2.2X,data[2]=0x%2.2X,
-	 *	data[3]=0x%2.2X\n",__func__,data[0],data[1],data[2],data[3]);
-	 */
-	/*I("data[0] & 0x01 = %d\n",(data[0] & 0x01));*/
+
 	if ((data[1] & 0x01) == 1)
 		ic_data->HX_INT_IS_EDGE = true;
 	else
@@ -2461,10 +2432,7 @@ static void himax_mcu_touch_information(void)
 
 	/*1. Read number of MKey R100070E8H to determin data size*/
 	g_core_fp.fp_register_read(psram_op->addr_mkey, DATA_LEN_4, data, 0);
-	/* I("%s: tmp_data[0] = 0x%02X,tmp_data[1] = 0x%02X,tmp_data[2]=0x%02X,
-	 *	tmp_data[3] = 0x%02X\n",
-	 */
-	/*	__func__, tmp_data[0], tmp_data[1], tmp_data[2], tmp_data[3]);*/
+
 	ic_data->HX_BT_NUM = data[0] & 0x03;
 
 	err_cnt = himax_mcu_tp_info_check();
@@ -2482,15 +2450,15 @@ static void himax_mcu_touch_information(void)
 	ic_data->HX_PEN_FUNC = FIX_HX_PEN_FUNC;
 #endif
 	g_core_fp.fp_ic_id_read();
-	I("%s:HX_RX_NUM =%d,HX_TX_NUM =%d,HX_MAX_PT=%d\n", __func__,
+	D("%s: HX_RX_NUM =%d,HX_TX_NUM =%d,HX_MAX_PT=%d\n", __func__,
 		ic_data->HX_RX_NUM,
 		ic_data->HX_TX_NUM,
 		ic_data->HX_MAX_PT);
-	I("%s:HX_XY_REVERSE =%d,HX_Y_RES =%d,HX_X_RES=%d\n", __func__,
+	D("%s: HX_XY_REVERSE =%d,HX_Y_RES =%d,HX_X_RES=%d\n", __func__,
 		ic_data->HX_XY_REVERSE,
 		ic_data->HX_Y_RES,
 		ic_data->HX_X_RES);
-	I("%s:HX_INT_IS_EDGE =%d\n", __func__, ic_data->HX_INT_IS_EDGE);
+	D("%s: HX_INT_IS_EDGE =%d\n", __func__, ic_data->HX_INT_IS_EDGE);
 
 	tmp_addr[3] = 0x10;
 	tmp_addr[2] = 0x00;
@@ -2498,7 +2466,7 @@ static void himax_mcu_touch_information(void)
 	tmp_addr[0] = 0x9C;
 	g_core_fp.fp_register_read(tmp_addr, DATA_LEN_4, tmp_data, 0);
 	ic_data->HX_PEN_FUNC = tmp_data[3];
-	I("%s:HX_PEN_FUNC = %d\n", __func__, ic_data->HX_PEN_FUNC);
+	D("%s: HX_PEN_FUNC = %d\n", __func__, ic_data->HX_PEN_FUNC);
 }
 
 static void himax_mcu_reload_config(void)
@@ -2562,7 +2530,7 @@ static bool himax_mcu_diag_check_sum(struct himax_report_data *hx_touch_data)
 	}
 
 	if (check_sum_cal % HX64K != 0) {
-		I("%s fail=%2X\n", __func__, check_sum_cal);
+		W("%s: checksum fail=%2X\n", __func__, check_sum_cal);
 		return 0;
 	}
 
@@ -2590,12 +2558,13 @@ static int himax_mcu_ic_esd_recovery(int hx_esd_event,
 	} else if (hx_zero_event == length) {
 		if (g_zero_event_count > 5) {
 			g_zero_event_count = 0;
-			I("[HIMAX TP MSG]: ESD event checked - ALL Zero.\n");
+			D("%s: [HIMAX TP MSG]: ESD event checked - ALL Zero.\n",
+				__func__);
 			ret_val = HX_ESD_EVENT;
 		} else {
 			g_zero_event_count++;
-			I("[HIMAX TP MSG]: ALL Zero event is %d times.\n",
-					g_zero_event_count);
+			D("%s: [HIMAX TP MSG]: ALL Zero event is %d times.\n",
+					__func__, g_zero_event_count);
 			ret_val = HX_ZERO_EVENT_COUNT;
 		}
 	}
@@ -2611,7 +2580,7 @@ static void himax_mcu_esd_ic_reset(void)
 #else
 	himax_mcu_system_reset();
 #endif
-	I("%s:\n", __func__);
+	D("%s: \n", __func__);
 }
 #endif
 #if defined(HX_TP_PROC_GUEST_INFO)
@@ -2650,40 +2619,34 @@ static int himax_guest_info_read(uint32_t start_addr,
 	int result = 0;
 
 
-	I("%s:Reading guest info in start_addr = 0x%08X !\n", __func__,
+	D("%s: Reading guest info in start_addr = 0x%08X !\n", __func__,
 		start_addr);
 
 	tmp_addr[0] = start_addr % 0x100;
 	tmp_addr[1] = (start_addr >> 8) % 0x100;
 	tmp_addr[2] = (start_addr >> 16) % 0x100;
 	tmp_addr[3] = start_addr / 0x1000000;
-	I("addr[0]=0x%2X,addr[1]=0x%2X,addr[2]=0x%2X,addr[3]=0x%2X\n",
+
+	D("%s: addr[0]=0x%2X,addr[1]=0x%2X,addr[2]=0x%2X,addr[3]=0x%2X\n",
+		__func__,
 		tmp_addr[0], tmp_addr[1],
 		tmp_addr[2], tmp_addr[3]);
 
 	result = g_core_fp.fp_check_CRC(tmp_addr, flash_page_len);
-	I("Checksum = 0x%8X\n", result);
-	if (result != 0)
+	if (result != 0) {
+		W("%s: CRC checksum failed.\n", __func__);
 		goto END_FUNC;
+	}
 
 	for (temp_addr = start_addr;
-	temp_addr < (start_addr + flash_page_len);
-	temp_addr = temp_addr + 128) {
-
-		/* I("temp_addr=%d,tmp_addr[0]=0x%2X,tmp_addr[1]=0x%2X,
-		 *	tmp_addr[2]=0x%2X,tmp_addr[3]=0x%2X\n",
-		 *	temp_addr,tmp_addr[0],tmp_addr[1],
-		 *	tmp_addr[2],tmp_addr[3]);
-		 */
+		temp_addr < (start_addr + flash_page_len);
+		temp_addr = temp_addr + 128) {
 		tmp_addr[0] = temp_addr % 0x100;
 		tmp_addr[1] = (temp_addr >> 8) % 0x100;
 		tmp_addr[2] = (temp_addr >> 16) % 0x100;
 		tmp_addr[3] = temp_addr / 0x1000000;
 		g_core_fp.fp_register_read(tmp_addr, 128,
 			&flash_tmp_buffer[temp_addr - start_addr], false);
-		/* memcpy(&flash_tmp_buffer[temp_addr - start_addr],
-		 *	buffer,128);
-		 */
 	}
 
 END_FUNC:
@@ -2709,11 +2672,12 @@ static int hx_read_guest_info(void)
 	flash_tmp_buffer = kcalloc(HX_GUEST_INFO_SIZE * flash_page_len,
 		sizeof(uint8_t), GFP_KERNEL);
 	if (flash_tmp_buffer == NULL) {
-		I("%s: Memory allocate fail!\n", __func__);
+		D("%s: Memory allocate fail!\n", __func__);
 		return MEM_ALLOC_FAIL;
 	}
 
 	g_core_fp.fp_sense_off(true);
+
 	/* g_core_fp.fp_burst_enable(1); */
 
 	for (custom_info_temp = 0;
@@ -2743,34 +2707,17 @@ static int hx_read_guest_info(void)
 			+ (flash_tmp_buffer[custom_info_temp
 			* flash_page_len + 3] << 24);
 
-		I("Now custom_info_temp = %d\n", custom_info_temp);
-
-		I("Now size_buff[0]=0x%02X,[1]=0x%02X,[2]=0x%02X,[3]=0x%02X\n",
-			flash_tmp_buffer[custom_info_temp*flash_page_len],
-			flash_tmp_buffer[custom_info_temp*flash_page_len + 1],
-			flash_tmp_buffer[custom_info_temp*flash_page_len + 2],
-			flash_tmp_buffer[custom_info_temp*flash_page_len + 3]);
-
-		I("Now total length=%d\n", info_len);
-
 		g_guest_info_data->g_guest_data_len[custom_info_temp] =
 			info_len;
-
-		I("Now custom_info_id [0]=%d,[1]=%d,[2]=%d,[3]=%d\n",
-			flash_tmp_buffer[custom_info_temp*flash_page_len + 4],
-			flash_tmp_buffer[custom_info_temp*flash_page_len + 5],
-			flash_tmp_buffer[custom_info_temp*flash_page_len + 6],
-			flash_tmp_buffer[custom_info_temp*flash_page_len + 7]);
 
 		g_guest_info_data->g_guest_data_type[custom_info_temp] =
 			flash_tmp_buffer[custom_info_temp * flash_page_len
 			+ 7];
 
-		/* if(custom_info_temp < 3) { */
 		if (info_len > 128) {
-			I("%s: info_len=%d\n", __func__, info_len);
 			info_len = 128;
 		}
+
 		for (i = 0; i < info_len; i++)
 			temp_str[i] = flash_tmp_buffer[custom_info_temp
 				* flash_page_len
@@ -2778,35 +2725,19 @@ static int hx_read_guest_info(void)
 				+ HX_GUEST_INFO_ID_SIZE
 				+ i];
 
-		I("g_guest_info_data->g_guest_str_in_format[%d]size=%d\n",
-			custom_info_temp, info_len);
 		memcpy(&g_guest_info_data->
 			g_guest_str_in_format[custom_info_temp][0],
 			temp_str, info_len);
-		/*}*/
 
 		for (i = 0; i < 128; i++)
 			temp_str[i] = flash_tmp_buffer[custom_info_temp
 				* flash_page_len
 				+ i];
 
-		I("g_guest_info_data->g_guest_str[%d] size = %d\n",
-				custom_info_temp, 128);
 		memcpy(&g_guest_info_data->g_guest_str[custom_info_temp][0],
 				temp_str, 128);
-		/*if(custom_info_temp == 0)
-		 *{
-		 *	for ( i = 0; i< 256 ; i++) {
-		 *		if(i % 16 == 0 && i > 0)
-		 *			I("\n");
-		 *		I("g_guest_info_data->g_guest_str[%d][%d]
-					= 0x%02X", custom_info_temp, i,
-					g_guest_info_data->g_guest_str[
-					custom_info_temp][i]);
-		 *	}
-		 *}
-		 */
 	}
+
 	/* himax_burst_enable(private_ts->client, 0); */
 
 	g_core_fp.fp_sense_on(0x01);
@@ -2860,7 +2791,7 @@ void himax_mcu_clean_sram_0f(uint8_t *addr, int write_len, int type)
 	uint8_t tmp_addr[4];
 	uint8_t tmp_data[MAX_I2C_TRANS_SZ] = {0};
 
-	I("%s, Entering\n", __func__);
+	D("%s: Entering\n", __func__);
 
 	max_bus_size = (write_len > HX_MAX_WRITE_SZ - 4)
 			? (HX_MAX_WRITE_SZ - 4)
@@ -2874,7 +2805,7 @@ void himax_mcu_clean_sram_0f(uint8_t *addr, int write_len, int type)
 	tmp_addr[2] = addr[2];
 	tmp_addr[1] = addr[1];
 	tmp_addr[0] = addr[0];
-	I("%s:addr[3]=0x%2X,addr[2]=0x%2X,addr[1]=0x%2X,addr[0]=0x%2X\n",
+	D("%s: addr[3]=0x%2X,addr[2]=0x%2X,addr[1]=0x%2X,addr[0]=0x%2X\n",
 		__func__,
 		tmp_addr[3],
 		tmp_addr[2],
@@ -2896,7 +2827,7 @@ void himax_mcu_clean_sram_0f(uint8_t *addr, int write_len, int type)
 	for (i = 0; i < MAX_I2C_TRANS_SZ; i++)
 		tmp_data[i] = fix_data;
 
-	I("%s,  total size=%d\n", __func__, total_size_temp);
+	D("%s:  total size=%d\n", __func__, total_size_temp);
 
 	if (total_size_temp % max_bus_size == 0)
 		total_read_times = total_size_temp / max_bus_size;
@@ -2904,13 +2835,11 @@ void himax_mcu_clean_sram_0f(uint8_t *addr, int write_len, int type)
 		total_read_times = total_size_temp / max_bus_size + 1;
 
 	for (i = 0; i < (total_read_times); i++) {
-		I("[log]write %d time start!\n", i);
 		if (total_size_temp >= max_bus_size) {
 			g_core_fp.fp_register_write(tmp_addr,
 				max_bus_size, tmp_data, 0);
 			total_size_temp = total_size_temp - max_bus_size;
 		} else {
-			I("last total_size_temp=%d\n", total_size_temp);
 			g_core_fp.fp_register_write(tmp_addr,
 				total_size_temp % max_bus_size,
 				tmp_data, 0);
@@ -2922,7 +2851,7 @@ void himax_mcu_clean_sram_0f(uint8_t *addr, int write_len, int type)
 		usleep_range(10000, 11000);
 	}
 
-	I("%s, END\n", __func__);
+	D("%s: END\n", __func__);
 }
 
 void himax_mcu_write_sram_0f(const struct firmware *fw_entry, uint8_t *addr,
@@ -2938,7 +2867,7 @@ void himax_mcu_write_sram_0f(const struct firmware *fw_entry, uint8_t *addr,
 	uint8_t *tmp_data;
 
 	total_size_temp = write_len;
-	I("%s, Entering - total write size=%d\n", __func__, total_size_temp);
+	D("%s: Entering - total write size=%d\n", __func__, total_size_temp);
 
 	max_bus_size = (write_len > HX_MAX_WRITE_SZ - 4)
 			? (HX_MAX_WRITE_SZ - 4)
@@ -2950,59 +2879,32 @@ void himax_mcu_write_sram_0f(const struct firmware *fw_entry, uint8_t *addr,
 	tmp_addr[2] = addr[2];
 	tmp_addr[1] = addr[1];
 	tmp_addr[0] = addr[0];
-	I("%s, write addr = 0x%02X%02X%02X%02X\n", __func__,
+
+	D("%s: write addr = 0x%02X%02X%02X%02X\n", __func__,
 		tmp_addr[3], tmp_addr[2], tmp_addr[1], tmp_addr[0]);
 
-	/* tmp_data = kcalloc(max_bus_size, sizeof(uint8_t), GFP_KERNEL);
-	 * if (tmp_data == NULL) {
-	 *	I("%s: Can't allocate enough buf\n", __func__);
-	 *	return;
-	 * }
-	 */
-
-	/*for(i = 0;i<10;i++)
-	 *{
-	 *	I("[%d] 0x%2.2X", i, tmp_data[i]);
-	 *}
-	 *I("\n");
-	 */
 	if (total_size_temp % max_bus_size == 0)
 		total_read_times = total_size_temp / max_bus_size;
 	else
 		total_read_times = total_size_temp / max_bus_size + 1;
 
 	for (i = 0; i < (total_read_times); i++) {
-		/*I("[log]write %d time start!\n", i);*/
-		/*I("[log]addr[3]=0x%02X, addr[2]=0x%02X,
-		 *	addr[1]=0x%02X,
-		 *	addr[0]=0x%02X!\n", tmp_addr[3],
-		 *	tmp_addr[2], tmp_addr[1], tmp_addr[0]);
-		 */
-
 		if (total_size_temp >= max_bus_size) {
-			/*memcpy(tmp_data, &fw_entry->data[start_index+i
-			 *	* max_bus_size], max_bus_size);
-			 */
 			tmp_data = (uint8_t *)&fw_entry->data[start_index+i
 				* max_bus_size];
 			g_core_fp.fp_register_write(tmp_addr,
 				max_bus_size, tmp_data, 0);
 			total_size_temp = total_size_temp - max_bus_size;
 		} else {
-			/*memcpy(tmp_data, &fw_entry->data[start_index+i
-			 *	* max_bus_size],
-			 *	total_size_temp % max_bus_size);
-			 */
 			tmp_data = (uint8_t *)&fw_entry->data[start_index+i
 				* max_bus_size];
-			I("last total_size_temp=%d\n",
+			D("%s: last total_size_temp=%d\n", __func__,
 				total_size_temp % max_bus_size);
 			g_core_fp.fp_register_write(tmp_addr,
 					total_size_temp % max_bus_size,
 					tmp_data, 0);
 		}
 
-		/*I("[log]write %d time end!\n", i);*/
 		address = ((i+1) * max_bus_size);
 		tmp_addr[0] = addr[0] + (uint8_t) ((address) & 0x00FF);
 
@@ -3015,8 +2917,8 @@ void himax_mcu_write_sram_0f(const struct firmware *fw_entry, uint8_t *addr,
 
 		udelay(100);
 	}
-	I("%s, End\n", __func__);
-	/* kfree(tmp_data); */
+
+	D("%s: End\n", __func__);
 }
 
 int himax_sram_write_crc_check(const struct firmware *fw_entry, uint8_t *addr,
@@ -3029,7 +2931,7 @@ int himax_sram_write_crc_check(const struct firmware *fw_entry, uint8_t *addr,
 		g_core_fp.fp_write_sram_0f(fw_entry, addr, strt_idx, len);
 		crc = g_core_fp.fp_check_CRC(addr,  len);
 		retry++;
-		I("%s, HW CRC %s in %d time\n", __func__,
+		D("%s: HW CRC %s in %d time\n", __func__,
 			(crc == 0) ? "OK" : "Fail", retry);
 	} while (crc != 0 && retry < 3);
 
@@ -3085,7 +2987,7 @@ int hx_parse_bin_cfg_data(const struct firmware *fw_entry,
 		part_num = fw_entry->data[HX64K + HX1K + 12];
 	else
 		part_num = fw_entry->data[HX64K + 12];
-	I("%s, Number of partition is %d\n", __func__, part_num);
+	D("%s: Number of partition is %d\n", __func__, part_num);
 	if (part_num <= 1) {
 		E("%s, size of cfg part failed! part_num = %d\n",
 			__func__, part_num);
@@ -3120,7 +3022,7 @@ int hx_parse_bin_cfg_data(const struct firmware *fw_entry,
 		if ((buf[15] == 0x55 && buf[14] == 0x66)
 		|| (buf[3] == 0x20 && buf[2] == 0x00
 		&& buf[1] == 0x8C && buf[0] == 0xE0)) {
-			I("%s: catch overlay section in index %d\n",
+			D("%s: catch overlay section in index %d\n",
 				__func__, i);
 
 			/* record index of overlay section */
@@ -3157,7 +3059,7 @@ int hx_parse_bin_cfg_data(const struct firmware *fw_entry,
 	if (cfg_sz % 16 != 0)
 		cfg_sz = cfg_sz + 16 - (cfg_sz % 16);
 
-	I("%s, cfg_sz = %d!, dsram_base = %X, dsram_max = %X\n", __func__,
+	D("%s: cfg_sz = %d!, dsram_base = %X, dsram_max = %X\n", __func__,
 			cfg_sz, dsram_base, dsram_max);
 	if (cfg_sz <= FW_BIN_16K_SZ)
 		memset(FW_buf, 0x00, sizeof(uint8_t) * cfg_sz);
@@ -3168,7 +3070,7 @@ int hx_parse_bin_cfg_data(const struct firmware *fw_entry,
 			zf_info_arr[i].cfg_addr = zf_info_arr[i].cfg_addr
 				- (zf_info_arr[i].cfg_addr % 4);
 
-		I("%s,[%d]SRAM addr=%08X,[%d]fw_addr=%08X,[%d]write_size=%d\n",
+		D("%s: [%d]SRAM addr=%08X,[%d]fw_addr=%08X,[%d]write_size=%d\n",
 			__func__,
 			i, zf_info_arr[i].cfg_addr,
 			i, zf_info_arr[i].fw_addr,
@@ -3177,7 +3079,7 @@ int hx_parse_bin_cfg_data(const struct firmware *fw_entry,
 #if defined(HX_CODE_OVERLAY)
 		/*overlay section*/
 		if (allovlidx & (1<<i)) {
-			I("%s: skip overlay section %d\n", __func__, i);
+			D("%s: skip overlay section %d\n", __func__, i);
 			continue;
 		}
 #endif
@@ -3186,20 +3088,6 @@ int hx_parse_bin_cfg_data(const struct firmware *fw_entry,
 				&fw_entry->data[zf_info_arr[i].fw_addr],
 				zf_info_arr[i].write_size);
 	}
-	/* debug info */
-	/* for (i = 1; i < part_num; i++) {
-	 *	different = 0;
-	 *	I("--cfg_addr = 0x%08X\n",zf_info_arr[i].cfg_addr);
-	 *	I("--bin_addr = 0x%08X\n",zf_info_arr[i].fw_addr);
-	 *	I("--write size = %d\n",zf_info_arr[i].write_size);
-	 *	for ( j = 0; j < zf_info_arr[i].write_size; j++) {
-	 *		if(FW_buf[zf_info_arr[i].cfg_addr - dsram_base + j] !=
-			fw_entry->data[zf_info_arr[i].fw_addr + j])
-	 *			different++;
-	 *	}
-	 *	I("--There are %d different\n", different);
-	 * }
-	 */
 
 	return cfg_sz;
 }
@@ -3242,7 +3130,7 @@ int himax_zf_part_info(const struct firmware *fw_entry)
 		part_num = fw_entry->data[HX64K + HX1K + 12];
 	else
 		part_num = fw_entry->data[HX64K + 12];
-	I("%s, Number of partition is %d\n", __func__, part_num);
+	D("%s: Number of partition is %d\n", __func__, part_num);
 	if (part_num <= 0)
 		part_num = 1;
 
@@ -3263,18 +3151,17 @@ int himax_zf_part_info(const struct firmware *fw_entry)
 	}
 
 	/*3. Find the data in the bin file */
+
 	/*CFG*/
 	cfg_sz = hx_parse_bin_cfg_data(fw_entry, zf_info_arr, FW_buf,
 			sram_min);
-	I("Now cfg_sz=%d\n", cfg_sz);
 	if (cfg_sz < 0) {
 		ret = LENGTH_FAIL;
 		goto END_FUNC;
 	} else {
-		cfg_crc_sw = g_core_fp.fp_Calculate_CRC_with_AP(FW_buf, 0,
-			cfg_sz);
-		I("Now cfg_crc_sw=%X\n", cfg_crc_sw);
+		cfg_crc_sw = g_core_fp.fp_Calculate_CRC_with_AP(FW_buf, 0, cfg_sz);
 	}
+
 	/*Fw Entity*/
 	if (flag_1k_header == true)
 		memcpy(buf, &fw_entry->data[0 * 0x10 + HX64K + HX1K], 16);
@@ -3299,11 +3186,12 @@ int himax_zf_part_info(const struct firmware *fw_entry)
 		zf_info_arr[0].write_size) != 0) {
 			E("%s, HW CRC FAIL\n", __func__);
 		} else {
-			I("%s, HW CRC PASS\n", __func__);
+			D("%s: HW CRC PASS\n", __func__);
 		}
 
-		I("Now sram_min[0]=0x%02X,[1]=0x%02X,[2]=0x%02X,[3]=0x%02X\n",
-			sram_min[0], sram_min[1], sram_min[2], sram_min[3]);
+		D("%s: Now sram_min[0]=0x%02X,[1]=0x%02X,[2]=0x%02X,[3]=0x%02X\n",
+			__func__, sram_min[0], sram_min[1], sram_min[2], sram_min[3]);
+		
 		do {
 			g_core_fp.fp_register_write(sram_min, cfg_sz,
 				FW_buf, 0);
@@ -3311,9 +3199,7 @@ int himax_zf_part_info(const struct firmware *fw_entry)
 			if (cfg_crc_hw != cfg_crc_sw) {
 				E("Cfg CRC FAIL,HWCRC=%X,SWCRC=%X,retry=%d\n",
 					cfg_crc_hw, cfg_crc_sw, retry);
-			} else
-				I("Config CRC Pass\n");
-
+			}
 		} while (cfg_crc_hw != cfg_crc_sw && retry-- > 0);
 
 #if defined(HX_CODE_OVERLAY)
@@ -3345,7 +3231,7 @@ int himax_zf_part_info(const struct firmware *fw_entry)
 			g_core_fp.fp_resend_cmd_func(private_ts->suspended);
 #endif
 		}
-		I("%s: prepare upgrade overlay section = %d\n",
+		D("%s: prepare upgrade overlay section = %d\n",
 				__func__, ovl_idx_t);
 
 		if (zf_info_arr[ovl_idx_t].write_size == 0) {
@@ -3360,7 +3246,7 @@ int himax_zf_part_info(const struct firmware *fw_entry)
 				send_data[0] = ovl_fault;
 				E("%s, Overlay HW CRC FAIL\n", __func__);
 			} else {
-				I("%s, Overlay HW CRC PASS\n", __func__);
+				D("%s: Overlay HW CRC PASS\n", __func__);
 			}
 		}
 
@@ -3396,7 +3282,7 @@ void himax_mcu_firmware_update_0f(const struct firmware *fw_entry)
 	int ret = 0;
 	uint8_t tmp_data[DATA_LEN_4] = {0x01, 0x00, 0x00, 0x00};
 
-	I("%s,Entering - total FW size=%d\n", __func__, (int)fw_entry->size);
+	D("%s: Entering - total FW size=%d\n", __func__, (int)fw_entry->size);
 
 	g_core_fp.fp_register_write(pzf_op->addr_system_reset, 4,
 			pzf_op->data_system_reset, 0);
@@ -3488,7 +3374,7 @@ void himax_mcu_firmware_update_0f(const struct firmware *fw_entry)
 	g_core_fp.fp_register_write(pfw_op->addr_set_frame_addr, 4,
 		tmp_data, 0);
 
-	I("%s, End\n", __func__);
+	D("%s: End\n", __func__);
 }
 
 int hx_0f_op_file_dirly(char *file_name)
@@ -3497,13 +3383,13 @@ int hx_0f_op_file_dirly(char *file_name)
 	const struct firmware *fw_entry = NULL;
 
 
-	I("%s, Entering,file name = %s\n", __func__, file_name);
+	D("%s: Entering,file name = %s\n", __func__, file_name);
 
 	ret = request_firmware(&fw_entry, file_name, private_ts->dev);
 	if (ret < 0) {
 #if defined(__EMBEDDED_FW__)
 		fw_entry = &g_embedded_fw;
-		I("%s: Not find FW in userspace, use embedded FW(size:%zu)\n",
+		D("%s: Not find FW in userspace, use embedded FW(size:%zu)\n",
 			__func__, g_embedded_fw.size);
 #else
 		E("%s,%d: error code = %d, file maybe fail\n",
@@ -3515,11 +3401,11 @@ int hx_0f_op_file_dirly(char *file_name)
 	himax_int_enable(0);
 
 	if (g_f_0f_updat == 1) {
-		I("%s:[Warning]Other thread is updating now!\n", __func__);
+		D("%s: [Warning]Other thread is updating now!\n", __func__);
 		err = -1;
 		goto END;
 	} else {
-		I("%s:Entering Update Flow!\n", __func__);
+		D("%s: Entering Update Flow!\n", __func__);
 		g_f_0f_updat = 1;
 	}
 
@@ -3529,7 +3415,7 @@ int hx_0f_op_file_dirly(char *file_name)
 
 	g_f_0f_updat = 0;
 END:
-	I("%s, END\n", __func__);
+	D("%s: END\n", __func__);
 	return err;
 }
 
@@ -3538,14 +3424,14 @@ int himax_mcu_0f_operation_dirly(void)
 	int err = NO_ERR, ret;
 	const struct firmware *fw_entry = NULL;
 
-	I("%s, Entering,file name = %s\n", __func__, i_CTPM_firmware_name);
+	D("%s: Entering,file name = %s\n", __func__, i_CTPM_firmware_name);
 
 	ret = request_firmware(&fw_entry, i_CTPM_firmware_name,
 		private_ts->dev);
 	if (ret < 0) {
 #if defined(__EMBEDDED_FW__)
 		fw_entry = &g_embedded_fw;
-		I("%s: Not find FW in userspace, use embedded FW(size:%zu)\n",
+		D("%s: Not find FW in userspace, use embedded FW(size:%zu)\n",
 			__func__, g_embedded_fw.size);
 #else
 		E("%s,%d: error code = %d, file maybe fail\n",
@@ -3557,11 +3443,11 @@ int himax_mcu_0f_operation_dirly(void)
 	himax_int_enable(0);
 
 	if (g_f_0f_updat == 1) {
-		I("%s:[Warning]Other thread is updating now!\n", __func__);
+		D("%s: [Warning]Other thread is updating now!\n", __func__);
 		err = -1;
 		goto END;
 	} else {
-		I("%s:Entering Update Flow!\n", __func__);
+		D("%s: Entering Update Flow!\n", __func__);
 		g_f_0f_updat = 1;
 	}
 
@@ -3571,7 +3457,7 @@ int himax_mcu_0f_operation_dirly(void)
 
 	g_f_0f_updat = 0;
 END:
-	I("%s, END\n", __func__);
+	D("%s: END\n", __func__);
 	return err;
 }
 
@@ -3580,14 +3466,14 @@ void himax_mcu_0f_operation(struct work_struct *work)
 	int err = NO_ERR;
 	const struct firmware *fw_entry = NULL;
 
-	I("%s, Entering,file name = %s\n", __func__, i_CTPM_firmware_name);
+	D("%s: Entering,file name = %s\n", __func__, i_CTPM_firmware_name);
 
 	err = request_firmware(&fw_entry, i_CTPM_firmware_name,
 		private_ts->dev);
 	if (err < 0) {
 #if defined(__EMBEDDED_FW__)
 		fw_entry = &g_embedded_fw;
-		I("%s: Not find FW in userspace, use embedded FW(size:%zu)",
+		D("%s: Not find FW in userspace, use embedded FW(size:%zu)",
 			__func__, g_embedded_fw.size);
 #else
 		E("%s,%d: error code = %d, file maybe fail\n",
@@ -3597,10 +3483,10 @@ void himax_mcu_0f_operation(struct work_struct *work)
 	}
 
 	if (g_f_0f_updat == 1) {
-		I("%s:[Warning]Other thread is updating now!\n", __func__);
+		D("%s: [Warning]Other thread is updating now!\n", __func__);
 		goto END;
 	} else {
-		I("%s:Entering Update Flow!\n", __func__);
+		D("%s: Entering Update Flow!\n", __func__);
 		g_f_0f_updat = 1;
 	}
 
@@ -3617,12 +3503,12 @@ void himax_mcu_0f_operation(struct work_struct *work)
 	/*msleep (10);*/
 	g_core_fp.fp_sense_on(0x00);
 	/*msleep (10);*/
-	I("%s:End\n", __func__);
+	D("%s: End\n", __func__);
 	himax_int_enable(1);
 
 	g_f_0f_updat = 0;
 END:
-	I("%s, END\n", __func__);
+	D("%s: END\n", __func__);
 }
 
 static int himax_mcu_0f_esd_check(void)
@@ -3647,7 +3533,7 @@ void himax_mcu_read_sram_0f(const struct firmware *fw_entry,
 	uint8_t *temp_info_data = NULL;
 	int *not_same_buff = NULL;
 
-	I("%s, Entering\n", __func__);
+	D("%s: Entering\n", __func__);
 
 	/*g_core_fp.fp_burst_enable(1);*/
 
@@ -3672,7 +3558,7 @@ void himax_mcu_read_sram_0f(const struct firmware *fw_entry,
 	else
 		total_read_times = total_size / max_bus_size + 1;
 
-	I("%s, total size=%d, bus size=%d, read time=%d\n",
+	D("%s: total size=%d, bus size=%d, read time=%d\n",
 		__func__,
 		total_size,
 		max_bus_size,
@@ -3682,7 +3568,7 @@ void himax_mcu_read_sram_0f(const struct firmware *fw_entry,
 	tmp_addr[2] = addr[2];
 	tmp_addr[1] = addr[1];
 	tmp_addr[0] = addr[0];
-	I("%s,addr[3]=0x%2X,addr[2]=0x%2X,addr[1]=0x%2X,addr[0]=0x%2X\n",
+	D("%s: addr[3]=0x%2X,addr[2]=0x%2X,addr[1]=0x%2X,addr[0]=0x%2X\n",
 		__func__,
 		tmp_addr[3],
 		tmp_addr[2],
@@ -3726,7 +3612,9 @@ void himax_mcu_read_sram_0f(const struct firmware *fw_entry,
 
 		/*msleep (10);*/
 	}
-	I("%s,READ Start, start_index = %d\n", __func__, start_index);
+	
+	D("%s: READ Start, start_index = %d\n", 
+		__func__, start_index);
 
 	j = start_index;
 	for (i = 0; i < read_len; i++, j++) {
@@ -3735,26 +3623,29 @@ void himax_mcu_read_sram_0f(const struct firmware *fw_entry,
 			not_same_buff[i] = 1;
 		}
 
-		I("0x%2.2X, ", temp_info_data[i]);
+		D("0x%2.2X, ", temp_info_data[i]);
 
 		if (i > 0 && i%16 == 15)
 			pr_info("\n");
-
 	}
-	I("%s,READ END,Not Same count=%d\n", __func__, not_same);
+
+	D("%s: READ END,Not Same count=%d\n", 
+		__func__, not_same);
 
 	if (not_same != 0) {
 		j = start_index;
 		for (i = 0; i < read_len; i++, j++) {
 			if (not_same_buff[i] == 1)
-				I("bin=[%d] 0x%2.2X\n", i, fw_entry->data[j]);
+				D("%s: bin=[%d] 0x%2.2X\n", 
+					__func__, i, fw_entry->data[j]);
 		}
 		for (i = 0; i < read_len; i++, j++) {
 			if (not_same_buff[i] == 1)
-				I("sram=[%d] 0x%2.2X\n", i, temp_info_data[i]);
+				D("%s: sram=[%d] 0x%2.2X\n", 
+					__func__, i, temp_info_data[i]);
 		}
 	}
-	I("%s,READ END, Not Same count=%d\n", __func__, not_same);
+	D("%s: READ END, Not Same count=%d\n", __func__, not_same);
 
 	kfree(not_same_buff);
 err_malloc_not_same_buff:
@@ -3777,7 +3668,7 @@ void himax_mcu_read_all_sram(uint8_t *addr, int read_len)
 	uint8_t tmp_addr[4];
 	uint8_t *temp_info_data;
 
-	I("%s, Entering\n", __func__);
+	D("%s: Entering\n", __func__);
 
 	/*g_core_fp.fp_burst_enable(1);*/
 
@@ -3790,13 +3681,13 @@ void himax_mcu_read_all_sram(uint8_t *addr, int read_len)
 	else
 		total_read_times = total_size / max_bus_size + 1;
 
-	I("%s, total size=%d\n", __func__, total_size);
+	D("%s: total size=%d\n", __func__, total_size);
 
 	tmp_addr[3] = addr[3];
 	tmp_addr[2] = addr[2];
 	tmp_addr[1] = addr[1];
 	tmp_addr[0] = addr[0];
-	I("%s:addr[3]=0x%2X,addr[2]=0x%2X,addr[1]=0x%2X,addr[0]=0x%2X\n",
+	D("%s: addr[3]=0x%2X,addr[2]=0x%2X,addr[1]=0x%2X,addr[0]=0x%2X\n",
 		__func__,
 		tmp_addr[3],
 		tmp_addr[2],
@@ -3831,37 +3722,16 @@ void himax_mcu_read_all_sram(uint8_t *addr, int read_len)
 
 		/*msleep (10);*/
 	}
-	I("%s,addr[3]=0x%2X,addr[2]=0x%2X,addr[1]=0x%2X,addr[0]=0x%2X\n",
+	D("%s: addr[3]=0x%2X,addr[2]=0x%2X,addr[1]=0x%2X,addr[0]=0x%2X\n",
 		__func__,
 		tmp_addr[3],
 		tmp_addr[2],
 		tmp_addr[1],
 		tmp_addr[0]);
-	/*for(i = 0;i<read_len;i++)
-	 *{
-	 *	I("0x%2.2X, ", temp_info_data[i]);
-	 *
-	 *	if (i > 0 && i%16 == 15)
-	 *		printk("\n");
-	 *}
-	 */
-
-	/* need modify
-	 * I("Now Write File start!\n");
-	 * vts_name = kp_getname_kernel("/sdcard/dump_dsram.txt");
-	 * fn = kp_file_open_name(vts_name, O_CREAT | O_WRONLY, 0);
-	 * if (!IS_ERR (fn)) {
-	 * I("%s create file and ready to write\n", __func__);
-	 * fn->f_op->write(fn, temp_info_data, read_len*sizeof (uint8_t),
-	 *	&fn->f_pos);
-	 * filp_close (fn, NULL);
-	 * }
-	 * I("Now Write File End!\n");
-	 */
 
 	kfree(temp_info_data);
 
-	I("%s, END\n", __func__);
+	D("%s: END\n", __func__);
 
 }
 
@@ -3869,7 +3739,7 @@ void himax_mcu_firmware_read_0f(const struct firmware *fw_entry, int type)
 {
 	uint8_t tmp_addr[4];
 
-	I("%s, Entering\n", __func__);
+	D("%s: Entering\n", __func__);
 	if (type == 0) { /* first 48K */
 		g_core_fp.fp_read_sram_0f(fw_entry,
 			pzf_op->data_sram_start_addr,
@@ -3905,7 +3775,7 @@ void himax_mcu_firmware_read_0f(const struct firmware *fw_entry, int type)
 			0xC30C, 4);
 	}
 
-	I("%s, END\n", __func__);
+	D("%s: END\n", __func__);
 }
 
 void himax_mcu_0f_operation_check(int type)
@@ -3915,42 +3785,45 @@ void himax_mcu_0f_operation_check(int type)
 	/* char *firmware_name = "himax.bin"; */
 
 
-	I("%s, Entering,file name = %s\n", __func__, i_CTPM_firmware_name);
+	D("%s: Entering,file name = %s\n", __func__, i_CTPM_firmware_name);
 
 	err = request_firmware(&fw_entry, i_CTPM_firmware_name,
 		private_ts->dev);
 	if (err < 0) {
 #if defined(__EMBEDDED_FW__)
 		fw_entry = &g_embedded_fw;
-		I("%s: Not find FW in userspace, use embedded FW(size:%zu)\n",
+		D("%s: Not find FW in userspace, use embedded FW(size:%zu)\n",
 			__func__, g_embedded_fw.size);
 #else
-		E("%s,%d: error code = %d\n", __func__, __LINE__, err);
+		E("%s(%d): error code = %d\n", __func__, __LINE__, err);
 		return;
 #endif
 	}
 
-	I("first 4 bytes 0x%2X, 0x%2X, 0x%2X, 0x%2X !\n",
-			fw_entry->data[0],
-			fw_entry->data[1],
-			fw_entry->data[2],
-			fw_entry->data[3]);
-	I("next 4 bytes 0x%2X, 0x%2X, 0x%2X, 0x%2X !\n",
-			fw_entry->data[4],
-			fw_entry->data[5],
-			fw_entry->data[6],
-			fw_entry->data[7]);
-	I("and next 4 bytes 0x%2X, 0x%2X, 0x%2X, 0x%2X !\n",
-			fw_entry->data[8],
-			fw_entry->data[9],
-			fw_entry->data[10],
-			fw_entry->data[11]);
+	D("%s: first 4 bytes 0x%2X, 0x%2X, 0x%2X, 0x%2X !\n",
+		__func__,
+		fw_entry->data[0],
+		fw_entry->data[1],
+		fw_entry->data[2],
+		fw_entry->data[3]);
+	D("%s: next 4 bytes 0x%2X, 0x%2X, 0x%2X, 0x%2X !\n",
+		__func__,
+		fw_entry->data[4],
+		fw_entry->data[5],
+		fw_entry->data[6],
+		fw_entry->data[7]);
+	D("%s: and next 4 bytes 0x%2X, 0x%2X, 0x%2X, 0x%2X !\n",
+		__func__,
+		fw_entry->data[8],
+		fw_entry->data[9],
+		fw_entry->data[10],
+		fw_entry->data[11]);
 
 	g_core_fp.fp_firmware_read_0f(fw_entry, type);
 
 	if (err >= 0)
 		release_firmware(fw_entry);
-	I("%s, END\n", __func__);
+	D("%s: END\n", __func__);
 }
 #endif
 
@@ -4108,7 +3981,7 @@ int himax_mcu_in_cmd_struct_init(void)
 {
 	int err = 0;
 
-	I("%s: Entering!\n", __func__);
+	D("%s: Entering!\n", __func__);
 	himax_mcu_cmd_struct_free = himax_mcu_in_cmd_struct_free;
 
 	g_core_cmd_op = kzalloc(sizeof(struct himax_core_command_operation),
@@ -4233,12 +4106,12 @@ void himax_mcu_in_cmd_struct_free(void)
 	kfree(g_core_cmd_op);
 	g_core_cmd_op = NULL;
 
-	I("%s: release completed\n", __func__);
+	D("%s: release completed\n", __func__);
 }
 
 void himax_mcu_in_cmd_init(void)
 {
-	I("%s: Entering!\n", __func__);
+	D("%s: Entering!\n", __func__);
 /* CORE_IC */
 	himax_parse_assign_cmd(ic_adr_ahb_addr_byte_0,
 		pic_op->addr_ahb_addr_byte_0,

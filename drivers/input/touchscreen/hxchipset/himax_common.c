@@ -257,7 +257,7 @@ static int himax_palm_detect(uint8_t *buf)
 	x = buf[base] << 8 | buf[base + 1];
 	y = (buf[base + 2] << 8 | buf[base + 3]);
 	w = buf[(ts->nFinger_support * 4) + loop_i];
-	I(" %s HX_PALM_REPORT_loopi=%d,base=%x,X=%x,Y=%x,W=%x\n",
+	D("%s: HX_PALM_REPORT_loopi=%d,base=%x,X=%x,Y=%x,W=%x\n",
 		__func__, loop_i, base, x, y, w);
 	if ((!atomic_read(&ts->suspend_mode))
 	&& (x == 0xFA5A)
@@ -403,7 +403,7 @@ static ssize_t himax_HSEN_read(struct file *file, char *buf,
 			kfree(temp_buf);
 			HX_PROC_SEND_FLAG = 1;
 		} else {
-			E("%s, Failed to allocate memory\n", __func__);
+			E("%s: Failed to allocate memory\n", __func__);
 		}
 	} else {
 		HX_PROC_SEND_FLAG = 0;
@@ -465,7 +465,7 @@ static ssize_t himax_SMWP_read(struct file *file, char *buf,
 			kfree(temp_buf);
 			HX_PROC_SEND_FLAG = 1;
 		} else {
-			E("%s, Failed to allocate memory\n", __func__);
+			E("%s: Failed to allocate memory\n", __func__);
 		}
 	} else {
 		HX_PROC_SEND_FLAG = 0;
@@ -529,7 +529,7 @@ static ssize_t himax_GESTURE_read(struct file *file, char *buf,
 			kfree(temp_buf);
 			HX_PROC_SEND_FLAG = 1;
 		} else {
-			E("%s, Failed to allocate memory\n", __func__);
+			E("%s: Failed to allocate memory\n", __func__);
 		}
 	} else {
 		HX_PROC_SEND_FLAG = 0;
@@ -555,20 +555,23 @@ static ssize_t himax_GESTURE_write(struct file *file, const char *buff,
 	if (copy_from_user(buf, buff, len))
 		return -EFAULT;
 
-	I("himax_GESTURE_store= %s, len = %d\n", buf, (int)len);
+	D("%s: himax_GESTURE_store= %s, len = %d\n", 
+		__func__, buf, (int)len);
 
 	for (i = 0; i < len; i++) {
 		if (buf[i] == '0' && j < GEST_SUP_NUM) {
 			ts->gesture_cust_en[j] = 0;
-			I("gesture en[%d]=%d\n", j, ts->gesture_cust_en[j]);
+			D("%s: gesture en[%d]=%d\n", __func__, 
+				j, ts->gesture_cust_en[j]);
 			j++;
 		} else if (buf[i] == '1' && j < GEST_SUP_NUM) {
 			ts->gesture_cust_en[j] = 1;
-			I("gesture en[%d]=%d\n", j, ts->gesture_cust_en[j]);
+			D("%s: gesture en[%d]=%d\n", __func__,
+				j, ts->gesture_cust_en[j]);
 			j++;
 		} else
-			I("Not 0/1 or >=GEST_SUP_NUM : buf[%d] = %c\n",
-				i, buf[i]);
+			D("%s: Not 0/1 or >=GEST_SUP_NUM : buf[%d] = %c\n",
+				__func__, i, buf[i]);
 	}
 
 	return len;
@@ -601,7 +604,7 @@ static ssize_t himax_psensor_read(struct file *file, char *buf,
 			kfree(temp_buf);
 			HX_PROC_SEND_FLAG = 1;
 		} else {
-			E("%s, Failed to allocate memory\n", __func__);
+			E("%s: Failed to allocate memory\n", __func__);
 		}
 	} else {
 		HX_PROC_SEND_FLAG = 0;
@@ -783,7 +786,7 @@ int himax_input_register(struct himax_ts_data *ts)
 #endif
 	ret = himax_dev_set(ts);
 	if (ret < 0) {
-		E("%s, input device register fail!\n", __func__);
+		E("%s: input device register fail!\n", __func__);
 		ret = INPUT_REGISTER_FAIL;
 		goto input_device_fail;
 	}
@@ -990,15 +993,15 @@ static int i_get_FW(void)
 	int result = NO_ERR;
 	const struct firmware *image = NULL;
 
-	I("file name = %s\n", i_CTPM_firmware_name);
+	D("%s: file name = %s\n", __func__, i_CTPM_firmware_name);
 	ret = request_firmware(&image, i_CTPM_firmware_name, private_ts->dev);
 	if (ret < 0) {
 #if defined(__EMBEDDED_FW__)
 		image = &g_embedded_fw;
-		D("%s: Not find FW in userspace, use embedded FW(size:%zu)",
+		W("%s: Not find FW in userspace, use embedded FW(size:%zu)",
 			__func__, g_embedded_fw.size);
 #else
-		E("%s,%d: error code = %d\n", __func__, __LINE__, ret);
+		E("%s(%d): FW update error code = %d\n", __func__, __LINE__, ret);
 		return OPEN_FILE_FAIL;
 #endif
 	}
@@ -1008,7 +1011,7 @@ static int i_get_FW(void)
 	if (i_CTPM_FW != NULL) {
 		memcpy(i_CTPM_FW, image->data, sizeof(char)*i_CTPM_FW_len);
 	} else {
-		E("%s, Failed to allocate memory\n", __func__);
+		E("%s: Failed to allocate memory\n", __func__);
 		result = MEM_ALLOC_FAIL;
 	}
 
@@ -1091,16 +1094,18 @@ static void himax_esd_hw_reset(void)
 	D("%s: START_Himax TP: ESD - Reset\n", __func__);
 
 	if (private_ts->in_self_test == 1) {
-		I("In self test , not  TP: ESD - Reset\n");
+		D("%s: In self test , not  TP: ESD - Reset\n", __func__);
 		return;
 	}
 
 	/*g_core_fp.fp_esd_ic_reset();*/
 #if defined(HX_ZERO_FLASH)
-	I("It will update fw after esd event in zero flash mode!\n");
+	D("%s: It will update fw after esd event in zero flash mode!\n",
+		__func__);
 	result = g_core_fp.fp_0f_operation_dirly();
 	if (result) {
-		E("Something is wrong! Skip Update with zero flash!\n");
+		E("%s: Something is wrong! Skip Update with zero flash!\n",
+			__func__);
 		goto ESCAPE_0F_UPDATE;
 	}
 	g_core_fp.fp_reload_disable(0);
@@ -1156,7 +1161,6 @@ static int himax_wake_event_parse(struct himax_ts_data *ts, int ts_status)
 				break;
 			}
 		}
-		I("0x%2.2X ", buf[i]);
 		if (buf[i] == gesture_flag) {
 			check_FC++;
 		} else {
@@ -1783,23 +1787,13 @@ static int himax_checksum_cal(struct himax_ts_data *ts, uint8_t *buf,
 		ret_val = HX_CHKSUM_FAIL;
 	} else {
 		raw_data_sel = buf[HX_TOUCH_INFO_POINT_CNT]>>4 & 0x0F;
-		/*I("%s:raw_out_sel=%x , hx_touch_data->diag_cmd=%x.\n",*/
-		/*		__func__, raw_data_sel,*/
-		/*		hx_touch_data->diag_cmd);*/
 		/*raw data out not match skip it*/
 		if ((raw_data_sel != 0x0F)
 		&& (raw_data_sel != hx_touch_data->diag_cmd)) {
-			/*I("%s:raw data out not match.\n", __func__);*/
 			if (!hx_touch_data->diag_cmd) {
 				/*Need to clear event stack here*/
 				g_core_fp.fp_read_event_stack(buf,
 					(128-hx_touch_data->touch_info_size));
-				/*D("%s: size =%d, buf[0]=%x ,buf[1]=%x,*/
-				/*	buf[2]=%x, buf[3]=%x.\n",*/
-				/*	__func__,*/
-				/*	(128-hx_touch_data->touch_info_size),*/
-				/*	buf[0], buf[1], buf[2], buf[3]);*/
-				/*I("%s:also clear event stack.\n", __func__);*/
 			}
 			ret_val = HX_READY_SERVE;
 		}
@@ -1815,7 +1809,8 @@ END_FUNCTION:
 #if defined(HX_ZERO_FLASH)
 void hx_update_dirly_0f(void)
 {
-	I("It will update fw after esd event in zero flash mode!\n");
+	D("%s: It will update fw after esd event in zero flash mode!\n",
+		__func__);
 	g_core_fp.fp_0f_operation_dirly();
 }
 #endif
@@ -1904,10 +1899,10 @@ __attribute__ ((unused)) static int himax_ts_event_check(struct himax_ts_data *t
  *		//check zero flash status
  *		if (g_core_fp.fp_0f_esd_check() < 0) {
  *			g_zero_event_count = 6;
- *			I("[HIMAX TP MSG]: ESD event checked
-				- ALL Zero in ZF.\n");
+ *			D("%s: [HIMAX TP MSG]: ESD event checked
+				- ALL Zero in ZF.\n", __func__);
  *		} else {
- *			I("[HIMAX TP MSG]: Status check pass in ZF.\n");
+ *			D("%s: [HIMAX TP MSG]: Status check pass in ZF.\n", __func__);
  *		}
  *	}
  *#endif
@@ -2048,7 +2043,7 @@ static int himax_distribute_touch_data(uint8_t *buf,
 				hx_touch_data->event_size);
 #endif
 	} else {
-		E("%s, Fail Path!\n", __func__);
+		E("%s: Fail Path!\n", __func__);
 		ts_status = HX_PATH_FAIL;
 	}
 
@@ -2267,9 +2262,9 @@ static int himax_parse_report_data(struct himax_ts_data *ts,
 		/* touch monitor rawdata */
 		if (debug_data != NULL) {
 			if (debug_data->fp_set_diag_cmd(ic_data, hx_touch_data))
-				I("%s:raw data_checksum not match\n", __func__);
+				D("%s: raw data_checksum not match\n", __func__);
 		} else {
-			E("%s,There is no init set_diag_cmd\n", __func__);
+			E("%s: There is no init set_diag_cmd\n", __func__);
 		}
 		ts_status = himax_parse_report_points(ts, ts_path, ts_status);
 		break;
@@ -2496,12 +2491,12 @@ static void himax_finger_leave(struct himax_ts_data *ts)
 
 #if defined(HX_PALM_REPORT)
 	if (himax_palm_detect(hx_touch_data->hx_coord_buf) == PALM_REPORT) {
-		I(" %s HX_PALM_REPORT KEY power event press\n", __func__);
+		D("%s: HX_PALM_REPORT KEY power event press\n", __func__);
 		input_report_key(ts->input_dev, KEY_POWER, 1);
 		input_sync(ts->input_dev);
 		msleep(100);
 
-		I(" %s HX_PALM_REPORT KEY power event release\n", __func__);
+		D("%s: HX_PALM_REPORT KEY power event release\n", __func__);
 		input_report_key(ts->input_dev, KEY_POWER, 0);
 		input_sync(ts->input_dev);
 		return;
@@ -2892,7 +2887,7 @@ int himax_chip_common_init(void)
 							__func__, i);
 					goto found_hx_chip;
 				} else {
-					I("%s:num=%d,chip NOT found! go Next\n",
+					D("%s: num=%d,chip NOT found! go Next\n",
 							__func__, i);
 					continue;
 				}
@@ -3203,7 +3198,7 @@ int himax_chip_common_suspend(struct himax_ts_data *ts)
 	}
 
 	if (debug_data != NULL && debug_data->flash_dump_going == true) {
-		I("[himax] %s: Flash dump is going, reject suspend\n",
+		D("%s: Flash dump is going, reject suspend\n",
 				__func__);
 		goto END;
 	}
@@ -3225,7 +3220,7 @@ int himax_chip_common_suspend(struct himax_ts_data *ts)
 
 		atomic_set(&ts->suspend_mode, 1);
 		ts->pre_finger_mask = 0;
-		I("[himax] %s: SMART_WAKEUP enable, reject suspend\n",
+		D("%s: SMART_WAKEUP enable, reject suspend\n",
 				__func__);
 		goto END;
 	}
@@ -3295,7 +3290,8 @@ int himax_chip_common_resume(struct himax_ts_data *ts)
 #if defined(HX_SMART_WAKEUP)
 	if (!ts->SMWP_enable) {
 #endif
-		I("It will update fw after resume in zero flash mode!\n");
+		D("%s: It will update fw after resume in zero flash mode!\n",
+			__func__);
 		if (g_core_fp.fp_0f_operation_dirly != NULL) {
 			result = g_core_fp.fp_0f_operation_dirly();
 			if (result) {

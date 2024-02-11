@@ -34,7 +34,6 @@ extern struct proc_dir_entry *himax_proc_vendor_file;
 
 int himax_touch_proc_init(void);
 void himax_touch_proc_deinit(void);
-extern int himax_int_en_set(void);
 
 extern uint8_t byte_length;
 extern uint8_t register_command[4];

@@ -45,7 +45,6 @@
 #endif
 
 #define HIMAX_DRIVER_VER "2.0.0.51_BOE10.1_01"
-
 #define FLASH_DUMP_FILE "/sdcard/HX_Flash_Dump.bin"
 
 #if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)

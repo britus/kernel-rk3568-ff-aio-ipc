@@ -5,6 +5,7 @@ ccflags-$(CONFIG_FB) += -DHX_CONFIG_FB
 ccflags-$(CONFIG_DRM) += -DHX_CONFIG_DRM
 ccflags-$(CONFIG_DEBUG_DRIVER) += -DDEBUG
 
+#NOTE: As module not tested - Please check 
 ifneq ($(filter m, $(CONFIG_TOUCHSCREEN_HIMAX_COMMON)),)
 ccflags-$(CONFIG_KALLSYMS_ALL) += -D__KERNEL_KALLSYMS_ALL_ENABLED__
 ccflags-$(CONFIG_TOUCHSCREEN_HIMAX_COMMON) += -D__HIMAX_MOD__
