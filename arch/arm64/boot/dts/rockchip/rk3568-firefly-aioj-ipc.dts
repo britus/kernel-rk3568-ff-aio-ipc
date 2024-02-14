@@ -211,7 +211,7 @@
         himax,display-coords = <0 800 0 1280>;    //分辨率
         // Input device protocol type: 0=A || 1=B || 2=B_3PA
         // see driver for more info... QT-QPA validated -> A.
-        himax,report_type = <0>; 
+        himax,report_type = <0>;
     };
 };
 
