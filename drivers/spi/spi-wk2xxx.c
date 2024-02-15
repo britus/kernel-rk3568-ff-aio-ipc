@@ -1903,21 +1903,21 @@ static int wk2xxx_probe(struct spi_device *spi)
 	/* Assign private driver data to device */
 	dev_set_drvdata(&spi->dev, priv);
 
-#ifdef WK_RSTGPIO_FUNCTION
-	/* Obtain the GPIO number of RST signal */
-	ret = wk2xxx_spi_rstgpio_parse_dt(&spi->dev);
-	if (ret) {
-		dev_err(&spi->dev, "%s: Unable to get reset gpio. error=%d\n",
-			__func__, ret);
-		goto error_gpio;
-	}
-#endif
-
 #ifdef WK_PWRGPIO_FUNCTION
 	/* Obtain the GPIO number of power signal */
 	ret = wk2xxx_spi_pwrgpio_parse_dt(&spi->dev);
 	if (ret) {
 		dev_err(&spi->dev, "%s: Unable to get power gpio. error=%d\n",
+			__func__, ret);
+		goto error_gpio;
+	}
+#endif
+
+#ifdef WK_RSTGPIO_FUNCTION
+	/* Obtain the GPIO number of RST signal */
+	ret = wk2xxx_spi_rstgpio_parse_dt(&spi->dev);
+	if (ret) {
+		dev_err(&spi->dev, "%s: Unable to get reset gpio. error=%d\n",
 			__func__, ret);
 		goto error_gpio;
 	}
