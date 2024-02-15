@@ -1,12 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
 /*
-*   FILE NAME  : wk2xxx_spi.c   
-*
-*   WKIC Ltd.
-*   By  Xu XunWei Tech  
-*   DEMO Version :2.4 Data:2022-07-24
-*   DESCRIPTION: Implements an interface for the wk2xxx of spi interface
-*/
+ * (C) Copyright 2022 WKIC Ltd. by Xu XunWei Tech, Xuxunwei
+ * (C) Copyright 2024 EoF Software Labs, B. Eschrich
+ * SPDX-License-Identifier:	GPL-2.0+
+ */
+
+/* ---------------------------------------------------
+ *   FILE NAME: wk2xxx_spi.c   
+ *   DEMO Version: 2.4 Data: 2022-07-24
+ *   DESCRIPTION: Implements an interface for the wk2xxx of spi interface
+ *   WKIC Ltd. By  Xu XunWei Tech  
+ */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -35,9 +38,9 @@
 #include <uapi/linux/sched.h>
 #include <uapi/linux/sched/types.h>
 
-#define DRIVER_DESC "SPI driver for spi to Uart chip WK2XXX, etc."
-#define VERSION_DESC "V2.4 On 2022.07.24"
-#define DRIVER_AUTHOR "Xuxunwei and B. Eschrich"
+#define DRIVER_DESC "SPI driver for SPI to UART chip WK2XXX"
+#define VERSION_DESC "V2.5 on 2024.02.15"
+#define DRIVER_AUTHOR "Xuxunwei/B.Eschrich"
 
 /*************The debug control **********************************/
 #if defined(CONFIG_SPI_WK2XXX_DEBUG)
@@ -2163,7 +2166,7 @@ static int wk2xxx_remove(struct spi_device *spi)
 	mutex_unlock(&wk2xxxs_lock);
 
 	devm_kfree(&spi->dev, priv);
-	
+
 	dev_info(&spi->dev, "Driver removed\n");
 	return 0;
 }
