@@ -1865,6 +1865,8 @@ static int wk2xxx_probe(struct spi_device *spi)
 	dev_info(&spi->dev, DRIVER_DESC "\n");
 	dev_info(&spi->dev, VERSION_DESC "\n");
 
+	dev_dbg(&spi->dev, "%s: Setup spi device.\n", __func__);
+	
 	/*
 	 * TODO: get spi parameters from DT 
 	 */
@@ -2003,7 +2005,7 @@ static int wk2xxx_probe(struct spi_device *spi)
 		}
 	}
 
-	dev_dbg(&spi->dev, "%s: Initialize serial ports\n", __func__);
+	dev_dbg(&spi->dev, "%s: Initialize serial ports.\n", __func__);
 
 	for (i = 0; i < WK2_NR_PORTS; i++) {
 		priv->p[i].line = i;
@@ -2045,6 +2047,8 @@ static int wk2xxx_probe(struct spi_device *spi)
 			__func__, priv->p[i].port.iobase, ret);
 	}
 	mutex_unlock(&wk2xxxs_lock);
+
+	dev_dbg(&spi->dev, "%s: Setup interrupt.\n", __func__);
 
 	/* Setup interrupt */
 	ret = devm_request_irq(&spi->dev, priv->irq_num, wk2xxx_irq,
