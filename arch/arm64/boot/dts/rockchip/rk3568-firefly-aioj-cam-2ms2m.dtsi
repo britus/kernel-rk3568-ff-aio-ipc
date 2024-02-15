@@ -12,8 +12,12 @@
 	status = "okay";
 };
 
-&rkisp_vir0 {
+&csi2_dphy_hw {
 	status = "okay";
+};
+
+&rkisp_vir0 {
+	status = "disabled";
 	port {
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -26,7 +30,7 @@
 };
 
 &rkisp_vir1 {
-	status = "okay";
+	status = "disabled";
 	port {
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -38,16 +42,40 @@
 	};
 };
 
-&csi2_dphy_hw {
-	status = "okay";
-};
-
 &csi2_dphy0 {
 	status = "disabled";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			dphy0_in: endpoint@1 {
+				reg = <1>;
+				remote-endpoint = <&gc2053_out_0>;
+				data-lanes = <1 2>;
+			};
+		};
+
+		port@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			dphy0_out: endpoint@1 {
+				reg = <1>;
+				remote-endpoint = <&isp0_in>;
+			};
+		};
+	};
 };
 
 &csi2_dphy1 {
-	status = "okay";
+	status = "disabled";
 	/*
 	 * dphy1 only used for split mode,
 	 * can be used concurrently with dphy2
@@ -64,7 +92,7 @@
 
 			dphy1_in: endpoint@1 {
 				reg = <1>;
-				remote-endpoint = <&gc2053_out>;
+				remote-endpoint = <&gc2053_out_1>;
 				data-lanes = <1 2>;
 			};
 		};
@@ -83,7 +111,7 @@
 };
 
 &csi2_dphy2 {
-	status = "okay";
+	status = "disabled";
 	/*
 	 * dphy2 only used for split mode,
 	 * can be used concurrently with dphy1
@@ -119,7 +147,7 @@
 };
 
 &mipi_csi2 {
-    status = "okay";
+    status = "disabled";
 
     ports {
         #address-cells = <1>;
@@ -152,7 +180,7 @@
 };
 
 &rkcif_mipi_lvds {
-    status = "okay";
+    status = "disabled";
     port {
         cif_mipi_in: endpoint {
             remote-endpoint = <&mipi_csi2_output>;
@@ -162,7 +190,7 @@
 };
 
 &rkcif_mipi_lvds_sditf {
-    status = "okay";
+    status = "disabled";
     port {
         mipi_lvds_sditf: endpoint {
             remote-endpoint = <&isp1_in>;
@@ -172,11 +200,11 @@
 };
 
 &rkcif_mmu {
-    status = "okay";
+    status = "disabled";
 };
 
 &rkcif {
-    status = "okay";
+    status = "disabled";
 };
 
 &i2c4 {
@@ -203,7 +231,11 @@
 		rockchip,camera-module-name = "YT-RV1109-2-V1";
 		rockchip,camera-module-lens-name = "40IR-2MP-F20";
 		port {
-			gc2053_out: endpoint {
+			gc2053_out_0: endpoint@0 {
+				remote-endpoint = <&dphy0_in>;
+				data-lanes = <1 2>;
+			};
+			gc2053_out_1: endpoint@1 {
 				remote-endpoint = <&dphy1_in>;
 				data-lanes = <1 2>;
 			};

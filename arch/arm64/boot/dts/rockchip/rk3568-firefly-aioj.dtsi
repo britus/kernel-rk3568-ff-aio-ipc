@@ -7,7 +7,6 @@
 #include "rk3568-firefly-port.dtsi"
 
 / {
-
 	vcc_hub_power: vcc-hub-power-regulator {
 		compatible = "regulator-fixed";
 		enable-active-high;
@@ -75,36 +74,6 @@
 			gpios = <&pca9555 PCA_IO1_0 GPIO_ACTIVE_HIGH>;
 		};
 	};
-};
-
-&csi2_dphy0 {
-	status = "disabled";
-};
-
-&csi2_dphy1 {
-	status = "disabled";
-	/*
-	* dphy1 only used for split mode,
-	* can be used  concurrently  with dphy2
-	* full mode and split mode are mutually exclusive
-	*/
-};
-
-&csi2_dphy2 {
-	status = "okay";
-	/*
-	* dphy2 only used for split mode,
-	* can be used  concurrently  with dphy1
-	* full mode and split mode are mutually exclusive
-	*/
-};
-
-&rkisp_vir0 {
-	status = "disabled";
-};
-
-&rkisp_vir1 {
-	status = "disabled";
 };
 
 &i2c1 {

@@ -14,7 +14,8 @@
     compatible = "rockchip,rk3568-firefly-aioj", "rockchip,rk3568";
 
 	chosen: chosen {
-		/* -> The option root= will be set by the extlinux.conf file on the boot partition of the SD-Card */
+		/* The option root= will be set by the extlinux.conf
+         * file located on the boot partition of the SD-Card */
 		bootargs = "earlycon=uart8250,mmio32,0xfe660000 console=ttyFIQ0 coherent_pool=1m systemd.gpt_auto=0 cgroup_enable=memory swapaccount=1 swiotlb=0x10000";
 	};
 
@@ -88,15 +89,15 @@
 	status = "okay";
 };
 
+&video_phy1 {
+    status = "okay";
+};
+
 &route_dsi1 {
     status = "okay";
     logo,rotation = <270>;
     logo,mode = "center";
     connect = <&vp1_out_dsi1>;
-};
-
-&video_phy1 {
-    status = "okay";
 };
 
 &dsi1_in_vp0 {

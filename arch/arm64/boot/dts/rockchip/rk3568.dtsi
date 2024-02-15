@@ -233,8 +233,10 @@
 
 	display_subsystem: display-subsystem {
 		compatible = "rockchip,display-subsystem";
-		memory-region = <&drm_logo>, <&drm_cubic_lut>;
-		memory-region-names = "drm-logo", "drm-cubic-lut";
+		/*memory-region = <&drm_logo>, <&drm_cubic_lut>;*/
+		memory-region = <&drm_logo>;
+		/*memory-region-names = "drm-logo", "drm-cubic-lut";*/
+		memory-region-names = "drm-logo";
 		ports = <&vop_out>;
 		devfreq = <&dmc>;
 
@@ -328,7 +330,7 @@
 		compatible = "arm,psci-1.0";
 		method = "smc";
 	};
-
+/*
 	reserved_memory: reserved-memory {
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -338,9 +340,19 @@
 			compatible = "rockchip,drm-logo";
 			reg = <0x0 0x0 0x0 0x0>;
 		};
-
 		drm_cubic_lut: drm-cubic-lut@00000000 {
 			compatible = "rockchip,drm-cubic-lut";
+			reg = <0x0 0x0 0x0 0x0>;
+		};
+	};
+*/
+	reserved_memory: reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		drm_logo: drm-logo@00000000 {
+			compatible = "rockchip,drm-logo";
 			reg = <0x0 0x0 0x0 0x0>;
 		};
 	};
@@ -1753,18 +1765,6 @@
 		power-domains = <&power RK3568_PD_VI>;
 		#iommu-cells = <0>;
 		rockchip,disable-mmu-reset;
-		status = "disabled";
-	};
-
-	rkisp_vir0: rkisp-vir0 {
-		compatible = "rockchip,rkisp-vir";
-		rockchip,hw = <&rkisp>;
-		status = "disabled";
-	};
-
-	rkisp_vir1: rkisp-vir1 {
-		compatible = "rockchip,rkisp-vir";
-		rockchip,hw = <&rkisp>;
 		status = "disabled";
 	};
 
@@ -3505,44 +3505,6 @@
 		status = "disabled";
 	};
 
-	csi2_dphy_hw: csi2-dphy-hw@fe870000 {
-		compatible = "rockchip,rk3568-csi2-dphy-hw";
-		reg = <0x0 0xfe870000 0x0 0x1000>;
-		clocks = <&cru PCLK_MIPICSIPHY>;
-		clock-names = "pclk";
-		rockchip,grf = <&grf>;
-		status = "disabled";
-	};
-
-	/*
-	 * csi2_dphy0: used for csi2 dphy full mode,
-		       is mutually exclusive with
-		       csi2_dphy1 and csi2_dphy2
-	 * csi2_dphy1: used for csi2 dphy split mode,
-		       physical lanes use lane0 and lane1,
-		       can be used with csi2_dphy2  parallel
-	 * csi2_dphy2: used for csi2 dphy split mode,
-		       physical lanes use lane2 and lane3,
-		       can be used with csi2_dphy1  parallel
-	 */
-	csi2_dphy0: csi2-dphy0 {
-		compatible = "rockchip,rk3568-csi2-dphy";
-		rockchip,hw = <&csi2_dphy_hw>;
-		status = "disabled";
-	};
-
-	csi2_dphy1: csi2-dphy1 {
-		compatible = "rockchip,rk3568-csi2-dphy";
-		rockchip,hw = <&csi2_dphy_hw>;
-		status = "disabled";
-	};
-
-	csi2_dphy2: csi2-dphy2 {
-		compatible = "rockchip,rk3568-csi2-dphy";
-		rockchip,hw = <&csi2_dphy_hw>;
-		status = "disabled";
-	};
-
 	usb2phy0: usb2-phy@fe8a0000 {
 		compatible = "rockchip,rk3568-usb2phy";
 		reg = <0x0 0xfe8a0000 0x0 0x10000>;
@@ -3673,6 +3635,58 @@
 			interrupt-controller;
 			#interrupt-cells = <2>;
 		};
+	};
+
+	csi2_dphy_hw: csi2-dphy-hw@fe870000 {
+		compatible = "rockchip,rk3568-csi2-dphy-hw";
+		reg = <0x0 0xfe870000 0x0 0x1000>;
+		clocks = <&cru PCLK_MIPICSIPHY>;
+		clock-names = "pclk";
+		rockchip,grf = <&grf>;
+		status = "disabled";
+	};
+
+	/*
+	 * csi2_dphy0: used for csi2 dphy full mode,
+		       is mutually exclusive with
+		       csi2_dphy1 and csi2_dphy2
+	 * csi2_dphy1: used for csi2 dphy split mode,
+		       physical lanes use lane0 and lane1,
+		       can be used with csi2_dphy2  parallel
+	 * csi2_dphy2: used for csi2 dphy split mode,
+		       physical lanes use lane2 and lane3,
+		       can be used with csi2_dphy1  parallel
+	 */
+	csi2_dphy0: csi2-dphy0 {
+		compatible = "rockchip,rk3568-csi2-dphy";
+		rockchip,hw = <&csi2_dphy_hw>;
+		status = "disabled";
+	};
+
+	csi2_dphy1: csi2-dphy1 {
+		compatible = "rockchip,rk3568-csi2-dphy";
+		rockchip,hw = <&csi2_dphy_hw>;
+		status = "disabled";
+	};
+
+	csi2_dphy2: csi2-dphy2 {
+		compatible = "rockchip,rk3568-csi2-dphy";
+		rockchip,hw = <&csi2_dphy_hw>;
+		status = "disabled";
+	};
+
+	/* Camera support -- incomplete -- look into:
+	 * i.e. rk3568-firefly-aioj-cam-2ms2m.dtsi */
+	rkisp_vir0: rkisp-vir0 {
+		compatible = "rockchip,rkisp-vir";
+		rockchip,hw = <&rkisp>;
+		status = "disabled";
+	};
+
+	rkisp_vir1: rkisp-vir1 {
+		compatible = "rockchip,rkisp-vir";
+		rockchip,hw = <&rkisp>;
+		status = "disabled";
 	};
 };
 

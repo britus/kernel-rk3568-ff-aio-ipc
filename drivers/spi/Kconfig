@@ -796,10 +796,54 @@ config SPI_TLE62X0
 	  exposing both switch control and diagnostic feedback.
 
 config SPI_WK2XXX
-	tristate "wk2xxx Spi Switch Uart"
-	depends on SPI
+	tristate "wk2xxx SPI to UART switch"
+	depends on SPI && OF
 	help
-	  Say Y to get the third party encryption service.
+	  This enables the wk2xxx SPI switch to UART chip. You need
+	  a device tree node to describe the driver. Important DT
+	  properties:
+	    * irq-gpio
+	  Optional DT properties (see options.)
+	    * power-gpio
+	    * reset-gpio
+	    * cs-gpio
+
+config SPI_WK2XXX_GPIO_RST
+	bool "wk2xxx Using reset gpio"
+	depends on SPI_WK2XXX
+	default y
+	help
+	  This enables the usage of a reset gpio.
+	  DT property 'reset-gpio'
+
+config SPI_WK2XXX_GPIO_CS
+	bool "wk2xxx Using chip select gpio"
+	depends on SPI_WK2XXX
+	default y
+	help
+	  This enables the usage of a chip select gpio.
+	  DT property 'cs-gpio'
+
+config SPI_WK2XXX_GPIO_PWR
+	bool "wk2xxx Using power gpio"
+	depends on SPI_WK2XXX
+	default y
+	help
+	  This enables the usage of a power gpio.
+	  DT property 'power-gpio'
+
+config SPI_WK2XXX_GPIO_RS485
+	bool "wk2xxx Function RS485"
+	depends on SPI_WK2XXX
+	default y
+	help
+	  This enables the function RS485.
+
+config SPI_WK2XXX_DEBUG
+	bool "wk2xxx Debug output"
+	depends on SPI_WK2XXX 
+	help
+	  This enables detailed driver debug output.
 
 config SPI_FIREFLY
 	tristate "Firefly SPI demo support"
