@@ -3,6 +3,8 @@
 ##
 config TOUCHSCREEN_HIMAX_CHIPSET
 		tristate "HIMAX chipset i2c touchscreen"
+		depends on I2C
+		select TOUCHSCREEN_HIMAX_COMMON
 		help 
 		  This enables support for HIMAX CHIPSET over 
 		  I2C based touchscreens. 
@@ -11,16 +13,14 @@ config TOUCHSCREEN_HIMAX_CHIPSET
 
 config TOUCHSCREEN_HIMAX_COMMON
 		tristate "HIMAX I2C touchscreen driver framework"
-		depends on TOUCHSCREEN_HIMAX_CHIPSET
 		select TOUCHSCREEN_HIMAX_INCELL
-		select I2C
 		help 
 		  This enables support for HIMAX CHIPSET over I2C based touchscreens.
 
 choice
 	prompt "Select HIMAX IC type"
 	default TOUCHSCREEN_HIMAX_INCELL
-	depends on TOUCHSCREEN_HIMAX_COMMON
+	depends on TOUCHSCREEN_HIMAX_CHIPSET
 
 config TOUCHSCREEN_HIMAX_INCELL
 		bool "HIMAX chipset in-cell"
@@ -32,6 +32,31 @@ config TOUCHSCREEN_HIMAX_ONCELL
 		help 
 		  This enables support for HIMAX CHIPSET of on-cell function.
 endchoice
+
+config TOUCHSCREEN_HIMAX_DEBUG
+		bool "HIMAX debug output"
+		depends on TOUCHSCREEN_HIMAX_ONCELL || TOUCHSCREEN_HIMAX_INCELL
+		help 
+		  This enables driver debug output.
+
+config TOUCHSCREEN_HIMAX_INSPECT
+		bool "HIMAX inspect function"
+		depends on (TOUCHSCREEN_HIMAX_INCELL || TOUCHSCREEN_HIMAX_ONCELL) && TOUCHSCREEN_HIMAX_DEBUG
+		help
+		  This enables support for HIMAX inspect function.
+
+#config HMX_DB
+		#bool "HIMAX driver test over Dragon Board"
+		#depends on TOUCHSCREEN_HIMAX_COMMON
+		#help
+		  #This enables support for HIMAX driver test over Dragon Board.
+
+#config TOUCHSCREEN_HIMAX_EMBEDDED_FIRMWARE
+#		tristate "HIMAX IC embedded firmware"
+#		depends on TOUCHSCREEN_HIMAX_COMMON
+#		help 
+#		  This enables HIMAX CHIPSET embedded firmware built-in 
+#		  FW inside kernel as binary array. This always requiered
 
 ## ***************** On-cell Start *****************
 config TOUCHSCREEN_HIMAX_IC_HX852xH
@@ -87,41 +112,12 @@ config TOUCHSCREEN_HIMAX_IC_HX83106
 config TOUCHSCREEN_HIMAX_IC_HX83102
 		tristate "HIMAX chipset HX83102 function"
 		depends on TOUCHSCREEN_HIMAX_INCELL
-		select I2C
 		help
 		  This enables support for HIMAX CHIPSET of HX83102.
 
 config TOUCHSCREEN_HIMAX_IC_HX83103
 		tristate "HIMAX chipset HX83103 function"
 		depends on TOUCHSCREEN_HIMAX_INCELL
-		select I2C
 		help
 		  This enables support for HIMAX CHIPSET of HX83103.
 ## ***************** In-cell End *******************
-
-config TOUCHSCREEN_HIMAX_DEBUG
-		bool "HIMAX debug function"
-		depends on TOUCHSCREEN_HIMAX_INCELL || TOUCHSCREEN_HIMAX_ONCELL
-		depends on DEBUG_DRIVER
-		help
-		  This enables support for HIMAX debug function.
-
-config TOUCHSCREEN_HIMAX_INSPECT
-		bool "HIMAX inspect function"
-		depends on TOUCHSCREEN_HIMAX_INCELL || TOUCHSCREEN_HIMAX_ONCELL
-		depends on DEBUG_DRIVER
-		help
-		  This enables support for HIMAX inspect function.
-
-#config HMX_DB
-		#bool "HIMAX driver test over Dragon Board"
-		#depends on TOUCHSCREEN_HIMAX_COMMON
-		#help
-		  #This enables support for HIMAX driver test over Dragon Board.
-
-#config TOUCHSCREEN_HIMAX_EMBEDDED_FIRMWARE
-#		tristate "HIMAX IC embedded firmware"
-#		depends on TOUCHSCREEN_HIMAX_COMMON
-#		help 
-#		  This enables HIMAX CHIPSET embedded firmware built-in 
-#		  FW inside kernel as binary array. This always requiered

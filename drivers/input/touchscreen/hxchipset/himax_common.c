@@ -12,9 +12,6 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  */
-
-/*#include "himax_common.h"*/
-/*#include "himax_ic_core.h"*/
 #include "himax_inspection.h"
 #include "himax_modular_table.h"
 
@@ -793,11 +790,14 @@ int himax_input_register(struct himax_ts_data *ts)
 
 	set_bit(EV_SYN, ts->input_dev->evbit);
 	set_bit(EV_ABS, ts->input_dev->evbit);
+
+#if defined(HX_KEYBOARD_FUNCTION)
 	set_bit(EV_KEY, ts->input_dev->evbit);
 	set_bit(KEY_BACK, ts->input_dev->keybit);
 	set_bit(KEY_HOME, ts->input_dev->keybit);
 	set_bit(KEY_MENU, ts->input_dev->keybit);
 	set_bit(KEY_SEARCH, ts->input_dev->keybit);
+#endif
 
 #if defined(HX_SMART_WAKEUP)
 	for (i = 0; i < GEST_SUP_NUM; i++)
@@ -806,9 +806,11 @@ int himax_input_register(struct himax_ts_data *ts)
 	set_bit(KEY_POWER, ts->input_dev->keybit);
 #endif
 
+#if defined(HX_KEYBOARD_FUNCTION)
 	set_bit(BTN_TOUCH, ts->input_dev->keybit);
 	set_bit(KEY_APPSELECT, ts->input_dev->keybit);
 	set_bit(INPUT_PROP_DIRECT, ts->input_dev->propbit);
+#endif
 
 	/* protocol type is set by OF himax,report_type: <0> => A or <1> => B */
 	if (ts->protocol_type == PROTOCOL_TYPE_A) {
@@ -2307,7 +2309,6 @@ static void himax_finger_report(struct himax_ts_data *ts)
 	int i = 0;
 	bool valid = false;
 
-
 	if (g_ts_dbg != 0) {
 		D("%s:start hx_touch_data->finger_num=%d\n",
 			__func__, hx_touch_data->finger_num);
@@ -2559,7 +2560,6 @@ static void himax_finger_leave(struct himax_ts_data *ts)
 
 static void himax_report_points(struct himax_ts_data *ts)
 {
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	if (g_ts_dbg != 0)
 		D("%s: start!\n", __func__);
 
@@ -2576,13 +2576,10 @@ static void himax_report_points(struct himax_ts_data *ts)
 
 int himax_report_data(struct himax_ts_data *ts, int ts_path, int ts_status)
 {
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	if (g_ts_dbg != 0)
 		D("%s: Entering, ts_status=%d!\n", __func__, ts_status);
 
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	if (ts_path == HX_REPORT_COORD || ts_path == HX_REPORT_COORD_RAWDATA) {
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 		/* Touch Point information */
 		himax_report_points(ts);
 
@@ -2609,12 +2606,9 @@ static int himax_ts_operation(struct himax_ts_data *ts,
 	memset(ts->xfer_buff, 0x00, 128 * sizeof(uint8_t));
 	memset(hw_reset_check, 0x00, sizeof(hw_reset_check));
 
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	ts_status = himax_touch_get(ts, ts->xfer_buff, ts_path, ts_status);
 	if (ts_status == HX_TS_GET_DATA_FAIL){
-
 		goto END_FUNCTION;
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	}
 
 	ts_status = himax_distribute_touch_data(ts->xfer_buff,
@@ -2625,9 +2619,7 @@ static int himax_ts_operation(struct himax_ts_data *ts,
 	else
 		goto END_FUNCTION;
 
-
 	ts_status = himax_report_data(ts, ts_path, ts_status);
-
 
 END_FUNCTION:
 	return ts_status;
@@ -2635,32 +2627,25 @@ END_FUNCTION:
 
 void himax_ts_work(struct himax_ts_data *ts)
 {
-
 	int ts_status = HX_TS_NORMAL_END;
 	int ts_path = 0;
 
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	if (debug_data != NULL)
 		debug_data->fp_ts_dbg_func(ts, HX_FINGER_ON);
 
 #if defined(HX_USB_DETECT_GLOBAL)
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	himax_cable_detect_func(false);
 #endif
 
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	ts_path = himax_ts_work_status(ts);
 	switch (ts_path) {
 	case HX_REPORT_COORD:
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 		ts_status = himax_ts_operation(ts, ts_path, ts_status);
 		break;
 	case HX_REPORT_SMWP_EVENT:
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 		ts_status = himax_ts_operation(ts, ts_path, ts_status);
 		break;
 	case HX_REPORT_COORD_RAWDATA:
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 		ts_status = himax_ts_operation(ts, ts_path, ts_status);
 		break;
 	default:
@@ -2668,12 +2653,10 @@ void himax_ts_work(struct himax_ts_data *ts)
 		goto END_FUNCTION;
 	}
 
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	if (ts_status == HX_TS_GET_DATA_FAIL)
 		goto GET_TOUCH_FAIL;
 	else
 		goto END_FUNCTION;
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 
 GET_TOUCH_FAIL:
 	D("%s: Now reset the Touch chip.\n", __func__);
@@ -2686,6 +2669,7 @@ GET_TOUCH_FAIL:
 	if (g_core_fp.fp_0f_reload_to_active)
 		g_core_fp.fp_0f_reload_to_active();
 #endif
+
 END_FUNCTION:
 	if (debug_data != NULL)
 		debug_data->fp_ts_dbg_func(ts, HX_FINGER_LEAVE);
@@ -2733,11 +2717,9 @@ UPDATE_FW:
 static int hx_chk_flash_sts(void)
 {
 	int rslt = 0;
-	uint32_t size = 0;
+	uint32_t size = FW_SIZE_128k;
 
 	D("%s: Entering\n", __func__);
-	size = FW_SIZE_128k;
-
 
 #if defined(HX_AUTO_UPDATE_FW)
 	g_auto_update_flag = (!g_core_fp.fp_calculateChecksum(false, size));
@@ -2751,47 +2733,15 @@ static int hx_chk_flash_sts(void)
 }
 #endif
 
-#if defined(HX_CONFIG_FB) || defined(HX_CONFIG_DRM)
-static void himax_fb_register(struct work_struct *work)
-{
-	int ret = 0;
-
-	struct himax_ts_data *ts = container_of(work, struct himax_ts_data,
-			work_att.work);
-
-	D("%s: in\n", __func__);
-#if defined(HX_CONFIG_FB)
-	ts->fb_notif.notifier_call = fb_notifier_callback;
-	ret = fb_register_client(&ts->fb_notif);
-#elif defined(HX_CONFIG_DRM)
-#if defined(__HIMAX_MOD__)
-	hx_msm_drm_register_client =
-		(void *)kallsyms_lookup_name("msm_drm_register_client");
-	if (hx_msm_drm_register_client != NULL) {
-		ts->fb_notif.notifier_call = drm_notifier_callback;
-		ret = hx_msm_drm_register_client(&ts->fb_notif);
-	}	else
-		E("hx_msm_drm_register_client is NULL\n");
-#else
-	ts->fb_notif.notifier_call = drm_notifier_callback;
-	ret = msm_drm_register_client(&ts->fb_notif);
-#endif
-#endif
-	if (ret)
-		E("Unable to register fb_notifier: %d\n", ret);
-}
-#endif
-
 #if defined(HX_CONTAINER_SPEED_UP)
 static void himax_resume_work_func(struct work_struct *work)
 {
 	himax_chip_common_resume(private_ts);
 }
-
 #endif
+
 int himax_chip_common_init(void)
 {
-
 	int i = 0, ret = 0, idx = 0;
 	int err = PROBE_FAIL;
 	struct himax_ts_data *ts = private_ts;
@@ -2856,9 +2806,10 @@ int himax_chip_common_init(void)
 #if defined(HX_RST_PIN_FUNC)
 	ts->rst_gpio = pdata->gpio_reset;
 #endif
-	himax_gpio_power_config(pdata);
-#if !defined(CONFIG_OF)
 
+	himax_gpio_power_config(pdata);
+
+#if !defined(CONFIG_OF)
 	if (pdata->power) {
 		ret = pdata->power(1);
 
@@ -2867,7 +2818,6 @@ int himax_chip_common_init(void)
 			goto err_power_failed;
 		}
 	}
-
 #endif
 
 	g_hx_chip_inited = 0;
@@ -2924,7 +2874,6 @@ found_hx_chip:
 		goto FW_force_upgrade;
 #endif
 
-
 #if defined(HX_AUTO_UPDATE_FW)
 FW_force_upgrade:
 	ts->himax_update_wq =
@@ -2938,6 +2887,7 @@ FW_force_upgrade:
 	queue_delayed_work(ts->himax_update_wq, &ts->work_update,
 			msecs_to_jiffies(2000));
 #endif
+
 #if defined(HX_ZERO_FLASH)
 	g_auto_update_flag = true;
 	ts->himax_0f_update_wq =
@@ -2962,13 +2912,6 @@ FW_force_upgrade:
 	INIT_DELAYED_WORK(&ts->ts_int_work, himax_resume_work_func);
 #endif
 
-	/*Himax Power On and Load Config*/
-/*	if (himax_loadSensorConfig(pdata)) {
- *		E("%s: Load Sesnsor configuration failed, unload driver.\n",
- *				__func__);
- *		goto err_detect_failed;
- *	}
- */
 	g_core_fp.fp_power_on_init();
 	calculate_point_number();
 
@@ -2977,20 +2920,21 @@ FW_force_upgrade:
 #endif
 
 	ts->pdata = pdata;
+
 	/*calculate the i2c data size*/
 	calcDataSize();
+
 	D("%s: calcDataSize complete\n", __func__);
 
 #if defined(CONFIG_OF)
-	ts->pdata->abs_pressure_min        = 0;
-	ts->pdata->abs_pressure_max        = 200;
-	ts->pdata->abs_width_min           = 0;
-	ts->pdata->abs_width_max           = 200;
-	pdata->cable_config[0]             = 0xF0;
-	pdata->cable_config[1]             = 0x00;
+	ts->pdata->abs_pressure_min = 0;
+	ts->pdata->abs_pressure_max = 200;
+	ts->pdata->abs_width_min    = 0;
+	ts->pdata->abs_width_max    = 200;
+	pdata->cable_config[0]      = 0xF0;
+	pdata->cable_config[1]      = 0x00;
 #endif
-
-	ts->suspended                      = false;
+	ts->suspended               = false;
 
 #if defined(HX_USB_DETECT_GLOBAL)
 	ts->usb_connected = 0x00;
@@ -3006,20 +2950,6 @@ FW_force_upgrade:
 
 	spin_lock_init(&ts->irq_lock);
 	ts->initialized = true;
-
-#if defined(HX_CONFIG_FB) || defined(HX_CONFIG_DRM)
-	ts->himax_att_wq = create_singlethread_workqueue("HMX_ATT_request");
-
-	if (!ts->himax_att_wq) {
-		E(" allocate himax_att_wq failed\n");
-		err = -ENOMEM;
-		goto err_get_intr_bit_failed;
-	}
-
-	INIT_DELAYED_WORK(&ts->work_att, himax_fb_register);
-	queue_delayed_work(ts->himax_att_wq, &ts->work_att,
-			msecs_to_jiffies(15000));
-#endif
 
 #if defined(HX_SMART_WAKEUP)
 	ts->SMWP_enable = 0;
@@ -3061,11 +2991,6 @@ err_creat_proc_file_failed:
 err_report_data_init_failed:
 #if defined(HX_SMART_WAKEUP)
 	wakeup_source_trash(&ts->ts_SMWP_wake_lock);
-#endif
-#if defined(HX_CONFIG_FB) || defined(HX_CONFIG_DRM)
-	cancel_delayed_work_sync(&ts->work_att);
-	destroy_workqueue(ts->himax_att_wq);
-err_get_intr_bit_failed:
 #endif
 err_input_register_device_failed:
 	input_free_device(ts->input_dev);
@@ -3131,27 +3056,6 @@ void himax_chip_common_deinit(void)
 
 #if defined(HX_SMART_WAKEUP)
 	wakeup_source_trash(&ts->ts_SMWP_wake_lock);
-#endif
-#if defined(HX_CONFIG_FB)
-	if (fb_unregister_client(&ts->fb_notif))
-		E("Error occurred while unregistering fb_notifier.\n");
-	cancel_delayed_work_sync(&ts->work_att);
-	destroy_workqueue(ts->himax_att_wq);
-#elif defined(HX_CONFIG_DRM)
-#if defined(__HIMAX_MOD__)
-	hx_msm_drm_unregister_client =
-		(void *)kallsyms_lookup_name("msm_drm_unregister_client");
-	if (hx_msm_drm_unregister_client != NULL) {
-		if (hx_msm_drm_unregister_client(&ts->fb_notif))
-			E("Error occurred while unregistering drm_notifier.\n");
-	} else
-		E("hx_msm_drm_unregister_client is NULL\n");
-#else
-	if (msm_drm_unregister_client(&ts->fb_notif))
-		E("Error occurred while unregistering drm_notifier.\n");
-#endif
-	cancel_delayed_work_sync(&ts->work_att);
-	destroy_workqueue(ts->himax_att_wq);
 #endif
 	input_free_device(ts->input_dev);
 #if defined(HX_CONTAINER_SPEED_UP)
@@ -3227,8 +3131,6 @@ int himax_chip_common_suspend(struct himax_ts_data *ts)
 
 #endif
 	himax_int_enable(0);
-	/*if (g_core_fp.fp_suspend_ic_action != NULL)*/
-		/*g_core_fp.fp_suspend_ic_action();*/
 
 	if (!ts->use_irq) {
 		int32_t cancel_state;
