@@ -784,6 +784,7 @@ int himax_input_register(struct himax_ts_data *ts)
 #if defined(HX_SMART_WAKEUP)
 	int i = 0;
 #endif
+
 	ret = himax_dev_set(ts);
 	if (ret < 0) {
 		E("%s: input device register fail!\n", __func__);
@@ -2571,7 +2572,6 @@ static void himax_finger_leave(struct himax_ts_data *ts)
 
 static void himax_report_points(struct himax_ts_data *ts)
 {
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	if (g_ts_dbg != 0)
 		D("%s: start!\n", __func__);
 
@@ -2588,16 +2588,12 @@ static void himax_report_points(struct himax_ts_data *ts)
 
 int himax_report_data(struct himax_ts_data *ts, int ts_path, int ts_status)
 {
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	if (g_ts_dbg != 0)
 		D("%s: Entering, ts_status=%d!\n", __func__, ts_status);
 
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	if (ts_path == HX_REPORT_COORD || ts_path == HX_REPORT_COORD_RAWDATA) {
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 		/* Touch Point information */
 		himax_report_points(ts);
-
 #if defined(HX_SMART_WAKEUP)
 	} else if (ts_path == HX_REPORT_SMWP_EVENT) {
 		himax_wake_event_report();
@@ -2621,12 +2617,9 @@ static int himax_ts_operation(struct himax_ts_data *ts,
 	memset(ts->xfer_buff, 0x00, 128 * sizeof(uint8_t));
 	memset(hw_reset_check, 0x00, sizeof(hw_reset_check));
 
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	ts_status = himax_touch_get(ts, ts->xfer_buff, ts_path, ts_status);
 	if (ts_status == HX_TS_GET_DATA_FAIL){
-
 		goto END_FUNCTION;
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	}
 
 	ts_status = himax_distribute_touch_data(ts->xfer_buff,
@@ -2647,32 +2640,25 @@ END_FUNCTION:
 
 void himax_ts_work(struct himax_ts_data *ts)
 {
-
 	int ts_status = HX_TS_NORMAL_END;
 	int ts_path = 0;
 
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	if (debug_data != NULL)
 		debug_data->fp_ts_dbg_func(ts, HX_FINGER_ON);
 
 #if defined(HX_USB_DETECT_GLOBAL)
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	himax_cable_detect_func(false);
 #endif
 
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	ts_path = himax_ts_work_status(ts);
 	switch (ts_path) {
 	case HX_REPORT_COORD:
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 		ts_status = himax_ts_operation(ts, ts_path, ts_status);
 		break;
 	case HX_REPORT_SMWP_EVENT:
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 		ts_status = himax_ts_operation(ts, ts_path, ts_status);
 		break;
 	case HX_REPORT_COORD_RAWDATA:
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 		ts_status = himax_ts_operation(ts, ts_path, ts_status);
 		break;
 	default:
@@ -2680,12 +2666,10 @@ void himax_ts_work(struct himax_ts_data *ts)
 		goto END_FUNCTION;
 	}
 
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 	if (ts_status == HX_TS_GET_DATA_FAIL)
 		goto GET_TOUCH_FAIL;
 	else
 		goto END_FUNCTION;
-	//printk("============ %s %d jjlook ==========\n", __func__, __LINE__);
 
 GET_TOUCH_FAIL:
 	D("%s: Now reset the Touch chip.\n", __func__);
