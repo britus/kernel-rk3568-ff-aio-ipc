@@ -67,13 +67,28 @@
 /*#define HX_ZERO_FLASH*/
 
 /*system suspend-chipset power off,
- *oncell chipset need to enable the definition */
+ *oncell chipset need to enable the definition
+ */
 /*#define HX_RESUME_HW_RESET*/
 
-/*for Himax auto-motive chipset */
+/*for Himax auto-motive chipset
+ */
 /*#define HX_PON_PIN_SUPPORT*/
 
 /*=============================================*/
+
+/* Enable it if driver go into suspend/resume twice */
+/*#undef HX_CONFIG_FB*/
+
+/* Enable it if driver go into suspend/resume twice */
+/*#undef HX_CONFIG_DRM*/
+
+#if defined(HX_CONFIG_FB)
+#include <linux/notifier.h>
+#include <linux/fb.h>
+#elif defined(HX_CONFIG_DRM)
+#include <linux/msm_drm_notify.h>
+#endif
 
 #if defined(__HIMAX_MOD__)
 #define HX_USE_KSYM
@@ -111,6 +126,14 @@
 /*Resume queue delay work time after LCM RST (unit:ms)
  */
 #define DELAY_TIME 40
+#endif
+
+#if defined(HX_CONFIG_FB)
+int fb_notifier_callback(struct notifier_block *self,
+		unsigned long event, void *data);
+#elif defined(HX_CONFIG_DRM)
+int drm_notifier_callback(struct notifier_block *self,
+			unsigned long event, void *data);
 #endif
 
 #define HX_MAX_WRITE_SZ    (64 * 1024 + 4)
@@ -393,6 +416,12 @@ struct himax_ts_data {
 	int in_self_test;
 	int suspend_resume_done;
 	int bus_speed;
+
+#if defined(HX_CONFIG_FB) || defined(HX_CONFIG_DRM)
+	struct notifier_block fb_notif;
+	struct workqueue_struct *himax_att_wq;
+	struct delayed_work work_att;
+#endif
 
 	struct workqueue_struct *flash_wq;
 	struct work_struct flash_work;

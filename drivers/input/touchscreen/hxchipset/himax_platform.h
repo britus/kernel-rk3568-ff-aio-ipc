@@ -123,16 +123,23 @@ extern int himax_bus_write_command(uint8_t command,
 		uint8_t toRetry);
 extern void himax_int_enable(int enable);
 extern int himax_ts_register_interrupt(void);
+int himax_ts_unregister_interrupt(void);
 extern uint8_t himax_int_gpio_read(int pinnum);
 extern int himax_gpio_power_config(struct himax_i2c_platform_data *pdata);
+void himax_gpio_power_deconfig(struct himax_i2c_platform_data *pdata);
+
+#if defined(HX_CONFIG_FB)
+extern int fb_notifier_callback(struct notifier_block *self,
+		unsigned long event, void *data);
+#elif defined(HX_CONFIG_DRM)
+extern int drm_notifier_callback(struct notifier_block *self,
+		unsigned long event, void *data);
+#endif
 extern struct himax_ts_data *private_ts;
 extern void himax_ts_work(struct himax_ts_data *ts);
 extern enum hrtimer_restart himax_ts_timer_func(struct hrtimer *timer);
 extern int himax_chip_common_init(void);
 extern void himax_chip_common_deinit(void);
-
-int himax_ts_unregister_interrupt(void);
-void himax_gpio_power_deconfig(struct himax_i2c_platform_data *pdata);
 
 #endif
 

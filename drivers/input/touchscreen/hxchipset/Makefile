@@ -3,6 +3,8 @@
 ccflags-$(TOUCHSCREEN_HIMAX_CHIPSET) += -I$(srctree)/drivers/input/touchscreen/hxchipset/
 ccflags-$(CONFIG_DEBUG_DRIVER) += -DDEBUG
 ccflags-$(CONFIG_TOUCHSCREEN_HIMAX_DEBUG) += -DDEBUG
+ccflags-$(CONFIG_FB) += -DHX_CONFIG_FB
+ccflags-$(CONFIG_DRM) += -DHX_CONFIG_DRM
 
 #NOTE: As module not tested - Please check 
 ifneq ($(filter m, $(CONFIG_TOUCHSCREEN_HIMAX_COMMON)),)

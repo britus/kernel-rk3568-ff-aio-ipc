@@ -47,11 +47,10 @@ int himax_dev_set(struct himax_ts_data *ts)
 	}
 
 	ts->hx_pen_dev->name = "himax-pen";
-
 skip_pen_operation:
+
 	return ret;
 }
-
 int himax_input_register_device(struct input_dev *input_dev)
 {
 	return input_register_device(input_dev);
@@ -803,14 +802,12 @@ static int himax_common_suspend(struct device *dev)
 {
 	struct himax_ts_data *ts = dev_get_drvdata(dev);
 
-	if (!ts->suspended) {
-		D("%s: enter\n", __func__);
-		if (!ts->initialized)
-			return -ECANCELED;
-		himax_chip_common_suspend(ts);
-		ts->suspended = 1;
-	}
-	
+	D("%s: enter\n", __func__);
+#if defined(HX_CONFIG_DRM) && !defined(HX_CONFIG_FB)
+	if (!ts->initialized)
+		return -ECANCELED;
+#endif
+	himax_chip_common_suspend(ts);
 	return 0;
 }
 
@@ -818,19 +815,97 @@ static int himax_common_resume(struct device *dev)
 {
 	struct himax_ts_data *ts = dev_get_drvdata(dev);
 
-	if (ts->suspended) {
-		D("%s: enter\n", __func__);
-		/* wait until device resume for TDDI
-		 * TDDI: Touch and display Driver IC */
-		if (!ts->initialized)
-			if (himax_chip_common_init())
-				return -ECANCELED;
-		himax_chip_common_resume(ts);
-		ts->suspended = 0;
-	}
-	
+	D("%s: enter\n", __func__);
+#if defined(HX_CONFIG_DRM) && !defined(HX_CONFIG_FB)
+	/*
+	 *	wait until device resume for TDDI
+	 *	TDDI: Touch and display Driver IC
+	 */
+	if (!ts->initialized)
+		if (himax_chip_common_init())
+			return -ECANCELED;
+#endif
+	himax_chip_common_resume(ts);
 	return 0;
 }
+
+#if defined(HX_CONFIG_FB)
+int fb_notifier_callback(struct notifier_block *self,
+		unsigned long event, void *data)
+{
+	struct fb_event *evdata = data;
+	int *blank;
+	struct himax_ts_data *ts =
+	    container_of(self, struct himax_ts_data, fb_notif);
+
+
+	D("%s: FB notifier\n", __func__);
+
+	if (evdata
+	&& evdata->data
+	&& event == FB_EVENT_BLANK
+	&& ts
+	&& ts->client) {
+		blank = evdata->data;
+
+		switch (*blank) {
+		case FB_BLANK_UNBLANK:
+			himax_common_resume(&ts->client->dev);
+			break;
+		case FB_BLANK_POWERDOWN:
+		case FB_BLANK_HSYNC_SUSPEND:
+		case FB_BLANK_VSYNC_SUSPEND:
+		case FB_BLANK_NORMAL:
+			himax_common_suspend(&ts->client->dev);
+			break;
+		}
+	}
+
+	return 0;
+}
+#elif defined(HX_CONFIG_DRM)
+int drm_notifier_callback(struct notifier_block *self,
+		unsigned long event, void *data)
+{
+	struct msm_drm_notifier *evdata = data;
+	int *blank;
+	struct himax_ts_data *ts =
+		container_of(self, struct himax_ts_data, fb_notif);
+
+	if (!evdata || (evdata->id != 0))
+		return 0;
+
+	D("%s DRM notifier\n", __func__);
+
+	if (evdata->data
+	&& event == MSM_DRM_EARLY_EVENT_BLANK
+	&& ts
+	&& ts->client) {
+		blank = evdata->data;
+		switch (*blank) {
+		case MSM_DRM_BLANK_POWERDOWN:
+			if (!ts->initialized)
+				return -ECANCELED;
+			himax_common_suspend(&ts->client->dev);
+			break;
+		}
+	}
+
+	if (evdata->data
+	&& event == MSM_DRM_EVENT_BLANK
+	&& ts
+	&& ts->client) {
+		blank = evdata->data;
+		switch (*blank) {
+		case MSM_DRM_BLANK_UNBLANK:
+			himax_common_resume(&ts->client->dev);
+			break;
+		}
+	}
+
+	return 0;
+}
+#endif
 
 int himax_chip_common_probe(struct i2c_client *client,
 		const struct i2c_device_id *id)
@@ -888,8 +963,10 @@ static const struct i2c_device_id himax_common_ts_id[] = {
 };
 
 static const struct dev_pm_ops himax_common_pm_ops = {
+#if (!defined(HX_CONFIG_FB)) && (!defined(HX_CONFIG_DRM))
 	.suspend = himax_common_suspend,
 	.resume  = himax_common_resume,
+#endif
 };
 
 #if defined(CONFIG_OF)
