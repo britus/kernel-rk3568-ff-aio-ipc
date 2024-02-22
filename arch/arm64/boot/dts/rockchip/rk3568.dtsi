@@ -3037,7 +3037,7 @@
 	};
 
 	spi0: spi@fe610000 {
-		compatible = "rockchip,rk3066-spi";
+		compatible = "rockchip,rk3568-spi";
 		reg = <0x0 0xfe610000 0x0 0x1000>;
 		interrupts = <GIC_SPI 103 IRQ_TYPE_LEVEL_HIGH>;
 		#address-cells = <1>;
@@ -3053,7 +3053,7 @@
 	};
 
 	spi1: spi@fe620000 {
-		compatible = "rockchip,rk3066-spi";
+		compatible = "rockchip,rk3568-spi";
 		reg = <0x0 0xfe620000 0x0 0x1000>;
 		interrupts = <GIC_SPI 104 IRQ_TYPE_LEVEL_HIGH>;
 		#address-cells = <1>;
@@ -3069,7 +3069,7 @@
 	};
 
 	spi2: spi@fe630000 {
-		compatible = "rockchip,rk3066-spi";
+		compatible = "rockchip,rk3568-spi";
 		reg = <0x0 0xfe630000 0x0 0x1000>;
 		interrupts = <GIC_SPI 105 IRQ_TYPE_LEVEL_HIGH>;
 		#address-cells = <1>;
@@ -3085,7 +3085,7 @@
 	};
 
 	spi3: spi@fe640000 {
-		compatible = "rockchip,rk3066-spi";
+		compatible = "rockchip,rk3568-spi";
 		reg = <0x0 0xfe640000 0x0 0x1000>;
 		interrupts = <GIC_SPI 106 IRQ_TYPE_LEVEL_HIGH>;
 		#address-cells = <1>;

@@ -5,12 +5,18 @@
  */
 
 / {
-	/* Fireflys "Android simulation" overlayfs bullshit: 
+	/* Firefly's overlayfs bullshit: 
 	chosen: chosen {
-		bootargs = "earlycon=uart8250,mmio32,0xfe660000 console=ttyFIQ0 root=PARTLABEL=rootfs rootfstype=ext4 ro rootwait overlayroot=device:dev=PARTLABEL=userdata,fstype=ext4,mkfs=1 coherent_pool=1m systemd.gpt_auto=0 cgroup_enable=memory swapaccount=1 swiotlb=0x10000";
-		bootargs = "earlycon=uart8250,mmio32,0xfe660000 console=ttyFIQ0 coherent_pool=1m systemd.gpt_auto=0 cgroup_enable=memory swapaccount=1 swiotlb=0x10000";
+		bootargs = "earlycon=uart8250,mmio32,0xfe660000 console=ttyFIQ0 \
+			root=PARTLABEL=rootfs rootfstype=ext4 ro rootwait \
+			overlayroot=device:dev=PARTLABEL=userdata,fstype=ext4,mkfs=1 \
+			coherent_pool=1m systemd.gpt_auto=0 cgroup_enable=memory \
+			swapaccount=1 swiotlb=0x10000";
 	};
-	Setup root= option for the rootfs partition as needed in the final device DTS */
+	Setup classic root= option for the rootfs partition as needed in the
+	final device DTS or use 'append' option in extlinux.conf for sdcard 
+	or emmc non Android GPT partition layout
+	*/
 
 	fiq-debugger {
 		compatible = "rockchip,fiq-debugger";
