@@ -15,7 +15,7 @@
 
 	chosen: chosen {
 		/* The option root= will be set by the extlinux.conf
-         * file located on the boot partition of the SD-Card */
+         * file located on the boot partition of the SD-Card or eMMC or NVME SSD */
 		bootargs = "earlycon=uart8250,mmio32,0xfe660000 console=ttyFIQ0 coherent_pool=1m systemd.gpt_auto=0 cgroup_enable=memory swapaccount=1 swiotlb=0x10000";
 	};
 
@@ -91,6 +91,7 @@
 
 &video_phy1 {
     status = "okay";
+	phy-supply = <&vdd_gpu>;
 };
 
 &route_dsi1 {
@@ -139,7 +140,7 @@
         dsi,lanes  = <4>;
 
         panel-init-sequence = [
-            //39 00 04 B9 83 10 2E
+            // 39 00 04 B9 83 10 2E
             // 15 00 02 CF FF
             05 78 01 11
             05 32 01 29
@@ -155,14 +156,14 @@
             native-mode = <&dsi1_timing0>;
             dsi1_timing0: timing0 {
                 clock-frequency = <72600000>;   //<72600000> //<80000000>;
-                hactive = <800>;                //<800>  //<768>;
+                hactive = <800>;                //<800>      //<768>;
                 vactive = <1280>;               //<1280>
-                hsync-len = <14>;               //<14>   //20, 50,10
-                hback-porch = <26>;             //<26>   //50, 56,10
-                hfront-porch = <32>;            //<32>   //50, 30,180
-	            vsync-len = <8>;                //<8>    //4
-	            vback-porch = <20>;             //<20>   //4
-	            vfront-porch = <80>;            //<80>   //8
+                hsync-len = <14>;               //<14>       //20, 50,10
+                hback-porch = <26>;             //<26>       //50, 56,10
+                hfront-porch = <32>;            //<32>       //50, 30,180
+	            vsync-len = <8>;                //<8>        //4
+	            vback-porch = <20>;             //<20>       //4
+	            vfront-porch = <80>;            //<80>       //8
 	            hsync-active = <0>;
 	            vsync-active = <0>;
 	            de-active = <0>;

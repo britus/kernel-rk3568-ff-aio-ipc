@@ -579,6 +579,16 @@
 	vccio7-supply = <&vcc_3v3>;
 };
 
+&power {
+	pd_npu-supply = <&vdd_npu>;
+	pd_vpu-supply = <&vdd_gpu>;
+	pd_gpu-supply = <&vdd_gpu>;
+	pd_rga-supply = <&vdd_logic>;
+	pd_rkvdec-supply = <&vdd_logic>;
+	pd_rkvenc-supply = <&vdd_logic>;
+	pd_vi-supply = <&vdd_logic>;
+};
+
 &pwm4 {
 	status = "okay";
 };
@@ -610,6 +620,7 @@
 
 &rknpu {
 	rknpu-supply = <&vdd_npu>;
+	mem-supply = <&vdd_npu>;
 	status = "okay";
 };
 
@@ -666,6 +677,7 @@
 
 &u2phy0_otg {
 	vbus-supply = <&vcc5v0_otg>;
+	phy-supply = <&vcc5v0_host>;
 	status = "okay";
 };
 
@@ -675,6 +687,7 @@
 };
 
 &u2phy1_otg {
+	vbus-supply = <&vcc5v0_otg>;
 	phy-supply = <&vcc5v0_host>;
 	status = "okay";
 };

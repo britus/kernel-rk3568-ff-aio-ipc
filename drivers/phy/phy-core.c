@@ -651,8 +651,12 @@ struct phy *phy_get(struct device *dev, const char *string)
 		index = of_property_match_string(dev->of_node, "phy-names",
 			string);
 		phy = _of_phy_get(dev->of_node, index);
+		dev_info(dev, "%s: key '%s' idx=%d phy=%p\n", //
+			__func__, string, index, IS_ERR(phy) ? 0 : phy);
 	} else {
 		phy = phy_find(dev, string);
+		dev_info(dev, "%s: key '%s' phy=%p\n", //
+			__func__, string, IS_ERR(phy) ? 0 : phy);
 	}
 	if (IS_ERR(phy))
 		return phy;
@@ -847,7 +851,7 @@ struct phy *phy_create(struct device *dev, struct device_node *node,
 
 	phy->dev.class = phy_class;
 	phy->dev.parent = dev;
-	phy->dev.of_node = node ?: dev->of_node;
+	phy->dev.of_node = node ? node : dev->of_node;
 	phy->id = id;
 	phy->ops = ops;
 
@@ -858,6 +862,7 @@ struct phy *phy_create(struct device *dev, struct device_node *node,
 	/* phy-supply */
 	phy->pwr = regulator_get_optional(&phy->dev, "phy");
 	if (IS_ERR(phy->pwr)) {
+		dev_err(dev, "Can't find power supply property 'phy-supply'.\n");
 		ret = PTR_ERR(phy->pwr);
 		if (ret == -EPROBE_DEFER)
 			goto put_dev;
