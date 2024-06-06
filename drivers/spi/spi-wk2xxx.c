@@ -30,11 +30,12 @@
 #include <linux/platform_device.h>
 #include <asm/irq.h>
 #include <asm/io.h>
-#include "linux/version.h"
+#include <linux/version.h>
 #include <linux/regmap.h>
 #include <linux/uaccess.h>
 #include <linux/kthread.h>
 #include <linux/sched.h>
+#include <linux/interrupt.h>
 #include <uapi/linux/sched.h>
 #include <uapi/linux/sched/types.h>
 
@@ -42,7 +43,17 @@
 #define VERSION_DESC "V2.5 on 2024.02.15"
 #define DRIVER_AUTHOR "Xuxunwei/B.Eschrich"
 
+/*************Config **********************************************/
+#if 0
+#define CONFIG_SPI_WK2XXX_DEBUG 1
+#define CONFIG_SPI_WK2XXX_GPIO_RS485 1
+#define CONFIG_SPI_WK2XXX_GPIO_RST 1
+#define CONFIG_SPI_WK2XXX_GPIO_CS 1
+#define CONFIG_SPI_WK2XXX_GPIO_PWR 1
+#endif
+
 /*************The debug control **********************************/
+
 #if defined(CONFIG_SPI_WK2XXX_DEBUG)
 #define _DEBUG_WK_FUNCTION
 #define _DEBUG_WK_RX
@@ -97,7 +108,6 @@ static DEFINE_MUTEX(wk2xxxs_global_lock);
 #define MINOR_START 5
 //wk2xxx hardware configuration
 #define WK_SPI_SPEED 10000000
-//#define WK_CRASTAL_CLK (24000000)
 #define WK_CRASTAL_CLK (11059200)
 #define WK2_ISR_PASS_LIMIT 2
 #define PORT_WK2XXX 1
@@ -111,8 +121,7 @@ static DEFINE_MUTEX(wk2xxxs_global_lock);
 #define WK2XXX_GIER_REG 0X10 /*Slave UART Interrupt Enable */
 #define WK2XXX_GIFR_REG 0X11 /*Slave UART Interrupt Flag*/
 #define WK2XXX_GPDIR_REG 0X21 /*GPIO Direction*/ /*WK2168/WK2212*/
-#define WK2XXX_GPDAT_REG 0X31 
-/* ^^ GPIO Data Input and Data Output*/ /*WK2168/WK2212*/
+#define WK2XXX_GPDAT_REG 0X31 /*GPIO Data I/O*/ /*WK2168/WK2212*/
 
 /*****************************
 ****wk2xxx  slave uarts  register address defines****
@@ -131,8 +140,7 @@ static DEFINE_MUTEX(wk2xxxs_global_lock);
 #define WK2XXX_RFCNT_REG 0X0A /* RX FIFO counter */
 #define WK2XXX_FSR_REG 0X0B /* FIFO Status */
 #define WK2XXX_LSR_REG 0X0C /* Line Status */
-#define WK2XXX_FDAT_REG	0X0D 
-/*  ^^ Write transmit FIFO data or Read receive FIFO data */
+#define WK2XXX_FDAT_REG	0X0D /* Write transmit FIFO data or Read receive FIFO data */
 #define WK2XXX_FWCR_REG 0X0E /* Flow  Control */
 #define WK2XXX_RS485_REG 0X0F /* RS485 Control */
 
@@ -1223,6 +1231,8 @@ static int wk2xxx_startup(struct uart_port *port) //i
 
 /*enable rs485*/
 #ifdef WK_RS485_FUNCTION
+	dev_info(&spi->dev, "%s: Setup RS485 port iobase: %x.\n", __func__,
+			(uint8_t)one->port.iobase);
 	wk2xxx_write_slave_reg(spi, one->port.iobase, WK2XXX_RS485_REG,
 			       0X02); //default  high
 	//wk2xxx_write_slave_reg(s->spi_wk,one->port.iobase,WK2XXX_RS485,0X03);//default low
