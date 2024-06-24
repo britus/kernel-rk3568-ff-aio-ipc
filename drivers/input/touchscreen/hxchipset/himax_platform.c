@@ -87,14 +87,13 @@ void himax_vk_parser(struct device_node *dt,
 			if (of_property_read_u32(pp, "idx", &data) == 0)
 				vk[i].index = data;
 
-			if (of_property_read_u32_array(pp, "range", coords, 4)
-			== 0) {
+			if (of_property_read_u32_array(pp, "range", coords, 4) == 0) {
 				vk[i].x_range_min = coords[0];
 				vk[i].x_range_max = coords[1];
 				vk[i].y_range_min = coords[2];
 				vk[i].y_range_max = coords[3];
 			} else {
-				I(" range faile\n");
+				W("%s, range faile\n", __func__);
 			}
 
 			i++;
@@ -179,39 +178,41 @@ int himax_parse_dt(struct himax_ts_data *ts,
 #else
 	pdata->gpio_reset = of_get_named_gpio(dt, "himax,rst-gpio", 0);
 #endif
+	D("%s: gpio_rst=%d\n", __func__, pdata->gpio_reset);
+
 	if (!gpio_is_valid(pdata->gpio_reset)) {
 		W("%s: himax,gpio_rst value is not valid\n", __func__);
 	}
 
 #if defined(HX_PON_PIN_SUPPORT)
 	pdata->gpio_pon = of_get_named_gpio(dt, "himax,pon-gpio", 0);
-
-	if (!gpio_is_valid(pdata->gpio_pon))
-		W("%s: gpio_pon value is not valid\n", __func__);
-
 	D("%s: pdata->gpio_pon=%d\n", __func__, pdata->gpio_pon);
+
+	if (!gpio_is_valid(pdata->gpio_pon)) {
+		W("%s: gpio_pon value is not valid\n", __func__);
+	}
 #endif
 
+#if defined(HX_3v3_PIN_SUPPORT)
 	pdata->gpio_3v3_en = of_get_named_gpio(dt, "himax,3v3-gpio", 0);
+	D("%s: pdata->gpio_3v3_en=%d\n", __func__, pdata->gpio_3v3_en);
+
 	if (!gpio_is_valid(pdata->gpio_3v3_en)) {
 		W("%s: himax,gpio_3v3_en value is not valid\n", __func__);
 	}
+#endif
 
 	pdata->gpio_irq = of_get_named_gpio(dt, "himax,irq-gpio", 0);
+	D("%s: gpio_irq=%d\n", __func__, pdata->gpio_irq);
+
 	if (!gpio_is_valid(pdata->gpio_irq)) {
 		W("%s: himax,gpio_irq value is not valid\n", __func__);
 	}
 
-	D("%s: gpio_irq=%d, gpio_rst=%d, gpio_3v3_en=%d\n",
-			__func__,
-			pdata->gpio_irq,
-			pdata->gpio_reset,
-			pdata->gpio_3v3_en);
-
 	if (of_property_read_u32(dt, "himax,report_type", &data) == 0) {
 		pdata->protocol_type = data;
-	} else { /* default to protocol type B */
-		pdata->protocol_type = PROTOCOL_TYPE_B;
+	} else { /* default to protocol type A */
+		pdata->protocol_type = PROTOCOL_TYPE_A;
 	}
 
 	D("%s: protocol_type=%d (%s)\n", __func__, 
@@ -434,7 +435,6 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 	}
 
 #if defined(HX_RST_PIN_FUNC)
-
 	if (gpio_is_valid(pdata->gpio_reset)) {
 		/* configure touchscreen reset out gpio */
 		error = gpio_request(pdata->gpio_reset, "hmx_reset_gpio");
@@ -452,8 +452,8 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 			goto err_gpio_reset_req;
 		}
 	}
-
 #endif
+
 	error = himax_power_on(pdata, true);
 	if (error) {
 		E("%s: Failed to power on hardware\n", __func__);
@@ -485,8 +485,8 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 
 	/*msleep(20);*/
 	usleep_range(2000, 2001);
-#if defined(HX_RST_PIN_FUNC)
 
+#if defined(HX_RST_PIN_FUNC)
 	if (gpio_is_valid(pdata->gpio_reset)) {
 		error = gpio_direction_output(pdata->gpio_reset, 1);
 		if (error) {
@@ -495,8 +495,8 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 			goto err_set_gpio_irq;
 		}
 	}
-
 #endif
+
 	return 0;
 err_set_gpio_irq:
 
@@ -517,14 +517,13 @@ err_regulator_on:
 err_regulator_not_on:
 	return error;
 }
-
 #else
 int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 {
 	int error = 0;
 	struct i2c_client *client = private_ts->client;
-#if defined(HX_RST_PIN_FUNC)
 
+#if defined(HX_RST_PIN_FUNC)
 	if (pdata->gpio_reset >= 0) {
 		error = gpio_request(pdata->gpio_reset, "himax-reset");
 		if (error < 0) {
@@ -538,7 +537,6 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 			goto err_gpio_reset_dir;
 		}
 	}
-
 #endif
 
 #if defined(HX_PON_PIN_SUPPORT)
@@ -560,7 +558,7 @@ int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 	}
 #endif
 
-
+	/* find power enable GPIO in dts with gpio request */
 	if (pdata->gpio_3v3_en >= 0) {
 		error = gpio_request(pdata->gpio_3v3_en, "himax-3v3_en");
 		if (error < 0) {
@@ -713,7 +711,7 @@ int himax_int_register_trigger(void)
 	struct i2c_client *client = private_ts->client;
 
 	if (ic_data->HX_INT_IS_EDGE) {
-		D("%s: edge triiger falling\n ", __func__);
+		D("%s: edge trigger falling\n ", __func__);
 		ret = request_threaded_irq(client->irq, NULL, himax_ts_thread,
 			IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 			client->name, ts);
@@ -763,7 +761,7 @@ int himax_ts_register_interrupt(void)
 		hrtimer_init(&ts->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 		ts->timer.function = himax_ts_timer_func;
 		hrtimer_start(&ts->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
-		D("%s: polling mode enabled\n", __func__);
+		I("%s: polling mode enabled\n", __func__);
 	}
 
 	return ret;

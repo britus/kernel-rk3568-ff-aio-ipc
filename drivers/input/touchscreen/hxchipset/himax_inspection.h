@@ -21,7 +21,7 @@
 /*#define HX_INSP_LP_TEST*/
 /*#define HX_ACT_IDLE_TEST*/
 
-#define HX_RSLT_OUT_PATH "/sdcard/"
+#define HX_RSLT_OUT_PATH "/var/log/"
 #define HX_RSLT_OUT_FILE "hx_test_result.txt"
 #define PI(x...) pr_cont(x)
 #define HX_SZ_ICID 60

@@ -209,8 +209,10 @@
         //himax,3v3-gpio = <&gpio0 RK_PB4 GPIO_ACTIVE_HIGH>;
         //himax,pon-gpio = <&gpio0 RK_PB4 GPIO_ACTIVE_HIGH>;
 
+        /* ........................... */
         himax,panel-coords = <0 800 0 1280>;      //触摸范围
         himax,display-coords = <0 800 0 1280>;    //分辨率
+        
         // Input device protocol type: 0=A || 1=B || 2=B_3PA
         // see driver for more info... QT-QPA validated -> A.
         himax,report_type = <0>;

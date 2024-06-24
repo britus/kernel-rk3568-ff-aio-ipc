@@ -19,7 +19,7 @@
 static void hx83102_chip_init(void)
 {
 	(*kp_private_ts)->chip_cell_type = CHIP_IS_IN_CELL;
-	D("%s: IC cell type = %d\n", __func__, (*kp_private_ts)->chip_cell_type);
+	I("%s: IC 83102 cell type = %d\n", __func__, (*kp_private_ts)->chip_cell_type);
 	(*kp_IC_CHECKSUM) = HX_TP_BIN_CHECKSUM_CRC;
 	/*Himax: Set FW and CFG Flash Address*/
 	(*kp_FW_VER_MAJ_FLASH_ADDR) = 49157;  /*0x00C005*/
@@ -41,7 +41,7 @@ static void hx83102_chip_init(void)
 static void hx83102e_chip_init(void)
 {
 	(*kp_private_ts)->chip_cell_type = CHIP_IS_IN_CELL;
-	D("%s: IC cell type = %d\n", __func__, (*kp_private_ts)->chip_cell_type);
+	I("%s: IC 83102E cell type = %d\n", __func__, (*kp_private_ts)->chip_cell_type);
 	(*kp_IC_CHECKSUM) = HX_TP_BIN_CHECKSUM_CRC;
 	/*Himax: Set FW and CFG Flash Address*/
 	(*kp_FW_VER_MAJ_FLASH_ADDR) = 59397;  /*0x00E805*/
@@ -1643,7 +1643,7 @@ static bool hx83102_chip_detect(void)
 			E("%s: hx83102_register_read failed.\n", __func__);
 			return ret_data;
 		}
-		D("%s: Read driver IC ID = %X,%X,%X\n", __func__, tmp_data[3],
+		I("%s: Read driver IC ID = %X,%X,%X\n", __func__, tmp_data[3],
 			tmp_data[2], tmp_data[1]); /*83,10,2X*/
 
 		if ((tmp_data[3] == 0x83)
@@ -1657,28 +1657,28 @@ static bool hx83102_chip_detect(void)
 					HX_83102A_SERIES_PWON, 30);
 				(*kp_ic_data)->ic_adc_num =
 					hx83102a_data_adc_num;
-				D("%s: detect IC HX83102A successfully\n",
+				I("%s: detect IC HX83102A successfully\n",
 					__func__);
 			} else if (tmp_data[1] == 0x2b) {
 				strlcpy((*kp_private_ts)->chip_name,
 					HX_83102B_SERIES_PWON, 30);
 				(*kp_ic_data)->ic_adc_num =
 					hx83102b_data_adc_num;
-				D("%s: detect IC HX83102B successfully\n",
+				I("%s: detect IC HX83102B successfully\n",
 					__func__);
 			} else if (tmp_data[1] == 0x2d) {
 				strlcpy((*kp_private_ts)->chip_name,
 					HX_83102D_SERIES_PWON, 30);
 				(*kp_ic_data)->ic_adc_num =
 					hx83102d_data_adc_num;
-				D("%s: detect IC HX83102D successfully\n",
+				I("%s: detect IC HX83102D successfully\n",
 					__func__);
 			} else {
 				strlcpy((*kp_private_ts)->chip_name,
 					HX_83102E_SERIES_PWON, 30);
 				(*kp_ic_data)->ic_adc_num =
 					hx83102e_data_adc_num;
-				D("%s: detect IC HX83102E successfully\n",
+				I("%s: detect IC HX83102E successfully\n",
 					__func__);
 			}
 

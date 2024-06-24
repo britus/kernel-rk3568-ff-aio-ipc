@@ -67,13 +67,14 @@
 /*#define HX_ZERO_FLASH*/
 
 /*system suspend-chipset power off,
- *oncell chipset need to enable the definition
- */
+ *oncell chipset need to enable the definition */
 /*#define HX_RESUME_HW_RESET*/
 
-/*for Himax auto-motive chipset
- */
+/*for Himax auto-motive chipset */
 /*#define HX_PON_PIN_SUPPORT*/
+
+/*for Himax 3v3 pin support */
+/*#define HX_3v3_PIN_SUPPORT*/
 
 /*=============================================*/
 
