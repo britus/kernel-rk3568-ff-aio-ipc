@@ -16,8 +16,8 @@
 #ifndef HIMAX_COMMON_H
 #define HIMAX_COMMON_H
 
+#include <autoconf.h>
 #include <asm/segment.h>
-
 #include <linux/uaccess.h>
 #include <linux/atomic.h>
 #include <linux/delay.h>
@@ -45,7 +45,7 @@
 #endif
 
 #define HIMAX_DRIVER_VER "2.0.0.51_BOE10.1_01"
-#define FLASH_DUMP_FILE "/sdcard/HX_Flash_Dump.bin"
+#define FLASH_DUMP_FILE "/tmp/HX_Flash_Dump.bin"
 
 #if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
 #define HX_TP_PROC_2T2R
@@ -68,7 +68,9 @@
 
 /*system suspend-chipset power off,
  *oncell chipset need to enable the definition */
+#ifdef CONFIG_TOUCHSCREEN_HIMAX_ONCELL
 /*#define HX_RESUME_HW_RESET*/
+#endif
 
 /*for Himax auto-motive chipset */
 /*#define HX_PON_PIN_SUPPORT*/

@@ -1359,8 +1359,8 @@ int himax_report_data_init(void)
 		kfree(wake_event_buffer);
 		wake_event_buffer = NULL;
 	}
-
 #endif
+
 	hx_touch_data->touch_all_size = g_core_fp.fp_get_touch_data_size();
 	hx_touch_data->raw_cnt_max = ic_data->HX_MAX_PT / 4;
 	hx_touch_data->raw_cnt_rmd = ic_data->HX_MAX_PT % 4;
@@ -3234,9 +3234,11 @@ int himax_chip_common_suspend(struct himax_ts_data *ts)
 	atomic_set(&ts->suspend_mode, 1);
 	ts->pre_finger_mask = 0;
 
+	/* nice idea. Touch will never wakeup the system
 	if (ts->pdata)
 		if (ts->pdata->powerOff3V3 && ts->pdata->power)
 			ts->pdata->power(0);
+	*/
 
 END:
 	if (ts->in_self_test == 1)
@@ -3269,9 +3271,12 @@ int himax_chip_common_resume(struct himax_ts_data *ts)
 	atomic_set(&ts->suspend_mode, 0);
 	ts->diag_cmd = 0;
 
+	/* we doesn't supend the power. The touch must be
+	 * able to wakeup system
 	if (ts->pdata)
 		if (ts->pdata->powerOff3V3 && ts->pdata->power)
 			ts->pdata->power(1);
+	*/
 
 #if defined(HX_RST_PIN_FUNC) && defined(HX_RESUME_HW_RESET)
 	if (g_core_fp.fp_ic_reset != NULL)
