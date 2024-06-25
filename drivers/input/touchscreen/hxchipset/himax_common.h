@@ -78,16 +78,31 @@
 
 /*=============================================*/
 
-/* Enable it if driver go into suspend/resume twice */
-/*#undef HX_CONFIG_FB*/
+/* remove if already set by Makefile */
+#ifdef HX_CONFIG_FB
+#undef HX_CONFIG_FB
+#endif
 
-/* Enable it if driver go into suspend/resume twice */
-/*#undef HX_CONFIG_DRM*/
+#ifdef HX_CONFIG_DRM
+#undef HX_CONFIG_DRM
+#endif
+
+/* DON'T USE POWER SAVE ON SCREEN BLANK! FREEZES TOUCHPANEL
+#if defined(CONFIG_FB)
+#define HX_CONFIG_FB
+#endif
+
+#if defined(CONFIG_DRM)
+#define HX_CONFIG_DRM
+#endif
+*/
 
 #if defined(HX_CONFIG_FB)
 #include <linux/notifier.h>
 #include <linux/fb.h>
-#elif defined(HX_CONFIG_DRM)
+#endif
+
+#if defined(HX_CONFIG_DRM)
 #include <linux/msm_drm_notify.h>
 #endif
 

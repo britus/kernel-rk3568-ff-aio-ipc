@@ -2787,7 +2787,6 @@ static void himax_resume_work_func(struct work_struct *work)
 #endif
 int himax_chip_common_init(void)
 {
-
 	int i = 0, ret = 0, idx = 0;
 	int err = PROBE_FAIL;
 	struct himax_ts_data *ts = private_ts;
@@ -2809,8 +2808,9 @@ int himax_chip_common_init(void)
 	}
 
 #if defined(__EMBEDDED_FW__)
-	g_embedded_fw.size = (size_t)_binary___Himax_firmware_bin_end -
-			(size_t)_binary___Himax_firmware_bin_start;
+	g_embedded_fw.size = //
+		(size_t)_binary___Himax_firmware_bin_end -
+		(size_t)_binary___Himax_firmware_bin_start;
 #endif
 
 	ts->xfer_buff = devm_kzalloc(ts->dev, 128 * sizeof(uint8_t),
@@ -2852,9 +2852,10 @@ int himax_chip_common_init(void)
 #if defined(HX_RST_PIN_FUNC)
 	ts->rst_gpio = pdata->gpio_reset;
 #endif
-	himax_gpio_power_config(pdata);
-#if !defined(CONFIG_OF)
 
+	himax_gpio_power_config(pdata);
+
+#if !defined(CONFIG_OF)
 	if (pdata->power) {
 		ret = pdata->power(1);
 
@@ -2863,7 +2864,6 @@ int himax_chip_common_init(void)
 			goto err_power_failed;
 		}
 	}
-
 #endif
 
 	g_hx_chip_inited = 0;
@@ -2916,24 +2916,20 @@ found_hx_chip:
 #endif
 
 #if defined(HX_AUTO_UPDATE_FW)
-	if (g_auto_update_flag)
-		goto FW_force_upgrade;
+	if (g_auto_update_flag){
+		ts->himax_update_wq =
+				create_singlethread_workqueue("HMX_update_request");
+		if (!ts->himax_update_wq) {
+			E(" allocate himax_update_wq failed\n");
+			err = -ENOMEM;
+			goto err_update_wq_failed;
+		}
+		INIT_DELAYED_WORK(&ts->work_update, himax_update_register);
+		queue_delayed_work(ts->himax_update_wq, &ts->work_update,
+				msecs_to_jiffies(2000));
+	}   
 #endif
 
-
-#if defined(HX_AUTO_UPDATE_FW)
-FW_force_upgrade:
-	ts->himax_update_wq =
-			create_singlethread_workqueue("HMX_update_request");
-	if (!ts->himax_update_wq) {
-		E(" allocate himax_update_wq failed\n");
-		err = -ENOMEM;
-		goto err_update_wq_failed;
-	}
-	INIT_DELAYED_WORK(&ts->work_update, himax_update_register);
-	queue_delayed_work(ts->himax_update_wq, &ts->work_update,
-			msecs_to_jiffies(2000));
-#endif
 #if defined(HX_ZERO_FLASH)
 	g_auto_update_flag = true;
 	ts->himax_0f_update_wq =
@@ -3206,23 +3202,23 @@ int himax_chip_common_suspend(struct himax_ts_data *ts)
 	g_core_fp.fp_resend_cmd_func(ts->suspended);
 #endif
 #endif
-#if defined(HX_SMART_WAKEUP)
 
+#if defined(HX_SMART_WAKEUP)
 	if (ts->SMWP_enable) {
 #if defined(HX_CODE_OVERLAY)
 		if (ts->in_self_test == 0)
 			g_core_fp.fp_0f_overlay(2, 0);
 #endif
-
 		atomic_set(&ts->suspend_mode, 1);
 		ts->pre_finger_mask = 0;
 		D("%s: SMART_WAKEUP enable, reject suspend\n",
 				__func__);
 		goto END;
 	}
-
 #endif
+
 	himax_int_enable(0);
+
 	/*if (g_core_fp.fp_suspend_ic_action != NULL)*/
 		/*g_core_fp.fp_suspend_ic_action();*/
 

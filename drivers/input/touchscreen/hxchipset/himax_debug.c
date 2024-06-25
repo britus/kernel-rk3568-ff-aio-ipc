@@ -2863,7 +2863,6 @@ int himax_debug_init(void)
 	}
 
 #if defined(HX_TP_PROC_GUEST_INFO)
-
 	if (g_guest_info_data == NULL) {
 		g_guest_info_data = kzalloc(sizeof(struct hx_guest_info),
 				GFP_KERNEL);
@@ -2930,7 +2929,6 @@ int himax_debug_init(void)
 	}
 
 #if defined(HX_TP_PROC_2T2R)
-
 	if (Is_2T2R) {
 		setMutualBuffer_2(ic_data->HX_RX_NUM_2, ic_data->HX_TX_NUM_2);
 

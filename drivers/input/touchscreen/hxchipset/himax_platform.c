@@ -123,7 +123,6 @@ int himax_parse_dt(struct himax_ts_data *ts,
 	int ret = 0;
 
 	prop = of_find_property(dt, "himax,panel-coords", NULL);
-
 	if (prop) {
 		coords_size = prop->length / sizeof(u32);
 		if (coords_size != 4) {
@@ -148,7 +147,6 @@ int himax_parse_dt(struct himax_ts_data *ts,
 	}
 
 	prop = of_find_property(dt, "himax,display-coords", NULL);
-
 	if (prop) {
 		coords_size = prop->length / sizeof(u32);
 		if (coords_size != 4) {
@@ -156,22 +154,18 @@ int himax_parse_dt(struct himax_ts_data *ts,
 				__func__, coords_size);
 			return -EINVAL;
 		}
+		rc = of_property_read_u32_array(dt, "himax,display-coords",
+				coords, coords_size);
+		if (rc && (rc != -EINVAL)) {
+			E("%s: Fail to read display-coords %d\n", __func__, rc);
+			return rc;
+		}
+		pdata->screenWidth  = coords[1];
+		pdata->screenHeight = coords[3];		
+		D("%s: display-coords = (%d, %d)\n", __func__,
+				pdata->screenWidth,
+				pdata->screenHeight);
 	}
-
-	rc = of_property_read_u32_array(dt, "himax,display-coords",
-			coords, coords_size);
-
-	if (rc && (rc != -EINVAL)) {
-		E("%s: Fail to read display-coords %d\n", __func__, rc);
-		return rc;
-	}
-
-	pdata->screenWidth  = coords[1];
-	pdata->screenHeight = coords[3];
-	
-	D("%s: display-coords = (%d, %d)\n", __func__,
-			pdata->screenWidth,
-			pdata->screenHeight);
 
 #if defined(HX_PON_PIN_SUPPORT)
 	pdata->gpio_reset = 262;
@@ -245,15 +239,14 @@ int himax_bus_read(uint8_t command, uint8_t *data,
 			.buf = data,
 		}
 	};
-	mutex_lock(&private_ts->rw_lock);
 
+	mutex_lock(&private_ts->rw_lock);
 	for (retry = 0; retry < toRetry; retry++) {
 		if (i2c_transfer(client->adapter, msg, 2) == 2)
 			break;
 
 		/*msleep(20);*/
 	}
-
 	if (retry == toRetry) {
 		E("%s: i2c_read_block retry over %d\n",
 		  __func__, toRetry);
@@ -261,8 +254,8 @@ int himax_bus_read(uint8_t command, uint8_t *data,
 		mutex_unlock(&private_ts->rw_lock);
 		return -EIO;
 	}
-
 	mutex_unlock(&private_ts->rw_lock);
+	
 	return 0;
 }
 EXPORT_SYMBOL(himax_bus_read);
