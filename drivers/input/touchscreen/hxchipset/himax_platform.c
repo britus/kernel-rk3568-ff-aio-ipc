@@ -794,10 +794,12 @@ static int himax_common_suspend(struct device *dev)
 	struct himax_ts_data *ts = dev_get_drvdata(dev);
 
 	D("%s: enter\n", __func__);
+
 #if defined(HX_CONFIG_DRM) && !defined(HX_CONFIG_FB)
 	if (!ts->initialized)
 		return -ECANCELED;
 #endif
+
 	himax_chip_common_suspend(ts);
 	return 0;
 }
@@ -807,6 +809,7 @@ static int himax_common_resume(struct device *dev)
 	struct himax_ts_data *ts = dev_get_drvdata(dev);
 
 	D("%s: enter\n", __func__);
+
 #if defined(HX_CONFIG_DRM) && !defined(HX_CONFIG_FB)
 	/*
 	 *	wait until device resume for TDDI
@@ -816,6 +819,7 @@ static int himax_common_resume(struct device *dev)
 		if (himax_chip_common_init())
 			return -ECANCELED;
 #endif
+
 	himax_chip_common_resume(ts);
 	return 0;
 }
