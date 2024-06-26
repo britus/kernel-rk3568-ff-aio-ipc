@@ -824,14 +824,16 @@ static int himax_common_resume(struct device *dev)
 int fb_notifier_callback(struct notifier_block *self,
 		unsigned long event, void *data)
 {
-	struct fb_event *evdata = data;
 	int *blank;
+	struct fb_event *evdata = data;
 	struct himax_ts_data *ts =
 	    container_of(self, struct himax_ts_data, fb_notif);
 
+	I("%s: FB notifier\n", __func__);
 
-	D("%s: FB notifier\n", __func__);
-
+	/* "WHICH IDIOT THINK TO POWER OFF (KERNEL-PM) ON 'SCREEN BLANK' EVENT?"
+	 * "DO NOT SMOKE GANJA!" We doesn't power off. The touchpanel must 
+	 * be able to resume screen by finger tipping on the panel. */
 	if (evdata
 	&& evdata->data
 	&& event == FB_EVENT_BLANK
@@ -841,13 +843,17 @@ int fb_notifier_callback(struct notifier_block *self,
 
 		switch (*blank) {
 		case FB_BLANK_UNBLANK:
+#if 0
 			himax_common_resume(&ts->client->dev);
+#endif
 			break;
 		case FB_BLANK_POWERDOWN:
 		case FB_BLANK_HSYNC_SUSPEND:
 		case FB_BLANK_VSYNC_SUSPEND:
 		case FB_BLANK_NORMAL:
+#if 0
 			himax_common_suspend(&ts->client->dev);
+#endif
 			break;
 		}
 	}
@@ -866,8 +872,11 @@ int drm_notifier_callback(struct notifier_block *self,
 	if (!evdata || (evdata->id != 0))
 		return 0;
 
-	D("%s DRM notifier\n", __func__);
+	I("%s DRM notifier\n", __func__);
 
+	/* "WHICH IDIOT THINK TO POWER OFF ON 'SCREEN BLANK' EVENT?"
+	 * "DO NOT SMOKE GANJA!" We doesn't power off. The touchpanel must 
+	 * be able to resume screen by finger tipping on the panel. */
 	if (evdata->data
 	&& event == MSM_DRM_EARLY_EVENT_BLANK
 	&& ts
@@ -877,7 +886,9 @@ int drm_notifier_callback(struct notifier_block *self,
 		case MSM_DRM_BLANK_POWERDOWN:
 			if (!ts->initialized)
 				return -ECANCELED;
+#if 0
 			himax_common_suspend(&ts->client->dev);
+#endif
 			break;
 		}
 	}
@@ -889,7 +900,9 @@ int drm_notifier_callback(struct notifier_block *self,
 		blank = evdata->data;
 		switch (*blank) {
 		case MSM_DRM_BLANK_UNBLANK:
+#if 0
 			himax_common_resume(&ts->client->dev);
+#endif
 			break;
 		}
 	}
@@ -953,12 +966,17 @@ static const struct i2c_device_id himax_common_ts_id[] = {
 	{}
 };
 
+#if defined(CONFIG_PM)
 static const struct dev_pm_ops himax_common_pm_ops = {
-#if (!defined(HX_CONFIG_FB)) && (!defined(HX_CONFIG_DRM))
+	/* "WHICH IDIOT THINK TO POWER OFF ON 'SCREEN BLANK' EVENT?"
+	 * "DO NOT SMOKE GANJA!" We doesn't power off. The touchpanel must 
+	 * be able to resume screen by finger tipping on the panel. */
+//#if (!defined(HX_CONFIG_FB)) && (!defined(HX_CONFIG_DRM))
 	.suspend = himax_common_suspend,
 	.resume  = himax_common_resume,
-#endif
+//#endif
 };
+#endif
 
 #if defined(CONFIG_OF)
 static const struct of_device_id himax_match_table[] = {

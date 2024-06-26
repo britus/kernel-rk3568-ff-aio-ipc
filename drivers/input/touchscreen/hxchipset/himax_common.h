@@ -88,22 +88,16 @@
 #undef HX_CONFIG_DRM
 #endif
 
-/* DON'T USE POWER SAVE ON SCREEN BLANK! FREEZES TOUCHPANEL
 #if defined(CONFIG_FB)
 #define HX_CONFIG_FB
-#endif
-
-#if defined(CONFIG_DRM)
+#elif defined(CONFIG_DRM)
 #define HX_CONFIG_DRM
 #endif
-*/
 
 #if defined(HX_CONFIG_FB)
 #include <linux/notifier.h>
 #include <linux/fb.h>
-#endif
-
-#if defined(HX_CONFIG_DRM)
+#elif defined(HX_CONFIG_DRM)
 #include <linux/msm_drm_notify.h>
 #endif
 

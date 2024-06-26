@@ -2756,6 +2756,7 @@ static void himax_fb_register(struct work_struct *work)
 			work_att.work);
 
 	D("%s: in\n", __func__);
+	
 #if defined(HX_CONFIG_FB)
 	ts->fb_notif.notifier_call = fb_notifier_callback;
 	ret = fb_register_client(&ts->fb_notif);
@@ -2773,6 +2774,7 @@ static void himax_fb_register(struct work_struct *work)
 	ret = msm_drm_register_client(&ts->fb_notif);
 #endif
 #endif
+
 	if (ret)
 		E("Unable to register fb_notifier: %d\n", ret);
 }
@@ -3234,11 +3236,9 @@ int himax_chip_common_suspend(struct himax_ts_data *ts)
 	atomic_set(&ts->suspend_mode, 1);
 	ts->pre_finger_mask = 0;
 
-	/* nice idea. Touch will never wakeup the system
 	if (ts->pdata)
 		if (ts->pdata->powerOff3V3 && ts->pdata->power)
 			ts->pdata->power(0);
-	*/
 
 END:
 	if (ts->in_self_test == 1)
@@ -3254,6 +3254,7 @@ int himax_chip_common_resume(struct himax_ts_data *ts)
 #if defined(HX_ZERO_FLASH) && defined(HX_RESUME_SET_FW)
 	int result = 0;
 #endif
+
 	D("%s: enter\n", __func__);
 
 	if (ts->suspended == false) {
@@ -3271,12 +3272,9 @@ int himax_chip_common_resume(struct himax_ts_data *ts)
 	atomic_set(&ts->suspend_mode, 0);
 	ts->diag_cmd = 0;
 
-	/* we doesn't supend the power. The touch must be
-	 * able to wakeup system
 	if (ts->pdata)
 		if (ts->pdata->powerOff3V3 && ts->pdata->power)
 			ts->pdata->power(1);
-	*/
 
 #if defined(HX_RST_PIN_FUNC) && defined(HX_RESUME_HW_RESET)
 	if (g_core_fp.fp_ic_reset != NULL)
@@ -3304,6 +3302,7 @@ int himax_chip_common_resume(struct himax_ts_data *ts)
 	}
 #endif
 #endif
+
 #if defined(HX_SMART_WAKEUP)\
 	|| defined(HX_HIGH_SENSE)\
 	|| defined(HX_USB_DETECT_GLOBAL)
@@ -3315,15 +3314,18 @@ int himax_chip_common_resume(struct himax_ts_data *ts)
 		g_core_fp.fp_0f_overlay(3, 0);
 #endif
 #endif
+
 	himax_report_all_leave_event(ts);
 
 	if (g_core_fp.fp_sense_on != NULL)
 		g_core_fp.fp_resume_ic_action();
 
 	himax_int_enable(1);
+
 #if defined(HX_ZERO_FLASH) && defined(HX_RESUME_SET_FW)
 ESCAPE_0F_UPDATE:
 #endif
+
 END:
 	if (ts->in_self_test == 1)
 		ts->suspend_resume_done = 1;
