@@ -88,6 +88,7 @@
 #undef HX_CONFIG_DRM
 #endif
 
+#if 0
 #if defined(CONFIG_FB)
 #define HX_CONFIG_FB
 #elif defined(CONFIG_DRM)
@@ -99,6 +100,7 @@
 #include <linux/fb.h>
 #elif defined(HX_CONFIG_DRM)
 #include <linux/msm_drm_notify.h>
+#endif
 #endif
 
 #if defined(__HIMAX_MOD__)

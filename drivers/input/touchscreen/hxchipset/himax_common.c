@@ -2751,7 +2751,8 @@ static int hx_chk_flash_sts(void)
 static void himax_fb_register(struct work_struct *work)
 {
 	int ret = 0;
-
+	
+#if 0
 	struct himax_ts_data *ts = container_of(work, struct himax_ts_data,
 			work_att.work);
 
@@ -2772,6 +2773,7 @@ static void himax_fb_register(struct work_struct *work)
 #else
 	ts->fb_notif.notifier_call = drm_notifier_callback;
 	ret = msm_drm_register_client(&ts->fb_notif);
+#endif
 #endif
 #endif
 
