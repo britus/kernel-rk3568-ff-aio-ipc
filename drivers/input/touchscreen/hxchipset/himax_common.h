@@ -88,21 +88,6 @@
 #undef HX_CONFIG_DRM
 #endif
 
-#if 0
-#if defined(CONFIG_FB)
-#define HX_CONFIG_FB
-#elif defined(CONFIG_DRM)
-#define HX_CONFIG_DRM
-#endif
-
-#if defined(HX_CONFIG_FB)
-#include <linux/notifier.h>
-#include <linux/fb.h>
-#elif defined(HX_CONFIG_DRM)
-#include <linux/msm_drm_notify.h>
-#endif
-#endif
-
 #if defined(__HIMAX_MOD__)
 #define HX_USE_KSYM
 #if !defined(HX_USE_KSYM) || !defined(__KERNEL_KALLSYMS_ALL_ENABLED__)
@@ -139,14 +124,6 @@
 /*Resume queue delay work time after LCM RST (unit:ms)
  */
 #define DELAY_TIME 40
-#endif
-
-#if defined(HX_CONFIG_FB)
-int fb_notifier_callback(struct notifier_block *self,
-		unsigned long event, void *data);
-#elif defined(HX_CONFIG_DRM)
-int drm_notifier_callback(struct notifier_block *self,
-			unsigned long event, void *data);
 #endif
 
 #define HX_MAX_WRITE_SZ    (64 * 1024 + 4)
@@ -429,12 +406,6 @@ struct himax_ts_data {
 	int in_self_test;
 	int suspend_resume_done;
 	int bus_speed;
-
-#if defined(HX_CONFIG_FB) || defined(HX_CONFIG_DRM)
-	struct notifier_block fb_notif;
-	struct workqueue_struct *himax_att_wq;
-	struct delayed_work work_att;
-#endif
 
 	struct workqueue_struct *flash_wq;
 	struct work_struct flash_work;

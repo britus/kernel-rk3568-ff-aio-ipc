@@ -2747,41 +2747,6 @@ static int hx_chk_flash_sts(void)
 }
 #endif
 
-#if defined(HX_CONFIG_FB) || defined(HX_CONFIG_DRM)
-static void himax_fb_register(struct work_struct *work)
-{
-	int ret = 0;
-	
-#if 0
-	struct himax_ts_data *ts = container_of(work, struct himax_ts_data,
-			work_att.work);
-
-	D("%s: in\n", __func__);
-	
-#if defined(HX_CONFIG_FB)
-	ts->fb_notif.notifier_call = fb_notifier_callback;
-	ret = fb_register_client(&ts->fb_notif);
-#elif defined(HX_CONFIG_DRM)
-#if defined(__HIMAX_MOD__)
-	hx_msm_drm_register_client =
-		(void *)kallsyms_lookup_name("msm_drm_register_client");
-	if (hx_msm_drm_register_client != NULL) {
-		ts->fb_notif.notifier_call = drm_notifier_callback;
-		ret = hx_msm_drm_register_client(&ts->fb_notif);
-	}	else
-		E("hx_msm_drm_register_client is NULL\n");
-#else
-	ts->fb_notif.notifier_call = drm_notifier_callback;
-	ret = msm_drm_register_client(&ts->fb_notif);
-#endif
-#endif
-#endif
-
-	if (ret)
-		E("Unable to register fb_notifier: %d\n", ret);
-}
-#endif
-
 #if defined(HX_CONTAINER_SPEED_UP)
 static void himax_resume_work_func(struct work_struct *work)
 {
@@ -3003,20 +2968,6 @@ found_hx_chip:
 	spin_lock_init(&ts->irq_lock);
 	ts->initialized = true;
 
-#if defined(HX_CONFIG_FB) || defined(HX_CONFIG_DRM)
-	ts->himax_att_wq = create_singlethread_workqueue("HMX_ATT_request");
-
-	if (!ts->himax_att_wq) {
-		E(" allocate himax_att_wq failed\n");
-		err = -ENOMEM;
-		goto err_get_intr_bit_failed;
-	}
-
-	INIT_DELAYED_WORK(&ts->work_att, himax_fb_register);
-	queue_delayed_work(ts->himax_att_wq, &ts->work_att,
-			msecs_to_jiffies(15000));
-#endif
-
 #if defined(HX_SMART_WAKEUP)
 	ts->SMWP_enable = 0;
 	wakeup_source_init(&ts->ts_SMWP_wake_lock, HIMAX_common_NAME);
@@ -3058,13 +3009,10 @@ err_report_data_init_failed:
 #if defined(HX_SMART_WAKEUP)
 	wakeup_source_trash(&ts->ts_SMWP_wake_lock);
 #endif
-#if defined(HX_CONFIG_FB) || defined(HX_CONFIG_DRM)
-	cancel_delayed_work_sync(&ts->work_att);
-	destroy_workqueue(ts->himax_att_wq);
-err_get_intr_bit_failed:
-#endif
+
 err_input_register_device_failed:
 	input_free_device(ts->input_dev);
+
 /*err_detect_failed:*/
 
 #if defined(HX_CONTAINER_SPEED_UP)
@@ -3128,40 +3076,24 @@ void himax_chip_common_deinit(void)
 #if defined(HX_SMART_WAKEUP)
 	wakeup_source_trash(&ts->ts_SMWP_wake_lock);
 #endif
-#if defined(HX_CONFIG_FB)
-	if (fb_unregister_client(&ts->fb_notif))
-		E("Error occurred while unregistering fb_notifier.\n");
-	cancel_delayed_work_sync(&ts->work_att);
-	destroy_workqueue(ts->himax_att_wq);
-#elif defined(HX_CONFIG_DRM)
-#if defined(__HIMAX_MOD__)
-	hx_msm_drm_unregister_client =
-		(void *)kallsyms_lookup_name("msm_drm_unregister_client");
-	if (hx_msm_drm_unregister_client != NULL) {
-		if (hx_msm_drm_unregister_client(&ts->fb_notif))
-			E("Error occurred while unregistering drm_notifier.\n");
-	} else
-		E("hx_msm_drm_unregister_client is NULL\n");
-#else
-	if (msm_drm_unregister_client(&ts->fb_notif))
-		E("Error occurred while unregistering drm_notifier.\n");
-#endif
-	cancel_delayed_work_sync(&ts->work_att);
-	destroy_workqueue(ts->himax_att_wq);
-#endif
+
 	input_free_device(ts->input_dev);
+
 #if defined(HX_CONTAINER_SPEED_UP)
 	cancel_delayed_work_sync(&ts->ts_int_work);
 	destroy_workqueue(ts->ts_int_workqueue);
 #endif
+
 #if defined(HX_ZERO_FLASH)
 	cancel_delayed_work_sync(&ts->work_0f_update);
 	destroy_workqueue(ts->himax_0f_update_wq);
 #endif
+
 #if defined(HX_AUTO_UPDATE_FW)
 	cancel_delayed_work_sync(&ts->work_update);
 	destroy_workqueue(ts->himax_update_wq);
 #endif
+
 	himax_gpio_power_deconfig(ts->pdata);
 	if (himax_mcu_cmd_struct_free)
 		himax_mcu_cmd_struct_free();
