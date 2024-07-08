@@ -50,7 +50,8 @@ static void himax_mcu_burst_enable(uint8_t auto_add_4_byte)
 	uint8_t tmp_data[DATA_LEN_4];
 	int ret;
 
-	/*D("%s: Entering\n", __func__);*/
+	D("%s: Entering auto_add_4_byte=%d\n", __func__, auto_add_4_byte);
+
 	tmp_data[0] = pic_op->data_conti[0];
 
 	ret = himax_bus_write(pic_op->addr_conti[0], tmp_data, 1,
@@ -68,6 +69,8 @@ static void himax_mcu_burst_enable(uint8_t auto_add_4_byte)
 		E("%s: i2c access fail!\n", __func__);
 		return;
 	}
+
+	D("%s: Leave\n", __func__);
 }
 
 static int himax_mcu_register_read(uint8_t *read_addr, uint32_t read_length,
@@ -78,7 +81,7 @@ static int himax_mcu_register_read(uint8_t *read_addr, uint32_t read_length,
 	int address = 0;
 	int ret = 0;
 
-	/*D("%s: Entering\n",__func__);*/
+	D("%s: Entering cfg_flag=%d\n",__func__, cfg_flag);
 
 	if (cfg_flag == false) {
 		if (read_length > FLASH_RW_MAX_LEN) {
@@ -139,6 +142,8 @@ static int himax_mcu_register_read(uint8_t *read_addr, uint32_t read_length,
 			return I2C_FAIL;
 		}
 	}
+
+	D("%s: Leave\n", __func__);
 	return NO_ERR;
 }
 
@@ -181,7 +186,8 @@ static int himax_mcu_register_write(uint8_t *write_addr, uint32_t write_length,
 	int i = 0;
 	int ret = 0;
 
-	/*D("%s: Entering\n", __func__);*/
+	D("%s: Entering cfg_flag=%d write_length=%d\n", __func__, cfg_flag, write_length);
+
 	if (cfg_flag == 0) {
 		total_size_temp = write_length;
 #if defined(HX_ZERO_FLASH)
@@ -255,6 +261,7 @@ static int himax_mcu_register_write(uint8_t *write_addr, uint32_t write_length,
 	} else
 		E("%s: cfg_flag = %d, value is wrong!\n", __func__, cfg_flag);
 
+	D("%s: Leave\n", __func__);
 	return NO_ERR;
 }
 
@@ -262,6 +269,8 @@ static int himax_write_read_reg(uint8_t *tmp_addr, uint8_t *tmp_data,
 		uint8_t hb, uint8_t lb)
 {
 	int cnt = 0;
+
+	D("%s: Entering hb=%d lb=%d\n", __func__, hb, lb);
 
 	do {
 		g_core_fp.fp_register_write(tmp_addr, DATA_LEN_4, tmp_data, 0);
@@ -280,6 +289,7 @@ static int himax_write_read_reg(uint8_t *tmp_addr, uint8_t *tmp_data,
 	D("%s: Now register 0x%08X : high byte=0x%02X,low byte=0x%02X\n",
 		__func__, tmp_addr[3], tmp_data[1], tmp_data[0]);
 
+	D("%s: Leave\n", __func__);
 	return NO_ERR;
 }
 
@@ -289,6 +299,8 @@ static void himax_mcu_interface_on(void)
 	uint8_t tmp_data2[DATA_LEN_4];
 	int cnt = 0;
 	int ret = 0;
+
+	D("%s: Entering\n", __func__);
 
 	/* Read a dummy register to wake up I2C.*/
 	ret = himax_bus_read(pic_op->addr_ahb_rdata_byte_0[0], tmp_data,
@@ -332,6 +344,8 @@ static void himax_mcu_interface_on(void)
 
 	if (cnt > 0)
 		D("%s: Polling burst mode: %d times\n", __func__, cnt);
+
+	D("%s: Leave\n", __func__);
 }
 
 #define WIP_PRT_LOG "%s: retry:%d, bf[0]=%d, bf[1]=%d,bf[2]=%d, bf[3]=%d\n"
@@ -340,6 +354,8 @@ static bool himax_mcu_wait_wip(int Timing)
 	uint8_t tmp_data[DATA_LEN_4];
 	int retry_cnt = 0;
 
+	D("%s: Entering\n", __func__);	
+	
 	g_core_fp.fp_register_write(pflash_op->addr_spi200_trans_fmt,
 			DATA_LEN_4, pflash_op->data_spi200_trans_fmt, 0);
 	tmp_data[0] = 0x01;
@@ -377,6 +393,7 @@ static bool himax_mcu_wait_wip(int Timing)
 		msleep(Timing);
 	} while ((tmp_data[0] & 0x01) == 0x01);
 
+	D("%s: Leave\n", __func__);	
 	return true;
 }
 
@@ -385,6 +402,8 @@ static void himax_mcu_sense_on(uint8_t FlashMode)
 	uint8_t tmp_data[DATA_LEN_4];
 	int retry = 0;
 	int ret = 0;
+
+	D("%s: Entering FlashMode=%d\n", __func__, FlashMode);
 
 	g_core_fp.fp_interface_on();
 	g_core_fp.fp_register_write(pfw_op->addr_ctrl_fw_isr,
@@ -448,6 +467,8 @@ static void himax_mcu_sense_on(uint8_t FlashMode)
 				0);
 		}
 	}
+
+	D("%s: Leave\n", __func__);	
 }
 
 static bool himax_mcu_sense_off(bool check_en)
@@ -455,6 +476,8 @@ static bool himax_mcu_sense_off(bool check_en)
 	uint8_t cnt = 0;
 	uint8_t tmp_data[DATA_LEN_4];
 	int ret = 0;
+
+	D("%s: Entering check_en=%d\n", __func__, check_en);
 
 	do {
 		tmp_data[0] = pic_op->data_i2c_psw_lb[0];
@@ -511,8 +534,11 @@ static bool himax_mcu_sense_off(bool check_en)
 		}
 	} while (cnt++ < 15);
 
+	D("%s: Leave false\n", __func__);	
 	return false;
+
 TRUE_END:
+	D("%s: Leave true\n", __func__);	
 	return true;
 }
 
@@ -537,7 +563,8 @@ static void himax_mcu_suspend_ic_action(void)
 
 static void himax_mcu_power_on_init(void)
 {
-	D("%s: \n", __func__);
+	D("%s: Entering\n", __func__);
+
 	g_core_fp.fp_touch_information();
 	/*RawOut select initial*/
 	g_core_fp.fp_register_write(pfw_op->addr_raw_out_sel,
@@ -546,6 +573,8 @@ static void himax_mcu_power_on_init(void)
 	/*DSRAM func initial*/
 	g_core_fp.fp_assign_sorting_mode(pfw_op->data_clear);
 	g_core_fp.fp_sense_on(0x00);
+
+	D("%s: Leave\n", __func__);
 }
 
 static bool himax_mcu_dd_clk_set(bool enable)
@@ -560,6 +589,8 @@ static bool himax_mcu_dd_clk_set(bool enable)
 static void himax_mcu_dd_reg_en(bool enable)
 {
 	uint8_t data[4] = {0};
+
+	D("%s: Entering\n", __func__);
 
 	g_core_fp.fp_dd_reg_read(0xCB, 8, 1, data, 0);
 
@@ -576,6 +607,8 @@ static void himax_mcu_dd_reg_en(bool enable)
 	data[0] = 0x00;	data[1] = 0x83;
 	data[2] = 0x11;	data[3] = 0x2A;
 	g_core_fp.fp_dd_reg_write(0xB9, 0, 4, data, 0);
+
+	D("%s: Leave\n", __func__);
 }
 
 static bool himax_mcu_dd_reg_write(uint8_t addr, uint8_t pa_num,
@@ -588,7 +621,9 @@ static bool himax_mcu_dd_reg_write(uint8_t addr, uint8_t pa_num,
 	uint8_t tmp_data[4] = {0};
 	bool chk_data[data_len];
 	uint32_t chk_idx = 0;
-	int i = 0;
+	int ret, i = 0;
+
+	D("%s: Entering addr=%x pa_num=%d len=%d bank=%d\n", __func__, addr, pa_num, len, bank);
 
 	memset(w_data, 0, data_len * sizeof(uint8_t));
 	memset(chk_data, 0, data_len * sizeof(bool));
@@ -623,8 +658,11 @@ static bool himax_mcu_dd_reg_write(uint8_t addr, uint8_t pa_num,
 	D("%s Addr = %02X%02X%02X%02X.\n", __func__,
 			tmp_addr[3], tmp_addr[2],
 			tmp_addr[1], tmp_addr[0]);
-	return (g_core_fp.fp_register_write(tmp_addr, data_len, w_data, 0)
-			== NO_ERR);
+
+	ret = g_core_fp.fp_register_write(tmp_addr, data_len, w_data, 0);
+
+	D("%s: Leave ret=%d\n", __func__, ret);
+	return (ret == NO_ERR);
 }
 
 static bool himax_mcu_dd_reg_read(uint8_t addr, uint8_t pa_num, int len,
@@ -633,6 +671,8 @@ static bool himax_mcu_dd_reg_read(uint8_t addr, uint8_t pa_num, int len,
 	uint8_t tmp_addr[4] = {0};
 	uint8_t tmp_data[4] = {0};
 	int i = 0;
+
+	D("%s: Entering addr=%x pa_num=%d len=%d bank=%d\n", __func__, addr, pa_num, len, bank);
 
 	for (i = 0; i < len; i++) {
 		tmp_addr[3] = 0x30;
@@ -653,6 +693,8 @@ static bool himax_mcu_dd_reg_read(uint8_t addr, uint8_t pa_num, int len,
 			tmp_addr[0],
 			data[i]);
 	}
+	
+	D("%s: Leave\n", __func__);
 	return true;
 
 READ_FAIL:
@@ -2403,6 +2445,8 @@ static void himax_mcu_touch_information(void)
 	char data[DATA_LEN_8] = {0};
 	uint8_t err_cnt = 0;
 
+	D("%s: Entering ------", __func__);
+
 	g_core_fp.fp_register_read(pdriver_op->addr_fw_define_rxnum_txnum_maxpt,
 			DATA_LEN_8, data, 0);
 	ic_data->HX_RX_NUM = data[2];
@@ -2467,6 +2511,8 @@ static void himax_mcu_touch_information(void)
 	g_core_fp.fp_register_read(tmp_addr, DATA_LEN_4, tmp_data, 0);
 	ic_data->HX_PEN_FUNC = tmp_data[3];
 	D("%s: HX_PEN_FUNC = %d\n", __func__, ic_data->HX_PEN_FUNC);
+
+	D("%s: Leave ------", __func__);
 }
 
 static void himax_mcu_reload_config(void)

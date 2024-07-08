@@ -128,6 +128,9 @@ static int hx83102_register_read(uint8_t *read_addr, int read_length,
 	tmp_data[2] = (uint8_t)(i >> 16);
 	tmp_data[3] = (uint8_t)(i >> 24);
 
+	D("%s: bus_write 0x00 address=%04x tmp_data=[%02x %02x %02x %02x]", __func__, address, 
+		tmp_data[0], tmp_data[1], tmp_data[2], tmp_data[3]);
+
 	ret = kp_himax_bus_write(0x00, tmp_data, 4,
 		HIMAX_I2C_RETRY_TIMES);
 	if (ret < 0) {
@@ -136,6 +139,8 @@ static int hx83102_register_read(uint8_t *read_addr, int read_length,
 	}
 	tmp_data[0] = 0x00;
 
+	D("%s: bus_write 0x0C data=[%02x]", __func__, tmp_data[0]);
+
 	ret = kp_himax_bus_write(0x0C, tmp_data, 1,
 		HIMAX_I2C_RETRY_TIMES);
 	if (ret < 0) {
@@ -143,12 +148,15 @@ static int hx83102_register_read(uint8_t *read_addr, int read_length,
 		return I2C_FAIL;
 	}
 
+	D("%s: bus_read 0x08 read_length=%d", __func__, read_length);
+
 	ret = kp_himax_bus_read(0x08, read_data, read_length,
 		HIMAX_I2C_RETRY_TIMES);
 	if (ret < 0) {
 		E("%s: i2c access fail!\n", __func__);
 		return I2C_FAIL;
 	}
+
 	if (read_length > 4)
 		hx83102_burst_enable(0);
 
@@ -158,9 +166,12 @@ static int hx83102_register_read(uint8_t *read_addr, int read_length,
 #if defined(HX_RST_PIN_FUNC)
 static void hx83102_pin_reset(void)
 {
-	D("%s: Now reset the Touch chip.\n", __func__);
+	D("%s: Now reset the touch chip. gpio=%d\n", __func__, 
+		(*kp_private_ts)->rst_gpio);
+
 	kp_himax_rst_gpio_set((*kp_private_ts)->rst_gpio, 0);
 	msleep(20);
+
 	kp_himax_rst_gpio_set((*kp_private_ts)->rst_gpio, 1);
 	msleep(50);
 }
@@ -1076,6 +1087,7 @@ static void himax_hx83102d_sense_on(uint8_t FlashMode)
 		} else {
 			D("%s: OK and Read status from IC = %X,%X\n", __func__,
 				tmp_data[0], tmp_data[1]);
+
 			/* reset code*/
 			tmp_data[0] = 0x00;
 
@@ -1093,8 +1105,7 @@ static void himax_hx83102d_sense_on(uint8_t FlashMode)
 
 			kp_g_core_fp->fp_register_write(
 				(*kp_pfw_op)->addr_safe_mode_release_pw,
-				sizeof((*kp_pfw_op)->
-				data_safe_mode_release_pw_reset),
+				sizeof((*kp_pfw_op)->data_safe_mode_release_pw_reset),
 				(*kp_pfw_op)->data_safe_mode_release_pw_reset,
 				0);
 		}
@@ -1155,6 +1166,7 @@ static void hx83102ab_firmware_update_0f(const struct firmware *fw_entry)
 
 	D("%s: END\n", __func__);
 }
+
 #if defined(HX_0F_DEBUG)
 static void hx83102ab_firmware_read_0f(const struct firmware *fw_entry,
 		int type)
@@ -1449,6 +1461,7 @@ static bool hx83102e_read_event_stack(uint8_t *buf, uint8_t length)
 static void himax_hx83102ab_reg_re_init(uint8_t ic_name)
 {
 	D("%s: Entering!\n", __func__);
+
 	kp_himax_parse_assign_cmd(hx83102ab_fw_addr_sorting_mode_en,
 			(*kp_pfw_op)->addr_sorting_mode_en,
 			sizeof((*kp_pfw_op)->addr_sorting_mode_en));

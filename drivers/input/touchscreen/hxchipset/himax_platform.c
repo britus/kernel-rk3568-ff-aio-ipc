@@ -223,7 +223,7 @@ EXPORT_SYMBOL(himax_parse_dt);
 int himax_bus_read(uint8_t command, uint8_t *data,
 		uint32_t length, uint8_t toRetry)
 {
-	int retry;
+	int i, retry;
 	struct i2c_client *client = private_ts->client;
 	struct i2c_msg msg[] = {
 		{
@@ -240,6 +240,9 @@ int himax_bus_read(uint8_t command, uint8_t *data,
 		}
 	};
 
+	D("%s: command=0x%02x length=%d toRetry=%d\n", 
+		__func__, command, length, toRetry);
+
 	mutex_lock(&private_ts->rw_lock);
 	for (retry = 0; retry < toRetry; retry++) {
 		if (i2c_transfer(client->adapter, msg, 2) == 2)
@@ -247,6 +250,7 @@ int himax_bus_read(uint8_t command, uint8_t *data,
 
 		/*msleep(20);*/
 	}
+
 	if (retry == toRetry) {
 		E("%s: i2c_read_block retry over %d\n",
 		  __func__, toRetry);
@@ -255,7 +259,13 @@ int himax_bus_read(uint8_t command, uint8_t *data,
 		return -EIO;
 	}
 	mutex_unlock(&private_ts->rw_lock);
-	
+
+	if (data) {
+		for(i=0; i < length; i++) {
+			D("%s: got data[%d]=0x%02x\n", __func__, i, data[i]);
+		}
+	}
+
 	return 0;
 }
 EXPORT_SYMBOL(himax_bus_read);
@@ -265,6 +275,7 @@ int himax_bus_write(uint8_t command, uint8_t *data,
 {
 	int retry/*, loop_i*/;
 	uint8_t buf[length + 1];
+	int i;
 	struct i2c_client *client = private_ts->client;
 	struct i2c_msg msg[] = {
 		{
@@ -275,6 +286,16 @@ int himax_bus_write(uint8_t command, uint8_t *data,
 		}
 	};
 
+	D("%s: command=0x%02x length=%d toRetry=%d", 
+		__func__, command, length, toRetry);
+	if (data) {
+		for(i=0; i < length; i++) {
+			D("%s: set data[%d]=0x%02x\n", __func__, i, data[i]);
+		}
+	} else {
+		D("%s: data=NULL\n", __func__);
+	}
+	/*D("\n");*/
 
 	mutex_lock(&private_ts->rw_lock);
 	buf[0] = command;

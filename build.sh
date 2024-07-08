@@ -105,18 +105,19 @@ fi
 rm -vf ${UPDATE_DIR}/lib/modules/$KRNL_VER/source
 rm -vf ${UPDATE_DIR}/lib/modules/$KRNL_VER/build
 
+# FriendlyArm SOM-RK3399 EMMC image files
 if [ ! -e ${REMOTE_TARGET} ] ; then
+	# Remote SBC
     eval $(ssh-agent) # Create agent and environment variables
     ssh-add ${REMOTE_SSHKEY}
     OPTS="-arluvt"
     SOURCE="${UPDATE_DIR}/lib"
     echo "Enter manual following commands:"
     echo rsync ${OPTS} ${SOURCE} ${REMOTE_TARGET}
-    # FriendlyArm SOM-RK3399 EMMC image files
     [ -f kernel.img -a -f resource.img ] && \
         echo "scp -r -i ${REMOTE_SSHKEY} resource.img kernel.img ${REMOTE_TARGET}"
 else
-    # FriendlyArm SOM-RK3399 EMMC image files
+    # Local SBC
     [ -f kernel.img -a -f resource.img ] && \
         cp -Rpvu resource.img kernel.img ${UPDATE_DIR}/
 fi

@@ -6,6 +6,9 @@
 
 /dts-v1/;
 
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/gpio/gpio.h>
+
 #include "rk3568-firefly-aioj.dtsi"
 #include "rk3568-firefly-aioj-cam-2ms2m.dtsi"
 
@@ -198,12 +201,30 @@
 };
 
 /* Touch hardware */
-&i2c4 {   
+&i2c4 { 
+    #address-cells = <1>;
+    #size-cells = <0>;  
+    
     hxchipset@48{
         status = "okay";
         compatible = "himax,hxcommon";
         reg = <0x48>;
 
+        /* -------------------------------------------------------
+         * Newer kernel definition
+         * ------------------------------------------------------- */
+        
+        interrupt-parent = <&gpio0>;
+        interrupts = <RK_PC1 IRQ_TYPE_LEVEL_LOW>;        
+        
+        touchscreen-size-x = <800>;
+        touchscreen-size-y = <1280>;
+               
+        reset-gpios = <&pca9555 PCA_IO0_6 GPIO_ACTIVE_HIGH>;
+
+        /* -------------------------------------------------------
+         * For Himax Chipset Source Tree 
+         * ------------------------------------------------------- */
         himax,rst-gpio = <&pca9555 PCA_IO0_6 GPIO_ACTIVE_HIGH>;
         himax,irq-gpio = <&gpio0 RK_PC1 IRQ_TYPE_LEVEL_LOW>;
         //himax,3v3-gpio = <&gpio0 RK_PB4 GPIO_ACTIVE_HIGH>;
