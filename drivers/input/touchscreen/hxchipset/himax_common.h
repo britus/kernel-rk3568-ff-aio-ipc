@@ -88,6 +88,11 @@
 #undef HX_CONFIG_DRM
 #endif
 
+/* remove if already set by Makefile */
+#undef __HIMAX_MOD__
+#undef __KERNEL_KALLSYMS_ALL_ENABLED__
+#undef HX_USE_KSYM
+
 #if defined(__HIMAX_MOD__)
 #define HX_USE_KSYM
 #if !defined(HX_USE_KSYM) || !defined(__KERNEL_KALLSYMS_ALL_ENABLED__)
