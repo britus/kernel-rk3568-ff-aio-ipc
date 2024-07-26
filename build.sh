@@ -65,6 +65,11 @@ echo "----------------------------------------------------"
 
 mkdir -p ${UPDATE_DIR}
 
+if [ "x$1" == "xmenuconfig" ] ; then
+	make ${MP} CC=${CC} LD=${LD} CROSS_COMPILE=${CROSS_COMPILE} ARCH=${KRNL_ARCH} menuconfig || exit 1
+    exit 0
+fi
+
 if [ ! -f .config ] ; then
     echo "----------------------------------------------------"
     echo "++ Configure kernel from eof_defconfig"
@@ -79,6 +84,10 @@ fi
 echo "----------------------------------------------------"
 echo "++ Build kernel targets: Image modules dtbs"
 make ${MP} CC=${CC} LD=${LD} CROSS_COMPILE=${CROSS_COMPILE} ARCH=${KRNL_ARCH} Image modules dtbs || exit 1
+
+if [ "x$1" == "xcompile" ] ; then
+	exit 0
+fi
 
 echo "----------------------------------------------------"
 echo "++ Install kernel image to: ${UPDATE_DIR}"
