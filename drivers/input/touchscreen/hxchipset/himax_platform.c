@@ -691,5 +691,5 @@ static void __exit himax_common_exit(void)
 module_init(himax_common_init);
 module_exit(himax_common_exit);
 
-MODULE_DESCRIPTION("Himax_common driver");
+MODULE_DESCRIPTION("HIMAX chipset platform driver");
 MODULE_LICENSE("GPL");

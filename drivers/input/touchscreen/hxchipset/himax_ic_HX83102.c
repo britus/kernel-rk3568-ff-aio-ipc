@@ -623,5 +623,5 @@ static void __exit himax_hx83102_exit(void)
 module_init(himax_hx83102_init);
 module_exit(himax_hx83102_exit);
 
-MODULE_DESCRIPTION("HIMAX HX83102 touch driver");
+MODULE_DESCRIPTION("HIMAX HX83102E touch driver");
 MODULE_LICENSE("GPL");
