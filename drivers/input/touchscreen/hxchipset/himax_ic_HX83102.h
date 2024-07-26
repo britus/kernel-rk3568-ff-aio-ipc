@@ -63,6 +63,7 @@ bool hx83102_chip_detect(struct himax_ts_data *ts);
 void hx83102_pin_reset(struct himax_ts_data *ts);
 #endif
 
+void hx83102e_sense_on(struct himax_ts_data *ts, uint8_t FlashMode);
 bool hx83102e_sense_off(struct himax_ts_data *ts, bool check_en);
 bool hx83102e_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 			       uint8_t length);

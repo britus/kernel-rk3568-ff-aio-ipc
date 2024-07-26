@@ -17,8 +17,6 @@
 #include "himax_ic_core.h"
 #include "himax_ic_incell_core.h"
 
-extern struct hx_guest_info *g_guest_info_data;
-
 #if defined(HX_ZERO_FLASH)
 struct zf_operation *pzf_op;
 EXPORT_SYMBOL(pzf_op);
@@ -259,7 +257,7 @@ int himax_mcu_register_write(struct himax_ts_data *ts, uint8_t *write_addr,
 }
 EXPORT_SYMBOL(himax_mcu_register_write);
 
-static int himax_write_read_reg(struct himax_ts_data *ts, uint8_t *tmp_addr,
+int himax_write_read_reg(struct himax_ts_data *ts, uint8_t *tmp_addr,
 				uint8_t *tmp_data, uint8_t hb, uint8_t lb)
 {
 	int cnt = 0;
@@ -286,6 +284,7 @@ static int himax_write_read_reg(struct himax_ts_data *ts, uint8_t *tmp_addr,
 	D("%s: Leave\n", __func__);
 	return NO_ERR;
 }
+EXPORT_SYMBOL(himax_write_read_reg);
 
 void himax_mcu_interface_on(struct himax_ts_data *ts)
 {
@@ -345,7 +344,7 @@ void himax_mcu_interface_on(struct himax_ts_data *ts)
 EXPORT_SYMBOL(himax_mcu_interface_on);
 
 #define WIP_PRT_LOG "%s: retry:%d, bf[0]=%d, bf[1]=%d,bf[2]=%d, bf[3]=%d\n"
-static bool himax_mcu_wait_wip(struct himax_ts_data *ts, int Timing)
+bool himax_mcu_wait_wip(struct himax_ts_data *ts, int Timing)
 {
 	struct flash_operation *pflash_op = ts->g_core_cmd_op->flash_op;
 	uint8_t tmp_data[DATA_LEN_4];
@@ -391,6 +390,7 @@ static bool himax_mcu_wait_wip(struct himax_ts_data *ts, int Timing)
 	D("%s: Leave\n", __func__);
 	return true;
 }
+EXPORT_SYMBOL(himax_mcu_wait_wip);
 
 static void himax_mcu_sense_on(struct himax_ts_data *ts, uint8_t FlashMode)
 {
@@ -468,7 +468,7 @@ static void himax_mcu_sense_on(struct himax_ts_data *ts, uint8_t FlashMode)
 	D("%s: Leave\n", __func__);
 }
 
-static bool himax_mcu_sense_off(struct himax_ts_data *ts, bool check_en)
+bool himax_mcu_sense_off(struct himax_ts_data *ts, bool check_en)
 {
 	struct ic_operation *pic_op = ts->g_core_cmd_op->ic_op;
 	uint8_t cnt = 0;
@@ -541,9 +541,10 @@ TRUE_END:
 	D("%s: Leave true\n", __func__);
 	return true;
 }
+EXPORT_SYMBOL(himax_mcu_sense_off);
 
 /*power saving level*/
-static void himax_mcu_init_psl(struct himax_ts_data *ts)
+void himax_mcu_init_psl(struct himax_ts_data *ts)
 {
 	struct ic_operation *pic_op = ts->g_core_cmd_op->ic_op;
 	D("%s: ENTER ::::::: power saving level reset OK!\n", __func__);
@@ -551,11 +552,7 @@ static void himax_mcu_init_psl(struct himax_ts_data *ts)
 				 pic_op->data_rst, 0);
 	D("%s: LEAVE ::::::: power saving level reset OK!\n", __func__);
 }
-
-static void himax_mcu_suspend_ic_action(void)
-{
-	/* Nothing to do */
-}
+EXPORT_SYMBOL(himax_mcu_init_psl);
 
 int himax_mcu_power_on_init(struct himax_ts_data *ts)
 {
@@ -751,7 +748,7 @@ static bool himax_mcu_ic_id_read(struct himax_ts_data *ts)
 #define PRT_TMP_DATA "%s:[0]=0x%2X,[1]=0x%2X,	[2]=0x%2X,[3]=0x%2X\n"
 
 /* FW side start*/
-static void himax_mcu_system_reset(struct himax_ts_data *ts)
+void himax_mcu_system_reset(struct himax_ts_data *ts)
 {
 	struct fw_operation *pfw_op = ts->g_core_cmd_op->fw_op;
 	int ret = 0;
@@ -804,6 +801,7 @@ static void himax_mcu_system_reset(struct himax_ts_data *ts)
 		  tmp_data[1]);
 	} while ((tmp_data[1] != 0x02 || tmp_data[0] != 0x00) && retry++ < 5);
 }
+EXPORT_SYMBOL(himax_mcu_system_reset);
 
 static uint32_t himax_mcu_check_CRC(struct himax_ts_data *ts,
 				    uint8_t *start_addr, int reload_length)
@@ -901,7 +899,7 @@ static void himax_mcu_set_HSEN_enable(struct himax_ts_data *ts)
 		 retry_cnt < HIMAX_REG_RETRY_TIMES);
 }
 
-static bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
+bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 				       uint8_t length)
 {
 	struct fw_operation *pfw_op = ts->g_core_cmd_op->fw_op;
@@ -952,6 +950,7 @@ static bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 	D("%s: LEAVE ++++", __func__);
 	return 1;
 }
+EXPORT_SYMBOL(himax_mcu_read_event_stack);
 
 int himax_mcu_assign_sorting_mode(struct himax_ts_data *ts, uint8_t *tmp_data)
 {
@@ -970,7 +969,7 @@ int himax_mcu_assign_sorting_mode(struct himax_ts_data *ts, uint8_t *tmp_data)
 }
 EXPORT_SYMBOL(himax_mcu_assign_sorting_mode);
 
-static int himax_mcu_check_sorting_mode(struct himax_ts_data *ts,
+int himax_mcu_check_sorting_mode(struct himax_ts_data *ts,
 					uint8_t *tmp_data)
 {
 	struct fw_operation *pfw_op = ts->g_core_cmd_op->fw_op;
@@ -982,6 +981,7 @@ static int himax_mcu_check_sorting_mode(struct himax_ts_data *ts,
 
 	return NO_ERR;
 }
+EXPORT_SYMBOL(himax_mcu_check_sorting_mode);
 /* FW side end*/
 /* CORE_FW */
 
@@ -1025,7 +1025,7 @@ static void himax_mcu_reload_config(struct himax_ts_data *ts)
 void himax_mcu_ic_reset(struct himax_ts_data *ts, uint8_t loadconfig,
 			uint8_t int_off)
 {
-	HX_HW_RESET_ACTIVATE = 0;
+	ts->HX_HW_RESET_ACTIVATE = 0;
 
 	D("%s: status: loadconfig=%d,int_off=%d\n", __func__, loadconfig,
 	  int_off);
@@ -1165,22 +1165,25 @@ int himax_mcu_get_touch_data_size(void)
 }
 EXPORT_SYMBOL(himax_mcu_get_touch_data_size);
 
-static int himax_mcu_hand_shaking(void)
+int himax_mcu_hand_shaking(void)
 {
 	/* 0:Running, 1:Stop, 2:I2C Fail */
 	int result = 0;
 	return result;
 }
+EXPORT_SYMBOL(himax_mcu_hand_shaking);
 
-static int himax_mcu_determin_diag_rawdata(int diag_command)
+int himax_mcu_determin_diag_rawdata(int diag_command)
 {
 	return diag_command % 10;
 }
+EXPORT_SYMBOL(himax_mcu_determin_diag_rawdata);
 
-static int himax_mcu_determin_diag_storage(int diag_command)
+int himax_mcu_determin_diag_storage(int diag_command)
 {
 	return diag_command / 10;
 }
+EXPORT_SYMBOL(himax_mcu_determin_diag_storage);
 
 int himax_mcu_cal_data_len(int raw_cnt_rmd, int HX_MAX_PT, int raw_cnt_max)
 {
@@ -1197,7 +1200,7 @@ int himax_mcu_cal_data_len(int raw_cnt_rmd, int HX_MAX_PT, int raw_cnt_max)
 }
 EXPORT_SYMBOL(himax_mcu_cal_data_len);
 
-static bool himax_mcu_diag_check_sum(struct himax_report_data *hx_touch_data)
+bool himax_mcu_diag_check_sum(struct himax_report_data *hx_touch_data)
 {
 	uint16_t check_sum_cal = 0;
 	int i;
@@ -1218,6 +1221,7 @@ static bool himax_mcu_diag_check_sum(struct himax_report_data *hx_touch_data)
 
 	return 1;
 }
+EXPORT_SYMBOL(himax_mcu_diag_check_sum);
 
 #if defined(HX_ESD_RECOVERY)
 int himax_mcu_ic_esd_recovery(struct himax_ts_data *ts, int hx_esd_event,
@@ -1260,17 +1264,19 @@ EXPORT_SYMBOL(himax_mcu_esd_ic_reset);
 #endif
 
 #if defined(HX_TP_PROC_GUEST_INFO)
-static int himax_guest_info_get_status(void)
+int himax_guest_info_get_status(void)
 {
 	return g_guest_info_data->g_guest_info_ongoing;
 }
+EXPORT_SYMBOL(himax_guest_info_get_status);
 
-static void himax_guest_info_set_status(int setting)
+void himax_guest_info_set_status(int setting)
 {
 	g_guest_info_data->g_guest_info_ongoing = setting;
 }
+EXPORT_SYMBOL(himax_guest_info_set_status);
 
-static int himax_guest_info_read(struct himax_ts_data *ts, uint32_t start_addr,
+int himax_guest_info_read(struct himax_ts_data *ts, uint32_t start_addr,
 				 uint8_t *flash_tmp_buffer)
 {
 	uint32_t temp_addr = 0;
@@ -1310,6 +1316,7 @@ static int himax_guest_info_read(struct himax_ts_data *ts, uint32_t start_addr,
 END_FUNC:
 	return result;
 }
+EXPORT_SYMBOL(himax_guest_info_read);
 #endif
 /* CORE_DRIVER */
 
@@ -1380,7 +1387,7 @@ int himax_mcu_in_cmd_struct_init(struct himax_ts_data *ts)
 	}
 
 	D("%s: LEAVE ****\n", __func__);
-	return NO_ERR;
+	return 0;
 
 err_g_core_cmd_op_g_internal_buffer_fail:
 	kfree(ts->g_core_cmd_op->driver_op);
@@ -1804,3 +1811,23 @@ void himax_mcu_in_cmd_init(struct himax_ts_data *ts)
 }
 EXPORT_SYMBOL(himax_mcu_in_cmd_init);
 /* CORE_INIT init end */
+
+#if 0
+static int __init himax_ic_incell_init(void)
+{
+	return 0;
+}
+
+static void __exit himax_ic_incell_exit(void)
+{
+
+}
+
+module_init(himax_ic_incell_init);
+module_exit(himax_ic_incell_exit);
+
+MODULE_AUTHOR("Himax Ltd. <info@himax.com>");
+MODULE_AUTHOR("EoF Software Labs <bjoern.eschrich@gmail.com>");
+MODULE_DESCRIPTION("HIMAX chipset ic-incel");
+MODULE_LICENSE("GPL");
+#endif

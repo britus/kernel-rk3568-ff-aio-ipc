@@ -9,8 +9,15 @@
 #include <linux/interrupt.h>
 
 #include "himax_common.h"
-#include "himax_platform.h"
 
+int himax_write_read_reg(struct himax_ts_data *ts, uint8_t *tmp_addr,
+				uint8_t *tmp_data, uint8_t hb, uint8_t lb);
+
+void himax_mcu_in_cmd_init(struct himax_ts_data *ts);
+int himax_mcu_in_cmd_struct_init(struct himax_ts_data *ts);
+/* int himax_mcu_on_cmd_struct_init(void); */
+/* void himax_mcu_on_cmd_init(void); */
+	
 /* used in himax_ic_HX83102 */
 int himax_mcu_register_read(struct himax_ts_data *ts, uint8_t *read_addr,
 			    uint32_t read_length, uint8_t *read_data,
@@ -49,5 +56,25 @@ bool himax_mcu_dd_reg_write(struct himax_ts_data *ts, uint8_t addr,
 bool himax_mcu_dd_reg_read(struct himax_ts_data *ts, uint8_t addr,
 			   uint8_t pa_num, int len, uint8_t *data,
 			   uint8_t bank);
+
+#if defined(HX_TP_PROC_GUEST_INFO)
+int himax_guest_info_read(struct himax_ts_data *ts, uint32_t start_addr,
+				 uint8_t *flash_tmp_buffer);
+void himax_guest_info_set_status(int setting);
+int himax_guest_info_get_status(void);
+#endif /*HX_TP_PROC_GUEST_INFO*/
+
+bool himax_mcu_diag_check_sum(struct himax_report_data *hx_touch_data);
+int himax_mcu_determin_diag_storage(int diag_command);
+int himax_mcu_determin_diag_rawdata(int diag_command);
+int himax_mcu_hand_shaking(void);
+int himax_mcu_check_sorting_mode(struct himax_ts_data *ts,
+					uint8_t *tmp_data);
+bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
+				       uint8_t length);
+void himax_mcu_system_reset(struct himax_ts_data *ts);
+bool himax_mcu_wait_wip(struct himax_ts_data *ts, int Timing);
+void himax_mcu_init_psl(struct himax_ts_data *ts);
+bool himax_mcu_sense_off(struct himax_ts_data *ts, bool check_en);
 
 #endif /*_HIMAX_IC_INCELL_CORE_H_*/

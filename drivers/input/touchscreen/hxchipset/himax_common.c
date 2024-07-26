@@ -12,8 +12,12 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  */
-#include "himax_ic_HX83102.h"
+
+#include "himax_common.h"
+#include "himax_platform.h"
+#include "himax_ic_core.h"
 #include "himax_ic_incell_core.h"
+#include "himax_ic_HX83102.h"
 
 #define SUPPORT_FINGER_DATA_CHECKSUM 0x0F
 #define TS_WAKE_LOCK_TIMEOUT (5000)
@@ -43,13 +47,6 @@ EXPORT_SYMBOL(g_target_report_data);
 
 static void himax_report_all_leave_event(struct himax_ts_data *ts);
 /*ts_work about end*/
-
-static bool chip_test_r_flag;
-u8 HX_HW_RESET_ACTIVATE;
-
-static uint8_t AA_press;
-static uint8_t EN_NoiseFilter;
-static uint8_t Last_EN_NoiseFilter;
 
 static int p_point_num = 0xFFFF;
 static int probe_fail_flag;
@@ -546,7 +543,7 @@ static int himax_touch_get(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 	switch (ts_path) {
 	/*normal*/
 	case HX_REPORT_COORD:
-		if ((HX_HW_RESET_ACTIVATE)
+		if ((ts->HX_HW_RESET_ACTIVATE)
 #if defined(HX_ESD_RECOVERY)
 		    || (ts->HX_ESD_RESET_ACTIVATE)
 #endif
@@ -731,7 +728,7 @@ himax_ts_event_check(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 	}
 
 	if ((hx_esd_event == length || hx_zero_event == length) &&
-	    (HX_HW_RESET_ACTIVATE == 0) && (ts->HX_ESD_RESET_ACTIVATE == 0) &&
+	    (ts->HX_HW_RESET_ACTIVATE == 0) && (ts->HX_ESD_RESET_ACTIVATE == 0) &&
 	    (ts->hx_touch_data->diag_cmd == 0) && (ts->in_self_test == 0)) //
 	{
 		shaking_ret = himax_mcu_ic_esd_recovery(ts, hx_esd_event,
@@ -765,10 +762,10 @@ static int himax_err_ctrl(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 			  int ts_status)
 {
 #if defined(HX_RST_PIN_FUNC)
-	if (HX_HW_RESET_ACTIVATE) {
+	if (ts->HX_HW_RESET_ACTIVATE) {
 		/* drop 1st interrupts after chip reset */
-		HX_HW_RESET_ACTIVATE = 0;
-		D("%s: [HX_HW_RESET_ACTIVATE] Back from reset,ready to serve.\n",
+		ts->HX_HW_RESET_ACTIVATE = 0;
+		D("%s: [ts->HX_HW_RESET_ACTIVATE] Back from reset,ready to serve.\n",
 		  __func__);
 		ts_status = HX_RST_OK;
 		goto END_FUNCTION;
@@ -821,7 +818,7 @@ static int himax_distribute_touch_data(struct himax_ts_data *ts, uint8_t *buf,
 			memset(ts->hx_touch_data->hx_state_info, 0x00,
 			       sizeof(ts->hx_touch_data->hx_state_info));
 
-		if ((HX_HW_RESET_ACTIVATE)
+		if ((ts->HX_HW_RESET_ACTIVATE)
 #if defined(HX_ESD_RECOVERY)
 		    || (ts->HX_ESD_RESET_ACTIVATE)
 #endif
@@ -946,7 +943,7 @@ skip_pen_operation:
 	ts->hx_touch_data->finger_num =
 		ts->hx_touch_data->hx_coord_buf[ts->coordInfoSize - 4] & 0x0F;
 	ts->hx_touch_data->finger_on = 1;
-	AA_press = 1;
+	ts->AA_press = 1;
 
 	g_target_report_data->finger_num = ts->hx_touch_data->finger_num;
 	g_target_report_data->finger_on = ts->hx_touch_data->finger_on;
@@ -1028,11 +1025,11 @@ static int himax_parse_report_data(struct himax_ts_data *ts, int ts_path,
 	if (g_ts_dbg != 0)
 		D("%s: start now_status=%d!\n", __func__, ts_status);
 
-	EN_NoiseFilter =
+	ts->EN_NoiseFilter =
 		(ts->hx_touch_data
 			 ->hx_coord_buf[ts->HX_TOUCH_INFO_POINT_CNT + 2] >>
 		 3);
-	EN_NoiseFilter = EN_NoiseFilter & 0x01;
+	ts->EN_NoiseFilter = ts->EN_NoiseFilter & 0x01;
 	p_point_num = ts->hx_point_num;
 
 	if (ts->hx_touch_data->hx_coord_buf[ts->HX_TOUCH_INFO_POINT_CNT] ==
@@ -1270,7 +1267,7 @@ static void himax_finger_leave(struct himax_ts_data *ts)
 	ts->hx_touch_data->finger_on = 0;
 	g_target_report_data->finger_on = 0;
 	g_target_report_data->finger_num = 0;
-	AA_press = 0;
+	ts->AA_press = 0;
 
 	if (ts->pdata->protocol_type != PROTOCOL_TYPE_A) {
 		for (loop_i = 0; loop_i < ts->nFinger_support; loop_i++) {
@@ -1324,7 +1321,7 @@ static void himax_report_points(struct himax_ts_data *ts)
 		himax_finger_report(ts);
 	else
 		himax_finger_leave(ts);
-	Last_EN_NoiseFilter = EN_NoiseFilter;
+	ts->Last_EN_NoiseFilter = ts->EN_NoiseFilter;
 
 	if (g_ts_dbg != 0)
 		D("%s: end!\n", __func__);
@@ -1415,7 +1412,9 @@ GET_TOUCH_FAIL:
 END_FUNCTION:
 	D("%s: LEAVE ****\n", __func__);
 }
+EXPORT_SYMBOL(himax_ts_work);
 /*end ts_work*/
+
 enum hrtimer_restart himax_ts_timer_func(struct hrtimer *timer)
 {
 	struct himax_ts_data *ts;
@@ -1425,10 +1424,11 @@ enum hrtimer_restart himax_ts_timer_func(struct hrtimer *timer)
 	hrtimer_start(&ts->timer, ktime_set(0, 12500000), HRTIMER_MODE_REL);
 	return HRTIMER_NORESTART;
 }
+EXPORT_SYMBOL(himax_ts_timer_func);
 
 int himax_chip_common_init(struct himax_ts_data *ts)
 {
-	int i = 0, ret = 0, err = PROBE_FAIL;
+	int ret = 0, err = PROBE_FAIL;
 
 	D("%s: XFER_BUFF START\n", __func__);
 	ts->xfer_buff =
@@ -1575,6 +1575,7 @@ exit_err_0:
 	probe_fail_flag = 1;
 	return err;
 }
+EXPORT_SYMBOL(himax_chip_common_init);
 
 void himax_chip_common_deinit(struct himax_ts_data *ts)
 {
@@ -1608,6 +1609,7 @@ void himax_chip_common_deinit(struct himax_ts_data *ts)
 
 	D("%s: Common section deinited!\n", __func__);
 }
+EXPORT_SYMBOL(himax_chip_common_deinit);
 
 int himax_chip_common_suspend(struct himax_ts_data *ts)
 {
@@ -1652,6 +1654,7 @@ END:
 	D("%s: LEAVE ------\n", __func__);
 	return 0;
 }
+EXPORT_SYMBOL(himax_chip_common_suspend);
 
 int himax_chip_common_resume(struct himax_ts_data *ts)
 {
@@ -1694,3 +1697,24 @@ END:
 	D("%s: LEAVE ------\n", __func__);
 	return 0;
 }
+EXPORT_SYMBOL(himax_chip_common_resume);
+
+#if 0
+static int __init himax_common_init(void)
+{
+	return 0;
+}
+
+static void __exit himax_common_exit(void)
+{
+
+}
+
+module_init(himax_common_init);
+module_exit(himax_common_exit);
+
+MODULE_AUTHOR("Himax Ltd. and EoF Software Labs");
+MODULE_DESCRIPTION("HIMAX chipset framework");
+MODULE_LICENSE("GPL");
+#endif
+MODULE_LICENSE("GPL");

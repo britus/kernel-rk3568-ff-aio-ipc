@@ -129,7 +129,7 @@ cp -Rpvu .config ${UPDATE_DIR}/config-${KRNL_VER}
 # FriendlyArm SOM-RK3399 EMMC image files
 if [ ! -e ${REMOTE_TARGET} ] ; then
 	# Remote SBC
-    eval $(ssh-agent) # Create agent and environment variables
+    #eval $(ssh-agent) # Create agent and environment variables
     ssh-add ${REMOTE_SSHKEY}
     OPTS="-arluvt"
     SOURCE="${UPDATE_DIR}/"

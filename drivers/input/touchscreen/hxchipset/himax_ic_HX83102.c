@@ -13,6 +13,11 @@
  *  GNU General Public License for more details.
  */
 
+#include <linux/module.h>
+#include "himax_common.h"
+#include "himax_platform.h"
+#include "himax_ic_core.h"
+#include "himax_ic_incell_core.h"
 #include "himax_ic_HX83102.h"
 
 static void hx83102_burst_enable(struct i2c_client *client,
@@ -67,8 +72,6 @@ static int hx83102_flash_write_burst(struct i2c_client *client,
 static int hx83102_register_read(struct himax_ts_data *ts, uint8_t *read_addr,
 				 int read_length, uint8_t *read_data)
 {
-	struct ic_operation *pic_op = ts->g_core_cmd_op->ic_op;
-	struct fw_operation *pfw_op = ts->g_core_cmd_op->fw_op;
 	uint8_t tmp_data[4];
 	int i = 0;
 	int address = 0;
@@ -296,7 +299,7 @@ static bool hx83102_sense_off(struct himax_ts_data *ts, bool check_en)
 	return false;
 }
 
-static void hx83102e_sense_on(struct himax_ts_data *ts, uint8_t FlashMode)
+void hx83102e_sense_on(struct himax_ts_data *ts, uint8_t FlashMode)
 {
 	struct fw_operation *pfw_op = ts->g_core_cmd_op->fw_op;
 
@@ -318,6 +321,7 @@ static void hx83102e_sense_on(struct himax_ts_data *ts, uint8_t FlashMode)
 
 	D("%s: LEAVE *****\n", __func__);
 }
+EXPORT_SYMBOL(hx83102e_sense_on);
 
 bool hx83102e_sense_off(struct himax_ts_data *ts, bool check_en)
 {
@@ -569,7 +573,7 @@ bool hx83102_chip_detect(struct himax_ts_data *ts)
 	I("%s: detect IC %s successfully\n", __func__, ts->chip_name);
 
 	/* Initialize function pointers */
-	if (himax_mcu_in_cmd_struct_init(ts) < 0) {
+	if (himax_mcu_in_cmd_struct_init(ts)) {
 		E("%s: himax_mcu_in_cmd_struct_init() failed.\n", __func__);
 		return false;
 	}
@@ -591,7 +595,7 @@ bool hx83102_chip_detect(struct himax_ts_data *ts)
 	return true;
 
 exit_unsupported_chip:
-	E("%s: Unsupported chipd ID. HX83102E only.\n", __func__);
+	E("%s: Unsupported chipd ID: %s.\n", __func__, ts->chip_name);
 	return false;
 
 exit_chip_not_found:
@@ -623,5 +627,7 @@ static void __exit himax_hx83102_exit(void)
 module_init(himax_hx83102_init);
 module_exit(himax_hx83102_exit);
 
+MODULE_AUTHOR("Himax Ltd. <info@himax.com>");
+MODULE_AUTHOR("EoF Software Labs <bjoern.eschrich@gmail.com>");
 MODULE_DESCRIPTION("HIMAX HX83102E touch driver");
 MODULE_LICENSE("GPL");

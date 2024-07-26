@@ -61,7 +61,9 @@
 /* CORE_SRAM */
 /* CORE_DRIVER */
 
+#if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
 #define HX_0F_DEBUG
+#endif
 
 #if defined(CONFIG_TOUCHSCREEN_HIMAX_INCELL)
 #if defined(HX_TP_PROC_GUEST_INFO)
@@ -70,25 +72,11 @@ extern struct hx_guest_info *g_guest_info_data;
 void himax_mcu_in_cmd_struct_free(struct himax_ts_data *ts);
 #endif
 
-#if defined(CONFIG_TOUCHSCREEN_HIMAX_ONCELL)
-void himax_mcu_on_cmd_struct_free(struct himax_ts_data *ts);
-#endif
-
 #if defined(HX_RST_PIN_FUNC)
-extern u8 HX_HW_RESET_ACTIVATE;
 void himax_rst_gpio_set(int pinnum, uint8_t value);
 #endif
 
 int himax_report_data_init(struct himax_ts_data *ts);
-extern int i2c_error_count;
-
-/* CORE_INIT */
-int himax_mcu_in_cmd_struct_init(struct himax_ts_data *ts);
-void himax_mcu_in_cmd_init(struct himax_ts_data *ts);
-int himax_mcu_on_cmd_struct_init(void);
-void himax_mcu_on_cmd_init(void);
-void himax_parse_assign_cmd(uint32_t addr, uint8_t *cmd, int len);
-/* CORE_INIT */
 
 #if defined(HX_TP_PROC_GUEST_INFO)
 #define HX_GUEST_INFO_FLASH_SADDR 0x20000

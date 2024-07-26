@@ -23,6 +23,8 @@
 #include <linux/i2c.h>
 #include <linux/interrupt.h>
 
+#include "himax_common.h"
+
 #define HIMAX_I2C_RETRY_TIMES 3
 
 #if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
@@ -79,26 +81,23 @@ struct himax_i2c_platform_data {
 };
 
 /* forward decl from himax_common.h */
-extern struct himax_ts_data;
-
-extern uint8_t himax_int_gpio_read(int pinnum);
-extern enum hrtimer_restart himax_ts_timer_func(struct hrtimer *timer);
-
-extern int himax_bus_read(struct i2c_client *, uint8_t command, uint8_t *data,
-			  uint32_t length, uint8_t toRetry);
-extern int himax_bus_write(struct i2c_client *, uint8_t command, uint8_t *data,
-			   uint32_t length, uint8_t toRetry);
-extern int himax_bus_write_command(struct i2c_client *, uint8_t command,
-				   uint8_t toRetry);
-extern int himax_ts_register_interrupt(struct himax_ts_data *);
-extern int himax_gpio_power_config(struct himax_ts_data *);
-extern int himax_chip_common_init(struct himax_ts_data *);
-extern void himax_chip_common_deinit(struct himax_ts_data *);
-
-extern void himax_int_enable(struct himax_ts_data *ts, int enable);
-extern void himax_ts_work(struct himax_ts_data *ts);
-
+enum hrtimer_restart himax_ts_timer_func(struct hrtimer *timer);
+int himax_bus_read(struct i2c_client *, uint8_t command, uint8_t *data,
+	  uint32_t length, uint8_t toRetry);
+int himax_bus_write(struct i2c_client *, uint8_t command, uint8_t *data,
+	   uint32_t length, uint8_t toRetry);
+int himax_bus_write_command(struct i2c_client *, uint8_t command,
+		   uint8_t toRetry);
+int himax_ts_register_interrupt(struct himax_ts_data *);
+void himax_ts_work(struct himax_ts_data *ts);
 int himax_ts_unregister_interrupt(struct himax_ts_data *ts);
+int himax_chip_common_init(struct himax_ts_data *);
+void himax_chip_common_deinit(struct himax_ts_data *);
+void himax_int_enable(struct himax_ts_data *ts, int enable);
+uint8_t himax_int_gpio_read(int pinnum);
+int himax_gpio_power_config(struct himax_ts_data *);
 void himax_gpio_power_deconfig(struct himax_i2c_platform_data *pdata);
+int himax_dev_set(struct himax_ts_data *ts);
+int himax_input_register_device(struct input_dev *input_dev);
 
 #endif

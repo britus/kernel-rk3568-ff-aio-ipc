@@ -38,8 +38,6 @@
 #include <linux/proc_fs.h>
 #include <linux/kallsyms.h>
 
-#include "himax_platform.h"
-
 #if defined(CONFIG_OF)
 #include <linux/of_gpio.h>
 #endif
@@ -475,18 +473,25 @@ struct himax_ts_data {
 
 #if defined(HX_ESD_RECOVERY)
 	u8 HX_ESD_RESET_ACTIVATE;
-#endif
-
+	int g_zero_event_count;
 	int hx_EB_event_flag;
 	int hx_EC_event_flag;
 	int hx_ED_event_flag;
-
-#if defined(HX_ESD_RECOVERY)
-	int g_zero_event_count;
 #endif
+	
+#if defined(HX_RST_PIN_FUNC)
+	u8 HX_HW_RESET_ACTIVATE;
+#endif
+
+	uint8_t AA_press;
+	uint8_t EN_NoiseFilter;
+	uint8_t Last_EN_NoiseFilter;
 
 	/* core command operations addresses */
 	struct himax_core_command_operation *g_core_cmd_op;
+
+	/* debug */
+	int i2c_error_count;
 };
 
 enum input_protocol_type {
@@ -509,13 +514,14 @@ extern int *g_inspt_crtra_flag;
 int himax_chip_common_suspend(struct himax_ts_data *ts);
 int himax_chip_common_resume(struct himax_ts_data *ts);
 
+void himax_parse_assign_cmd(uint32_t addr, uint8_t *cmd, int len);
+
 int himax_parse_dt(struct himax_ts_data *ts,
 		   struct himax_i2c_platform_data *pdata);
 
 int himax_report_data_init(struct himax_ts_data *ts);
 int himax_report_data(struct himax_ts_data *ts, int ts_path, int ts_status);
 
-int himax_dev_set(struct himax_ts_data *ts);
-int himax_input_register_device(struct input_dev *input_dev);
+void himax_parse_assign_cmd(uint32_t addr, uint8_t *cmd, int len);
 
 #endif

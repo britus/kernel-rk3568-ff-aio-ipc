@@ -16,8 +16,6 @@
 #include "himax_platform.h"
 #include "himax_common.h"
 
-int i2c_error_count;
-
 int himax_dev_set(struct himax_ts_data *ts)
 {
 	int ret = 0;
@@ -51,10 +49,13 @@ skip_pen_operation:
 
 	return ret;
 }
+EXPORT_SYMBOL(himax_dev_set);
+
 int himax_input_register_device(struct input_dev *input_dev)
 {
 	return input_register_device(input_dev);
 }
+EXPORT_SYMBOL(himax_input_register_device);
 
 void himax_vk_parser(struct device_node *dt,
 		     struct himax_i2c_platform_data *pdata)
@@ -235,7 +236,7 @@ int himax_bus_read(struct i2c_client *client, uint8_t command, uint8_t *data,
 
 	if (retry == toRetry) {
 		E("%s: i2c_read_block retry over %d\n", __func__, toRetry);
-		i2c_error_count = toRetry;
+		ts->i2c_error_count = toRetry;
 		mutex_unlock(&ts->rw_lock);
 		return -EIO;
 	}
@@ -295,7 +296,7 @@ int himax_bus_write(struct i2c_client *client, uint8_t command, uint8_t *data,
 
 	if (retry == toRetry) {
 		E("%s: i2c_write_block retry over %d\n", __func__, toRetry);
-		i2c_error_count = toRetry;
+		ts->i2c_error_count = toRetry;
 		mutex_unlock(&ts->rw_lock);
 		return -EIO;
 	}
@@ -691,5 +692,7 @@ static void __exit himax_common_exit(void)
 module_init(himax_common_init);
 module_exit(himax_common_exit);
 
+MODULE_AUTHOR("Himax Ltd. <info@himax.com>");
+MODULE_AUTHOR("EoF Software Labs <bjoern.eschrich@gmail.com>");
 MODULE_DESCRIPTION("HIMAX chipset platform driver");
 MODULE_LICENSE("GPL");
