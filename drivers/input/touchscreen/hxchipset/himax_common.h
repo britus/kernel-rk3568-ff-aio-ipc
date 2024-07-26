@@ -36,148 +36,48 @@
 #include <linux/pm_wakeup.h>
 #include <linux/seq_file.h>
 #include <linux/proc_fs.h>
-#include "himax_platform.h"
 #include <linux/kallsyms.h>
 
+#include "himax_platform.h"
+
 #if defined(CONFIG_OF)
-	#include <linux/of_gpio.h>
+#include <linux/of_gpio.h>
 #endif
 
 #define HIMAX_DRIVER_VER "2.0.0.51_BOE10.1_01"
-#define FLASH_DUMP_FILE "/tmp/HX_Flash_Dump.bin"
 
-#if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
-#define HX_TP_PROC_2T2R
-/*if enable, selftest works in driver*/
-/*#define HX_TP_SELF_TEST_DRIVER*/
-#endif
 /*===========Himax Option function=============*/
 #define HX_RST_PIN_FUNC
 #define HX_ESD_RECOVERY
-/*#define HX_FIX_TOUCH_INFO*/ //0305
-/*#define HX_NEW_EVENT_STACK_FORMAT*/
-/*#define HX_AUTO_UPDATE_FW*/
-/*#define HX_SMART_WAKEUP*/
 #define HX_GESTURE_TRACK
-#define HX_RESUME_SEND_CMD	/*Need to enable on TDDI chipset*/
+#define HX_RESUME_SEND_CMD /*Need to enable on TDDI chipset*/
 #define HX_HIGH_SENSE
-/*#define HX_PALM_REPORT*/
-/*#define HX_USB_DETECT_GLOBAL*/
-/*#define HX_ZERO_FLASH*/
 
-/*system suspend-chipset power off,
- *oncell chipset need to enable the definition */
-#ifdef CONFIG_TOUCHSCREEN_HIMAX_ONCELL
-/*#define HX_RESUME_HW_RESET*/
-#endif
-
-/*for Himax auto-motive chipset */
-/*#define HX_PON_PIN_SUPPORT*/
-
-/*for Himax 3v3 pin support */
-/*#define HX_3v3_PIN_SUPPORT*/
-
-/*=============================================*/
-
-/* remove if already set by Makefile */
-#ifdef HX_CONFIG_FB
-#undef HX_CONFIG_FB
-#endif
-
-#ifdef HX_CONFIG_DRM
-#undef HX_CONFIG_DRM
-#endif
-
-/* remove if already set by Makefile */
-#undef __HIMAX_MOD__
-#undef __KERNEL_KALLSYMS_ALL_ENABLED__
-#undef HX_USE_KSYM
-
-#if defined(__HIMAX_MOD__)
-#define HX_USE_KSYM
-#if !defined(HX_USE_KSYM) || !defined(__KERNEL_KALLSYMS_ALL_ENABLED__)
-	#error Modulized driver must enable HX_USE_KSYM and CONFIG_KALLSYM_ALL
-#endif
-#endif
-
-#if defined(HX_ZERO_FLASH)
-/* zero flash case, you need to setup the fix_touch_info of module
- */
-#define HX_FIX_TOUCH_INFO
-#define HX_RESUME_SET_FW
-/*#define HX_CODE_OVERLAY*/
-/*Independent threads run the notification chain notification function resume
- */
-/*#define HX_CONTAINER_SPEED_UP*/
-#else
 #define HX_TP_PROC_GUEST_INFO
-#endif
 
-#if defined(HX_AUTO_UPDATE_FW)
-/* FW Auto upgrade case, you need to setup the fix_touch_info of module
- */
-#define HX_FIX_TOUCH_INFO
-#endif
+#define HX_MAX_WRITE_SZ (64 * 1024 + 4)
+#define HX_KEY_MAX_COUNT 4
+#define DEFAULT_RETRY_CNT 3
+#define HX_TP_BIN_CHECKSUM_SW 1
+#define HX_TP_BIN_CHECKSUM_HW 2
+#define HX_TP_BIN_CHECKSUM_CRC 3
 
-#if defined(HX_SMART_WAKEUP)
-/*This feature need P-sensor driver notified, and FW need to support
- */
-/*#define HX_ULTRA_LOW_POWER*/
-#endif
-
-#if defined(HX_CONTAINER_SPEED_UP)
-/*Resume queue delay work time after LCM RST (unit:ms)
- */
-#define DELAY_TIME 40
-#endif
-
-#define HX_MAX_WRITE_SZ    (64 * 1024 + 4)
-
-#define HX_KEY_MAX_COUNT             4
-#define DEFAULT_RETRY_CNT            3
-
-#define HX_85XX_A_SERIES_PWON		"HX85xxA"
-#define HX_85XX_B_SERIES_PWON		"HX85xxB"
-#define HX_85XX_C_SERIES_PWON		"HX85xxC"
-#define HX_85XX_D_SERIES_PWON		"HX85xxD"
-#define HX_85XX_E_SERIES_PWON		"HX85xxE"
-#define HX_85XX_ES_SERIES_PWON		"HX85xxES"
-#define HX_85XX_F_SERIES_PWON		"HX85xxF"
-#define HX_85XX_H_SERIES_PWON		"HX85xxH"
-#define HX_83100A_SERIES_PWON		"HX83100A"
-#define HX_83102A_SERIES_PWON		"HX83102A"
-#define HX_83102B_SERIES_PWON		"HX83102B"
-#define HX_83102D_SERIES_PWON		"HX83102D"
-#define HX_83102E_SERIES_PWON		"HX83102E"
-#define HX_83103A_SERIES_PWON		"HX83103A"
-#define HX_83106A_SERIES_PWON		"HX83106A"
-#define HX_83110A_SERIES_PWON		"HX83110A"
-#define HX_83110B_SERIES_PWON		"HX83110B"
-#define HX_83111B_SERIES_PWON		"HX83111B"
-#define HX_83112A_SERIES_PWON		"HX83112A"
-#define HX_83112B_SERIES_PWON		"HX83112B"
-#define HX_83113A_SERIES_PWON		"HX83113A"
-#define HX_83112D_SERIES_PWON		"HX83112D"
-#define HX_83112E_SERIES_PWON		"HX83112E"
-#define HX_83112F_SERIES_PWON		"HX83112F"
-#define HX_83191A_SERIES_PWON		"HX83191A"
-#define HX_83192A_SERIES_PWON		"HX83192A"
-
-#define HX_TP_BIN_CHECKSUM_SW		1
-#define HX_TP_BIN_CHECKSUM_HW		2
-#define HX_TP_BIN_CHECKSUM_CRC		3
+#define HX_83102A_SERIES_PWON "HX83102A"
+#define HX_83102B_SERIES_PWON "HX83102B"
+#define HX_83102D_SERIES_PWON "HX83102D"
+#define HX_83102E_SERIES_PWON "HX83102E"
 
 #define SHIFTBITS 5
 
-#define FW_SIZE_32k		32768
-#define FW_SIZE_60k		61440
-#define FW_SIZE_64k		65536
-#define FW_SIZE_124k	126976
-#define FW_SIZE_128k	131072
+#define FW_SIZE_32k 32768
+#define FW_SIZE_60k 61440
+#define FW_SIZE_64k 65536
+#define FW_SIZE_124k 126976
+#define FW_SIZE_128k 131072
 
 #define NO_ERR 0
 #define READY_TO_SERVE 1
-#define WORK_OUT	2
+#define WORK_OUT 2
 #define I2C_FAIL -1
 #define HX_INIT_FAIL -1
 #define MEM_ALLOC_FAIL -2
@@ -188,26 +88,16 @@
 #define LENGTH_FAIL -7
 #define OPEN_FILE_FAIL -8
 #define PROBE_FAIL -9
-#define ERR_WORK_OUT	-10
-#define ERR_STS_WRONG	-11
-#define ERR_TEST_FAIL	-12
+#define ERR_WORK_OUT -10
+#define ERR_STS_WRONG -11
+#define ERR_TEST_FAIL -12
 #define HW_CRC_FAIL 1
 
-#define HX_FINGER_ON	1
-#define HX_FINGER_LEAVE	2
+#define HX_FINGER_ON 1
+#define HX_FINGER_LEAVE 2
 
-#if defined(HX_PALM_REPORT)
-#define PALM_REPORT 1
-#define NOT_REPORT -1
-#endif
-
+// TODO: ??? PEN SUPPORT
 #define PEN_INFO_SZ 12
-
-#if defined(__EMBEDDED_FW__)
-extern const uint8_t _binary___Himax_firmware_bin_start[];
-extern const uint8_t _binary___Himax_firmware_bin_end[];
-extern struct firmware g_embedded_fw;
-#endif
 
 enum HX_TS_PATH {
 	HX_REPORT_COORD = 1,
@@ -231,31 +121,194 @@ enum HX_TS_STATUS {
 };
 
 enum cell_type {
-	CHIP_IS_ON_CELL,
-	CHIP_IS_IN_CELL
+	CHIP_IS_IN_CELL = 1,
 };
-#if defined(HX_FIX_TOUCH_INFO)
-enum fix_touch_info {
-	FIX_HX_RX_NUM = 48,
-	FIX_HX_TX_NUM = 32,
-	FIX_HX_BT_NUM = 0,
-	FIX_HX_X_RES = 1200,
-	FIX_HX_Y_RES = 1920,
-	FIX_HX_MAX_PT = 10,
-	FIX_HX_XY_REVERSE = false,
-	FIX_HX_INT_IS_EDGE = true,
-	FIX_HX_PEN_FUNC = false,
-#if defined(HX_TP_PROC_2T2R)
-	FIX_HX_RX_NUM_2 = 48,
-	FIX_HX_TX_NUM_2 = 32,
-#endif
-};
-#endif
 
-#if defined(HX_ZERO_FLASH)
-	#define HX_SPI_OPERATION
-	#define HX_0F_DEBUG
-#endif
+/* CORE_DRIVER */
+struct ic_operation {
+	uint8_t addr_ahb_addr_byte_0[1];
+	uint8_t addr_ahb_rdata_byte_0[1];
+	uint8_t addr_ahb_access_direction[1];
+	uint8_t addr_conti[1];
+	uint8_t addr_incr4[1];
+	uint8_t adr_i2c_psw_lb[1];
+	uint8_t adr_i2c_psw_ub[1];
+	uint8_t data_ahb_access_direction_read[1];
+	uint8_t data_conti[1];
+	uint8_t data_incr4[1];
+	uint8_t data_i2c_psw_lb[1];
+	uint8_t data_i2c_psw_ub[1];
+	uint8_t addr_tcon_on_rst[4];
+	uint8_t addr_adc_on_rst[4];
+	uint8_t addr_psl[4];
+	uint8_t addr_cs_central_state[4];
+	uint8_t data_rst[4];
+	uint8_t adr_osc_en[4];
+	uint8_t adr_osc_pw[4];
+};
+
+struct fw_operation {
+	uint8_t addr_system_reset[4];
+	uint8_t addr_safe_mode_release_pw[4];
+	uint8_t addr_ctrl_fw_isr[4];
+	uint8_t addr_flag_reset_event[4];
+	uint8_t addr_hsen_enable[4];
+	uint8_t addr_smwp_enable[4];
+	uint8_t addr_program_reload_from[4];
+	uint8_t addr_program_reload_to[4];
+	uint8_t addr_program_reload_page_write[4];
+	uint8_t addr_raw_out_sel[4];
+	uint8_t addr_reload_status[4];
+	uint8_t addr_reload_crc32_result[4];
+	uint8_t addr_reload_addr_from[4];
+	uint8_t addr_reload_addr_cmd_beat[4];
+	uint8_t addr_selftest_addr_en[4];
+	uint8_t addr_criteria_addr[4];
+	uint8_t addr_set_frame_addr[4];
+	uint8_t addr_selftest_result_addr[4];
+	uint8_t addr_sorting_mode_en[4];
+	uint8_t addr_fw_mode_status[4];
+	uint8_t addr_icid_addr[4];
+	uint8_t addr_fw_ver_addr[4];
+	uint8_t addr_fw_cfg_addr[4];
+	uint8_t addr_fw_vendor_addr[4];
+	uint8_t addr_cus_info[4];
+	uint8_t addr_proj_info[4];
+	uint8_t addr_fw_state_addr[4];
+	uint8_t addr_fw_dbg_msg_addr[4];
+	uint8_t addr_chk_fw_status[4];
+	uint8_t addr_dd_handshak_addr[4];
+	uint8_t addr_dd_data_addr[4];
+	uint8_t data_system_reset[4];
+	uint8_t data_safe_mode_release_pw_active[4];
+	uint8_t data_safe_mode_release_pw_reset[4];
+	uint8_t data_clear[4];
+	uint8_t data_fw_stop[4];
+	uint8_t data_program_reload_start[4];
+	uint8_t data_program_reload_compare[4];
+	uint8_t data_program_reload_break[4];
+	uint8_t data_selftest_request[4];
+	uint8_t data_criteria_aa_top[1];
+	uint8_t data_criteria_aa_bot[1];
+	uint8_t data_criteria_key_top[1];
+	uint8_t data_criteria_key_bot[1];
+	uint8_t data_criteria_avg_top[1];
+	uint8_t data_criteria_avg_bot[1];
+	uint8_t data_set_frame[4];
+	uint8_t data_selftest_ack_hb[1];
+	uint8_t data_selftest_ack_lb[1];
+	uint8_t data_selftest_pass[1];
+	uint8_t data_normal_cmd[1];
+	uint8_t data_normal_status[1];
+	uint8_t data_sorting_cmd[1];
+	uint8_t data_sorting_status[1];
+	uint8_t data_dd_request[1];
+	uint8_t data_dd_ack[1];
+	uint8_t data_idle_dis_pwd[1];
+	uint8_t data_idle_en_pwd[1];
+	uint8_t data_rawdata_ready_hb[1];
+	uint8_t data_rawdata_ready_lb[1];
+	uint8_t addr_ahb_addr[1];
+	uint8_t data_ahb_dis[1];
+	uint8_t data_ahb_en[1];
+	uint8_t addr_event_addr[1];
+	uint8_t addr_usb_detect[4];
+	uint8_t addr_ulpm_33[1];
+	uint8_t addr_ulpm_34[1];
+	uint8_t data_ulpm_11[1];
+	uint8_t data_ulpm_22[1];
+	uint8_t data_ulpm_33[1];
+	uint8_t data_ulpm_aa[1];
+};
+
+struct flash_operation {
+	uint8_t addr_spi200_trans_fmt[4];
+	uint8_t addr_spi200_trans_ctrl[4];
+	uint8_t addr_spi200_fifo_rst[4];
+	uint8_t addr_spi200_rst_status[4];
+	uint8_t addr_spi200_flash_speed[4];
+	uint8_t addr_spi200_cmd[4];
+	uint8_t addr_spi200_addr[4];
+	uint8_t addr_spi200_data[4];
+	uint8_t addr_spi200_bt_num[4];
+
+	uint8_t data_spi200_txfifo_rst[4];
+	uint8_t data_spi200_rxfifo_rst[4];
+	uint8_t data_spi200_trans_fmt[4];
+	uint8_t data_spi200_trans_ctrl_1[4];
+	uint8_t data_spi200_trans_ctrl_2[4];
+	uint8_t data_spi200_trans_ctrl_3[4];
+	uint8_t data_spi200_trans_ctrl_4[4];
+	uint8_t data_spi200_trans_ctrl_5[4];
+	uint8_t data_spi200_trans_ctrl_6[4];
+	uint8_t data_spi200_trans_ctrl_7[4];
+	uint8_t data_spi200_cmd_1[4];
+	uint8_t data_spi200_cmd_2[4];
+	uint8_t data_spi200_cmd_3[4];
+	uint8_t data_spi200_cmd_4[4];
+	uint8_t data_spi200_cmd_5[4];
+	uint8_t data_spi200_cmd_6[4];
+	uint8_t data_spi200_cmd_7[4];
+	uint8_t data_spi200_cmd_8[4];
+	uint8_t data_spi200_addr[4];
+};
+
+struct sram_operation {
+	uint8_t addr_mkey[4];
+	uint8_t addr_rawdata_addr[4];
+	uint8_t addr_rawdata_end[4];
+	uint8_t passwrd_start[2];
+	uint8_t passwrd_end[2];
+};
+
+struct driver_operation {
+	uint8_t addr_fw_define_flash_reload[4];
+	uint8_t addr_fw_define_2nd_flash_reload[4];
+	uint8_t addr_fw_define_int_is_edge[4];
+	uint8_t addr_fw_define_rxnum_txnum_maxpt[4];
+	uint8_t addr_fw_define_xy_res_enable[4];
+	uint8_t addr_fw_define_x_y_res[4];
+	uint8_t data_df_rx[1];
+	uint8_t data_df_tx[1];
+	uint8_t data_df_pt[1];
+	uint8_t data_df_x_res[2];
+	uint8_t data_df_y_res[2];
+	uint8_t data_fw_define_flash_reload_dis[4];
+	uint8_t data_fw_define_flash_reload_en[4];
+	uint8_t data_fw_define_rxnum_txnum_maxpt_sorting[4];
+	uint8_t data_fw_define_rxnum_txnum_maxpt_normal[4];
+};
+
+struct zf_operation {
+	uint8_t data_dis_flash_reload[4];
+	uint8_t addr_system_reset[4];
+	uint8_t data_system_reset[4];
+	uint8_t data_sram_start_addr[4];
+	uint8_t data_sram_clean[4];
+	uint8_t data_cfg_info[4];
+	uint8_t data_fw_cfg_1[4];
+	uint8_t data_fw_cfg_2[4];
+	uint8_t data_fw_cfg_3[4];
+	uint8_t data_adc_cfg_1[4];
+	uint8_t data_adc_cfg_2[4];
+	uint8_t data_adc_cfg_3[4];
+	uint8_t data_map_table[4];
+	/*	uint8_t data_mode_switch[4];*/
+	uint8_t addr_sts_chk[4];
+	uint8_t data_activ_sts[1];
+	uint8_t addr_activ_relod[4];
+	uint8_t data_activ_in[1];
+};
+
+struct himax_core_command_operation {
+	struct ic_operation *ic_op;
+	struct fw_operation *fw_op;
+	struct flash_operation *flash_op;
+	struct sram_operation *sram_op;
+	struct driver_operation *driver_op;
+	struct zf_operation *zf_op;
+};
+
 struct himax_ic_data {
 	int vendor_fw_ver;
 	int vendor_config_ver;
@@ -278,10 +331,6 @@ struct himax_ic_data {
 	bool HX_XY_REVERSE;
 	bool HX_INT_IS_EDGE;
 	bool HX_PEN_FUNC;
-#if defined(HX_TP_PROC_2T2R)
-	int HX_RX_NUM_2;
-	int HX_TX_NUM_2;
-#endif
 };
 
 struct himax_virtual_key {
@@ -300,9 +349,6 @@ struct himax_target_report_data {
 	int *finger_id;
 	int finger_on;
 	int finger_num;
-#if defined(HX_SMART_WAKEUP)
-	int SMWP_event_chk;
-#endif
 
 	int32_t *p_x;
 	int32_t *p_y;
@@ -318,7 +364,6 @@ struct himax_target_report_data {
 	int pre_p_btn2;
 
 	int ig_count;
-
 };
 
 struct himax_report_data {
@@ -326,15 +371,10 @@ struct himax_report_data {
 	int raw_cnt_max;
 	int raw_cnt_rmd;
 	int touch_info_size;
-	uint8_t	finger_num;
-	uint8_t	finger_on;
+	uint8_t finger_num;
+	uint8_t finger_on;
 	uint8_t *hx_coord_buf;
 	uint8_t hx_state_info[2];
-#if defined(HX_SMART_WAKEUP)
-	int event_size;
-	uint8_t *hx_event_buf;
-#endif
-
 	int rawdata_size;
 	uint8_t diag_cmd;
 	uint8_t *hx_rawdata_buf;
@@ -369,7 +409,6 @@ struct himax_ts_data {
 	uint16_t old_finger;
 	int hx_point_num;
 
-
 	uint32_t debug_log_level;
 	uint32_t widthFactor;
 	uint32_t heightFactor;
@@ -402,11 +441,11 @@ struct himax_ts_data {
 	atomic_t irq_state;
 	spinlock_t irq_lock;
 
-/******* SPI-start *******/
-	struct spi_device	*spi;
+	/******* SPI-start *******/
 	int hx_irq;
+	struct spi_device *spi;
 	uint8_t *xfer_buff;
-/******* SPI-end *******/
+	/******* SPI-end *******/
 
 	int in_self_test;
 	int suspend_resume_done;
@@ -415,40 +454,11 @@ struct himax_ts_data {
 	struct workqueue_struct *flash_wq;
 	struct work_struct flash_work;
 
-#if defined(HX_AUTO_UPDATE_FW)
-	struct workqueue_struct *himax_update_wq;
-	struct delayed_work work_update;
-#endif
-
-#if defined(HX_ZERO_FLASH)
-	struct workqueue_struct *himax_0f_update_wq;
-	struct delayed_work work_0f_update;
-#endif
-
-#if defined(HX_CONTAINER_SPEED_UP)
-	struct workqueue_struct *ts_int_workqueue;
-	struct delayed_work ts_int_work;
-#endif
-
 	struct workqueue_struct *himax_diag_wq;
 	struct delayed_work himax_diag_delay_wrok;
 
-#if defined(HX_SMART_WAKEUP)
-	uint8_t SMWP_enable;
-	uint8_t gesture_cust_en[26];
-	struct wakeup_source ts_SMWP_wake_lock;
-#if defined(HX_ULTRA_LOW_POWER)
-	bool psensor_flag;
-#endif
-#endif
-
 #if defined(HX_HIGH_SENSE)
 	uint8_t HSEN_enable;
-#endif
-
-#if defined(HX_USB_DETECT_GLOBAL)
-	uint8_t usb_connected;
-	uint8_t *cable_config;
 #endif
 
 #if defined(HX_TP_PROC_GUEST_INFO)
@@ -456,72 +466,54 @@ struct himax_ts_data {
 	struct work_struct guest_info_work;
 #endif
 
+	struct himax_ic_data *ic_data;
+	struct himax_report_data *hx_touch_data;
 
-};
+	unsigned char IC_CHECKSUM;
 
-struct himax_debug {
-	bool flash_dump_going;
-	void (*fp_ts_dbg_func)(struct himax_ts_data *ts, int start);
-	int (*fp_set_diag_cmd)(struct himax_ic_data *ic_data,
-				struct himax_report_data *hx_touch_data);
+	int HX_TOUCH_INFO_POINT_CNT;
+
+#if defined(HX_ESD_RECOVERY)
+	u8 HX_ESD_RESET_ACTIVATE;
+#endif
+
+	int hx_EB_event_flag;
+	int hx_EC_event_flag;
+	int hx_ED_event_flag;
+
+#if defined(HX_ESD_RECOVERY)
+	int g_zero_event_count;
+#endif
+
+	/* core command operations addresses */
+	struct himax_core_command_operation *g_core_cmd_op;
 };
 
 enum input_protocol_type {
-	PROTOCOL_TYPE_A     = 0x00,
-	PROTOCOL_TYPE_B     = 0x01,
+	PROTOCOL_TYPE_A = 0x00,
+	PROTOCOL_TYPE_B = 0x01,
 	PROTOCOL_TYPE_B_3PA = 0x02,
 };
 
 #if defined(HX_HIGH_SENSE)
-	void himax_set_HSEN_func(uint8_t HSEN_enable);
-#endif
-
-#if defined(HX_SMART_WAKEUP)
-void himax_set_SMWP_func(uint8_t SMWP_enable);
-#define GEST_PTLG_ID_LEN	(4)
-#define GEST_PTLG_HDR_LEN	(4)
-#define GEST_PTLG_HDR_ID1	(0xCC)
-#define GEST_PTLG_HDR_ID2	(0x44)
-extern uint8_t *wake_event_buffer;
+void himax_set_HSEN_func(uint8_t HSEN_enable);
 #endif
 
 #if defined(HX_GESTURE_TRACK)
-#define GEST_PT_MAX_NUM		(128)
+#define GEST_PT_MAX_NUM (128)
 #endif
 
 extern int g_mmi_refcnt;
 extern int *g_inspt_crtra_flag;
-extern uint32_t g_hx_chip_inited;
-/*void himax_HW_reset(uint8_t loadconfig,uint8_t int_off);*/
 
 int himax_chip_common_suspend(struct himax_ts_data *ts);
 int himax_chip_common_resume(struct himax_ts_data *ts);
 
-extern struct filename* (*kp_getname_kernel)(const char *filename);
-extern struct file * (*kp_file_open_name)(struct filename *name,
-			int flags, umode_t mode);
-
-struct himax_core_fp;
-extern struct himax_core_fp g_core_fp;
-extern struct himax_ts_data *private_ts;
-extern struct himax_ic_data *ic_data;
-extern struct device *g_device;
-
-#if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
-	int himax_debug_init(void);
-	int himax_debug_remove(void);
-#endif
-
-#if defined(CONFIG_TOUCHSCREEN_HIMAX_INSPECT)
-	extern char *g_rslt_data;
-	extern void (*fp_himax_self_test_init)(void);
-#endif
-
 int himax_parse_dt(struct himax_ts_data *ts,
-			struct himax_i2c_platform_data *pdata);
-int himax_report_data(struct himax_ts_data *ts, int ts_path, int ts_status);
+		   struct himax_i2c_platform_data *pdata);
 
-int himax_report_data_init(void);
+int himax_report_data_init(struct himax_ts_data *ts);
+int himax_report_data(struct himax_ts_data *ts, int ts_path, int ts_status);
 
 int himax_dev_set(struct himax_ts_data *ts);
 int himax_input_register_device(struct input_dev *input_dev);

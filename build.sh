@@ -26,7 +26,11 @@ if [ ${OS_HOST} == "x86_64" ] ; then
     MP="-j8"
 	KRNL_ARCH="arm64"
 	REMOTE_SSHKEY="${HOME}/.ssh/id_rsa_tux_deploy" 
-	REMOTE_HOST="192.168.181.112" 
+	REMOTE_HOST="192.168.181.112"
+    #dev-sd	
+	#REMOTE_HOST="192.168.181.12"
+	#prod 
+	#REMOTE_HOST="192.168.181.113" 
     REMOTE_TARGET="root@${REMOTE_HOST}:/mnt/ssd/boot-update/"
     if [ -e ${TOOL_CHAIN} ] ; then 
         if [[ ! ${PATH} =~ "${TOOL_CHAIN}" ]]; then

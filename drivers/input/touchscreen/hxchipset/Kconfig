@@ -26,98 +26,18 @@ config TOUCHSCREEN_HIMAX_INCELL
 		bool "HIMAX chipset in-cell"
 		help 
 		  This enables support for HIMAX CHIPSET of in-cell function.
-
-config TOUCHSCREEN_HIMAX_ONCELL
-		bool "HIMAX chipset on-cell"
-		help 
-		  This enables support for HIMAX CHIPSET of on-cell function.
 endchoice
 
 config TOUCHSCREEN_HIMAX_DEBUG
 		bool "HIMAX debug output"
-		depends on TOUCHSCREEN_HIMAX_ONCELL || TOUCHSCREEN_HIMAX_INCELL
+		depends on TOUCHSCREEN_HIMAX_INCELL
 		help 
 		  This enables driver debug output.
 
-config TOUCHSCREEN_HIMAX_INSPECT
-		bool "HIMAX inspect function"
-		depends on (TOUCHSCREEN_HIMAX_INCELL || TOUCHSCREEN_HIMAX_ONCELL) && TOUCHSCREEN_HIMAX_DEBUG
-		help
-		  This enables support for HIMAX inspect function.
-
-#config HMX_DB
-		#bool "HIMAX driver test over Dragon Board"
-		#depends on TOUCHSCREEN_HIMAX_COMMON
-		#help
-		  #This enables support for HIMAX driver test over Dragon Board.
-
-#config TOUCHSCREEN_HIMAX_EMBEDDED_FIRMWARE
-#		tristate "HIMAX IC embedded firmware"
-#		depends on TOUCHSCREEN_HIMAX_COMMON
-#		help 
-#		  This enables HIMAX CHIPSET embedded firmware built-in 
-#		  FW inside kernel as binary array. This always requiered
-
-## ***************** On-cell Start *****************
-config TOUCHSCREEN_HIMAX_IC_HX852xH
-		tristate "HIMAX chipset HX852xH function"
-		depends on TOUCHSCREEN_HIMAX_ONCELL
-		help
-		  This enables support for HIMAX CHIPSET of HX852xH.
-
-config TOUCHSCREEN_HIMAX_IC_HX852xG
-		tristate "HIMAX chipset HX852xG function"
-		depends on TOUCHSCREEN_HIMAX_ONCELL
-		help
-		  #This enables support for HIMAX CHIPSET of HX852xG.
-## ***************** On-cell End *******************
-
 ## ***************** In-cell Start *****************
-config TOUCHSCREEN_HIMAX_IC_HX83192
-		tristate "HIMAX chipset HX83192 function"
-		depends on TOUCHSCREEN_HIMAX_INCELL
-		help
-		  This enables support for HIMAX CHIPSET of HX83192.
-
-config TOUCHSCREEN_HIMAX_IC_HX83191
-		tristate "HIMAX chipset HX83191 function"
-		depends on TOUCHSCREEN_HIMAX_INCELL
-		help
-		  This enables support for HIMAX CHIPSET of HX83191.
-
-config TOUCHSCREEN_HIMAX_IC_HX83113
-		tristate "HIMAX chipset HX83113 function"
-		depends on TOUCHSCREEN_HIMAX_INCELL
-		help
-		  This enables support for HIMAX CHIPSET of HX83113.
-
-config TOUCHSCREEN_HIMAX_IC_HX83112
-		tristate "HIMAX chipset HX83112 function"
-		depends on TOUCHSCREEN_HIMAX_INCELL
-		help
-		  This enables support for HIMAX CHIPSET of HX83112.
-
-config TOUCHSCREEN_HIMAX_IC_HX83111
-		tristate "HIMAX chipset HX83111 function"
-		depends on TOUCHSCREEN_HIMAX_INCELL
-		help
-		  This enables support for HIMAX CHIPSET of HX83111.
-
-config TOUCHSCREEN_HIMAX_IC_HX83106
-		tristate "HIMAX chipset HX83106 function"
-		depends on TOUCHSCREEN_HIMAX_INCELL
-		help
-		  #This enables support for HIMAX CHIPSET of HX83106.
-
 config TOUCHSCREEN_HIMAX_IC_HX83102
 		tristate "HIMAX chipset HX83102 function"
 		depends on TOUCHSCREEN_HIMAX_INCELL
 		help
 		  This enables support for HIMAX CHIPSET of HX83102.
-
-config TOUCHSCREEN_HIMAX_IC_HX83103
-		tristate "HIMAX chipset HX83103 function"
-		depends on TOUCHSCREEN_HIMAX_INCELL
-		help
-		  This enables support for HIMAX CHIPSET of HX83103.
 ## ***************** In-cell End *******************
