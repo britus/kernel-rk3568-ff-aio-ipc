@@ -874,7 +874,6 @@ bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 
 	/*  AHB_I2C Burst Read Off */
 	cmd[0] = pfw_op->data_ahb_dis[0];
-
 	ret = himax_bus_write(ts->client, pfw_op->addr_ahb_addr[0], cmd, 1,
 			      HIMAX_I2C_RETRY_TIMES);
 	if (ret < 0) {
@@ -900,7 +899,6 @@ bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 
 	/*  AHB_I2C Burst Read On */
 	cmd[0] = pfw_op->data_ahb_en[0];
-
 	ret = himax_bus_write(ts->client, pfw_op->addr_ahb_addr[0], cmd, 1,
 			      HIMAX_I2C_RETRY_TIMES);
 	if (ret < 0) {

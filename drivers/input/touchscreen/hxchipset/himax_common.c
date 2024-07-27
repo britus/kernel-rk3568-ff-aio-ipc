@@ -33,11 +33,6 @@ char *g_guest_info_item[] = {
 };
 #endif
 
-/* enable debug info */
-#if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
-int g_ts_dbg = 1;
-#endif
-
 int g_mmi_refcnt;
 EXPORT_SYMBOL(g_mmi_refcnt);
 
@@ -271,7 +266,7 @@ static void calculate_point_number(struct himax_ts_data *ts)
 #if defined(HX_ESD_RECOVERY)
 static void himax_esd_hw_reset(struct himax_ts_data *ts)
 {
-	if (g_ts_dbg != 0)
+	if (ts->debug_log_level & BIT(1))
 		D("%s: ENTER ------\n", __func__);
 
 	D("%s: START_Himax TP: ESD - Reset\n", __func__);
@@ -563,8 +558,8 @@ static int himax_ts_work_status(struct himax_ts_data *ts)
 static int himax_touch_get(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 			   int ts_status)
 {
-	if (g_ts_dbg != 0)
-		D("%s: ENTER ------, ts_status=%d!\n", __func__, ts_status);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: ENTER :-:-:-: ts_status=%d!\n", __func__, ts_status);
 
 	switch (ts_path) {
 	/*normal*/
@@ -573,14 +568,28 @@ static int himax_touch_get(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 #if defined(HX_ESD_RECOVERY)
 		    || (ts->HX_ESD_RESET_ACTIVATE)
 #endif
-		) {
-			/* TODO: himax_mcu_read_event_stack */
+		)
+		#if 1
+		{
+			if (!himax_mcu_read_event_stack(ts, buf, 128)) {
+				E("%s: can't read data from chip!\n", __func__);
+				ts_status = HX_TS_GET_DATA_FAIL;
+			}
+		} else {
+			if (!himax_mcu_read_event_stack(
+				    ts, buf,
+				    ts->hx_touch_data->touch_info_size)) {
+				E("%s: can't read data from chip!\n", __func__);
+				ts_status = HX_TS_GET_DATA_FAIL;
+			}
+		}
+		#else
+		{
 			if (!hx83102e_read_event_stack(ts, buf, 128)) {
 				E("%s: can't read data from chip!\n", __func__);
 				ts_status = HX_TS_GET_DATA_FAIL;
 			}
 		} else {
-			/* TODO: himax_mcu_read_event_stack */
 			if (!hx83102e_read_event_stack(
 				    ts, buf,
 				    ts->hx_touch_data->touch_info_size)) {
@@ -588,14 +597,21 @@ static int himax_touch_get(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 				ts_status = HX_TS_GET_DATA_FAIL;
 			}
 		}
+		#endif
 		break;
 
 	case HX_REPORT_COORD_RAWDATA:
-		/* TODO: himax_mcu_read_event_stack */
+		#if 1
+		if (!himax_mcu_read_event_stack(ts, buf, 128)) {
+			E("%s: can't read data from chip!\n", __func__);
+			ts_status = HX_TS_GET_DATA_FAIL;
+		}
+		#else
 		if (!hx83102e_read_event_stack(ts, buf, 128)) {
 			E("%s: can't read data from chip!\n", __func__);
 			ts_status = HX_TS_GET_DATA_FAIL;
 		}
+		#endif
 		break;
 	default:
 		break;
@@ -615,8 +631,8 @@ static int himax_checksum_cal(struct himax_ts_data *ts, uint8_t *buf,
 	int raw_data_sel = 0;
 	int ret_val = ts_status;
 
-	if (g_ts_dbg != 0)
-		D("%s: ENTER ------, ts_status=%d!\n", __func__, ts_status);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: ENTER :-:-:-: ts_status=%d!\n", __func__, ts_status);
 
 	/* Normal */
 	switch (ts_path) {
@@ -655,18 +671,25 @@ static int himax_checksum_cal(struct himax_ts_data *ts, uint8_t *buf,
 			if (!ts->hx_touch_data->diag_cmd) {
 				/*Need to clear event stack here*/
 				/* TODO: himax_mcu_read_event_stack */
+				#if 1 
+				himax_mcu_read_event_stack(
+					ts, buf,
+					(128 -
+					 ts->hx_touch_data->touch_info_size));
+				#else
 				hx83102e_read_event_stack(
 					ts, buf,
 					(128 -
 					 ts->hx_touch_data->touch_info_size));
+				#endif
 			}
 			ret_val = HX_READY_SERVE;
 		}
 	}
 
 END_FUNCTION:
-	if (g_ts_dbg != 0)
-		D("%s: END, ret_val=%d!\n", __func__, ret_val);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: LEAVE :-:-:-: ret_val=%d!\n", __func__, ret_val);
 	return ret_val;
 }
 
@@ -686,8 +709,8 @@ himax_ts_event_check(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 	int length = 0;
 	int ret_val = ts_status;
 
-	if (g_ts_dbg != 0)
-		D("%s: ENTER ------, ts_status=%d!\n", __func__, ts_status);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: ENTER :-:-:-: ts_status=%d!\n", __func__, ts_status);
 
 	/* Normal */
 	switch (ts_path) {
@@ -703,7 +726,7 @@ himax_ts_event_check(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 		goto END_FUNCTION;
 	}
 
-	if (g_ts_dbg != 0)
+	if (ts->debug_log_level & BIT(4))
 		D("%s: Now Path=%d, Now status=%d, length=%d\n", __func__,
 		  ts_path, ts_status, length);
 
@@ -777,8 +800,8 @@ himax_ts_event_check(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 	}
 
 END_FUNCTION:
-	if (g_ts_dbg != 0)
-		D("%s: END, ret_val=%d!\n", __func__, ret_val);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: LEAVE :-:-:-: ret_val=%d!\n", __func__, ret_val);
 
 	return ret_val;
 }
@@ -787,6 +810,8 @@ END_FUNCTION:
 static int himax_err_ctrl(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 			  int ts_status)
 {
+	D("%s: ENTER :-: ts_status=%d!\n", __func__, ts_status);
+
 #if defined(HX_RST_PIN_FUNC)
 	if (ts->HX_HW_RESET_ACTIVATE) {
 		/* drop 1st interrupts after chip reset */
@@ -813,8 +838,8 @@ static int himax_err_ctrl(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 
 END_FUNCTION:
 
-	if (g_ts_dbg != 0)
-		D("%s: END, ts_status=%d!\n", __func__, ts_status);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: LEAVE :-: ts_status=%d!\n", __func__, ts_status);
 
 	return ts_status;
 }
@@ -829,8 +854,8 @@ static int himax_distribute_touch_data(struct himax_ts_data *ts, uint8_t *buf,
 	if (ts->ic_data->HX_PEN_FUNC)
 		hx_state_info_pos -= PEN_INFO_SZ;
 
-	if (g_ts_dbg != 0)
-		D("%s: ENTER ------, ts_status=%d!\n", __func__, ts_status);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: ENTER :-:-:-: ts_status=%d!\n", __func__, ts_status);
 
 	if (ts_path == HX_REPORT_COORD) {
 		memcpy(ts->hx_touch_data->hx_coord_buf, &buf[0],
@@ -875,8 +900,8 @@ static int himax_distribute_touch_data(struct himax_ts_data *ts, uint8_t *buf,
 		ts_status = HX_PATH_FAIL;
 	}
 
-	if (g_ts_dbg != 0)
-		D("%s: End, ts_status=%d!\n", __func__, ts_status);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: LEAVE :-:-:-: ts_status=%d!\n", __func__, ts_status);
 
 	return ts_status;
 }
@@ -896,8 +921,8 @@ int himax_parse_report_points(struct himax_ts_data *ts, int ts_path,
 	int base = 0;
 	int32_t loop_i = 0;
 
-	if (g_ts_dbg != 0)
-		D("%s: start!\n", __func__);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: ENTER :-:-:-:-:-:-:-:-:-:\n", __func__);
 
 	if (!ts->ic_data->HX_PEN_FUNC)
 		goto skip_pen_operation;
@@ -917,7 +942,7 @@ int himax_parse_report_points(struct himax_ts_data *ts, int ts_path,
 	p_btn2 = ts->hx_touch_data->hx_coord_buf[base + 9];
 	p_tilt_y = (int8_t)ts->hx_touch_data->hx_coord_buf[base + 10];
 
-	if (g_ts_dbg != 0) {
+	if (ts->debug_log_level & BIT(4)) {
 		D("%s: p_x=%d, p_y=%d, p_w=%d,p_tilt_x=%d, p_hover=%d\n",
 		  __func__, p_x, p_y, p_w, p_tilt_x, p_hover);
 		D("%s: p_btn=%d, p_btn2=%d, p_tilt_y=%d\n", __func__, p_btn,
@@ -950,7 +975,7 @@ int himax_parse_report_points(struct himax_ts_data *ts, int ts_path,
 		g_target_report_data->p_on[0] = 0;
 	}
 
-	if (g_ts_dbg != 0) {
+	if (ts->debug_log_level & BIT(4)) {
 		if (p_p_on != g_target_report_data->p_on[0]) {
 			D("%s: p_on[0] = %d, hx_point_num=%d\n", __func__,
 			  g_target_report_data->p_on[0], ts->hx_point_num);
@@ -961,7 +986,7 @@ skip_pen_operation:
 
 	ts->old_finger = ts->pre_finger_mask;
 	if (ts->hx_point_num == 0) {
-		if (g_ts_dbg != 0)
+		if (ts->debug_log_level & BIT(4))
 			D("%s: hx_point_num = 0!\n", __func__);
 		return ts_status;
 	}
@@ -976,7 +1001,7 @@ skip_pen_operation:
 	g_target_report_data->ig_count =
 		ts->hx_touch_data->hx_coord_buf[ts->coordInfoSize - 5];
 
-	if (g_ts_dbg != 0)
+	if (ts->debug_log_level & BIT(4))
 		D("%s:finger_num = 0x%2X, finger_on = %d\n", __func__,
 		  g_target_report_data->finger_num,
 		  g_target_report_data->finger_on);
@@ -990,7 +1015,7 @@ skip_pen_operation:
 		w = ts->hx_touch_data
 			    ->hx_coord_buf[(ts->nFinger_support * 4) + loop_i];
 
-		if (g_ts_dbg != 0)
+		if (ts->debug_log_level & BIT(4))
 			D("%s: now parsing[%d]:x=%d, y=%d, w=%d\n", __func__,
 			  loop_i, x, y, w);
 
@@ -1021,7 +1046,7 @@ skip_pen_operation:
 
 			if (loop_i == 0 && ts->first_pressed == 1) {
 				ts->first_pressed = 2;
-				if (g_ts_dbg != 0)
+				if (ts->debug_log_level & BIT(4))
 					D("%s: E1@%d, %d\n", __func__,
 					  ts->pre_finger_data[0][0],
 					  ts->pre_finger_data[0][1]);
@@ -1029,7 +1054,7 @@ skip_pen_operation:
 		}
 	}
 
-	if (g_ts_dbg != 0) {
+	if (ts->debug_log_level & BIT(4)) {
 		for (loop_i = 0; loop_i < 10; loop_i++) {
 			D("%s: DBG X=%d  Y=%d ID=%d\n", __func__,
 			  g_target_report_data->x[loop_i],
@@ -1040,15 +1065,15 @@ skip_pen_operation:
 		  g_target_report_data->finger_num);
 	}
 
-	if (g_ts_dbg != 0)
-		D("%s: end!\n", __func__);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: LEAVE :-:-:-:-:-:-:-:-:-:\n", __func__);
 	return ts_status;
 }
 
 static int himax_parse_report_data(struct himax_ts_data *ts, int ts_path,
 				   int ts_status)
 {
-	if (g_ts_dbg != 0)
+	if (ts->debug_log_level & BIT(4))
 		D("%s: start now_status=%d!\n", __func__, ts_status);
 
 	ts->EN_NoiseFilter =
@@ -1080,7 +1105,7 @@ static int himax_parse_report_data(struct himax_ts_data *ts, int ts_path,
 		ts_status = HX_PATH_FAIL;
 		break;
 	}
-	if (g_ts_dbg != 0)
+	if (ts->debug_log_level & BIT(4))
 		D("%s: end now_status=%d!\n", __func__, ts_status);
 	return ts_status;
 }
@@ -1110,7 +1135,7 @@ static void himax_finger_report(struct himax_ts_data *ts)
 	int i = 0;
 	bool valid = false;
 
-	if (g_ts_dbg != 0) {
+	if (ts->debug_log_level & BIT(4)) {
 		D("%s:start ts->hx_touch_data->finger_num=%d\n", __func__,
 		  ts->hx_touch_data->finger_num);
 	}
@@ -1122,10 +1147,10 @@ static void himax_finger_report(struct himax_ts_data *ts)
 			valid = true;
 		else
 			valid = false;
-		if (g_ts_dbg != 0)
+		if (ts->debug_log_level & BIT(4))
 			D("%s: valid=%d\n", __func__, valid);
 		if (valid) {
-			if (g_ts_dbg != 0) {
+			if (ts->debug_log_level & BIT(4)) {
 				D("%s: report_data->x[i]=%d,y[i]=%d,w[i]=%d",
 				  __func__, g_target_report_data->x[i],
 				  g_target_report_data->y[i],
@@ -1195,11 +1220,11 @@ static void himax_finger_report(struct himax_ts_data *ts)
 	else
 		valid = false;
 
-	if (g_ts_dbg != 0)
+	if (ts->debug_log_level & BIT(4))
 		D("%s: pen valid=%d\n", __func__, valid);
 
 	if (valid) { /*Pen down*/
-		if (g_ts_dbg != 0)
+		if (ts->debug_log_level & BIT(4))
 			D("%s: p_x[i]=%d, p_y[i]=%d, p_w[i]=%d\n", __func__,
 			  g_target_report_data->p_x[0],
 			  g_target_report_data->p_y[0],
@@ -1212,7 +1237,7 @@ static void himax_finger_report(struct himax_ts_data *ts)
 
 		if (g_target_report_data->p_btn[0] !=
 		    g_target_report_data->pre_p_btn) {
-			if (g_ts_dbg != 0)
+			if (ts->debug_log_level & BIT(4))
 				D("%s: BTN_STYLUS:%d\n", __func__,
 				  g_target_report_data->p_btn[0]);
 
@@ -1222,14 +1247,14 @@ static void himax_finger_report(struct himax_ts_data *ts)
 			g_target_report_data->pre_p_btn =
 				g_target_report_data->p_btn[0];
 		} else {
-			if (g_ts_dbg != 0)
+			if (ts->debug_log_level & BIT(4))
 				D("%s: BTN_STYLUS status no change, value=%d!\n",
 				  __func__, g_target_report_data->p_btn[0]);
 		}
 
 		if (g_target_report_data->p_btn2[0] !=
 		    g_target_report_data->pre_p_btn2) {
-			if (g_ts_dbg != 0)
+			if (ts->debug_log_level & BIT(4))
 				D("%s: BTN_STYLUS2:%d\n", __func__,
 				  g_target_report_data->p_btn2[0]);
 
@@ -1239,7 +1264,7 @@ static void himax_finger_report(struct himax_ts_data *ts)
 			g_target_report_data->pre_p_btn2 =
 				g_target_report_data->p_btn2[0];
 		} else {
-			if (g_ts_dbg != 0)
+			if (ts->debug_log_level & BIT(4))
 				D("%s: BTN_STYLUS2 status no change, value=%d!\n",
 				  __func__, g_target_report_data->p_btn2[0]);
 		}
@@ -1279,7 +1304,7 @@ static void himax_finger_report(struct himax_ts_data *ts)
 
 skip_pen_operation:
 
-	if (g_ts_dbg != 0)
+	if (ts->debug_log_level & BIT(4))
 		D("%s: end\n", __func__);
 }
 
@@ -1287,8 +1312,8 @@ static void himax_finger_leave(struct himax_ts_data *ts)
 {
 	int32_t loop_i = 0;
 
-	if (g_ts_dbg != 0)
-		D("%s: start!\n", __func__);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: ENTER :-:-:-:-:-:-:-:-:-:\n", __func__);
 
 	ts->hx_touch_data->finger_on = 0;
 	g_target_report_data->finger_on = 0;
@@ -1334,14 +1359,14 @@ static void himax_finger_leave(struct himax_ts_data *ts)
 		input_sync(ts->hx_pen_dev);
 	}
 
-	if (g_ts_dbg != 0)
-		D("%s: end!\n", __func__);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: LEAVE :-:-:-:-:-:-:-:-:-:\n", __func__);
 }
 
 static void himax_report_points(struct himax_ts_data *ts)
 {
-	if (g_ts_dbg != 0)
-		D("%s: start!\n", __func__);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: ENTER :-:-:-:-:-:-:-:-:-:\n", __func__);
 
 	if (ts->hx_point_num != 0)
 		himax_finger_report(ts);
@@ -1349,15 +1374,15 @@ static void himax_report_points(struct himax_ts_data *ts)
 		himax_finger_leave(ts);
 	ts->Last_EN_NoiseFilter = ts->EN_NoiseFilter;
 
-	if (g_ts_dbg != 0)
-		D("%s: end!\n", __func__);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: LEAVE :-:-:-:-:-:-:-:-:-:\n", __func__);
 }
 /* end report_points*/
 
 int himax_report_data(struct himax_ts_data *ts, int ts_path, int ts_status)
 {
-	if (g_ts_dbg != 0)
-		D("%s: ENTER ------, ts_status=%d!\n", __func__, ts_status);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: ENTER :-: ts_status=%d!\n", __func__, ts_status);
 
 	if (ts_path == HX_REPORT_COORD || ts_path == HX_REPORT_COORD_RAWDATA) {
 		/* Touch Point information */
@@ -1367,8 +1392,8 @@ int himax_report_data(struct himax_ts_data *ts, int ts_path, int ts_status)
 		ts_status = HX_PATH_FAIL;
 	}
 
-	if (g_ts_dbg != 0)
-		D("%s: END, ts_status=%d!\n", __func__, ts_status);
+	if (ts->debug_log_level & BIT(4))
+		D("%s: LEAVE :-: ts_status=%d!\n", __func__, ts_status);
 	return ts_status;
 }
 /* end report_data */
@@ -1493,6 +1518,31 @@ int himax_chip_common_init(struct himax_ts_data *ts)
 		goto exit_err_4;
 	}
 
+#if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
+	/* delay in hx83102e_read_event_stack() and
+	 * himax_mcu_read_event_stack() [set BIT(2)]
+	 * touch data debug [BIT(4)]*/
+	ts->debug_log_level = BIT(4);
+#else
+	ts->debug_log_level = 0;
+#endif
+
+	/* initial not suspended */
+	ts->suspended = false;
+
+#if defined(HX_HIGH_SENSE)
+	ts->HSEN_enable = 0; /* TODO ???? =1 */
+#endif
+
+#if defined(CONFIG_OF)
+	ts->pdata->abs_pressure_min = 0;
+	ts->pdata->abs_pressure_max = 200;
+	ts->pdata->abs_width_min = 0;
+	ts->pdata->abs_width_max = 200;
+	ts->pdata->cable_config[0] = 0xF0;
+	ts->pdata->cable_config[1] = 0x00;
+#endif
+
 	if (ts->pdata->virtual_key) {
 		ts->button = ts->pdata->virtual_key;
 	}
@@ -1533,19 +1583,6 @@ int himax_chip_common_init(struct himax_ts_data *ts)
 
 	/*calculate the i2c data size*/
 	calcDataSize(ts);
-
-	ts->suspended = false;
-#if defined(HX_HIGH_SENSE)
-	ts->HSEN_enable = 0; /* TODO ???? =1 */
-#endif
-#if defined(CONFIG_OF)
-	ts->pdata->abs_pressure_min = 0;
-	ts->pdata->abs_pressure_max = 200;
-	ts->pdata->abs_width_min = 0;
-	ts->pdata->abs_width_max = 200;
-	ts->pdata->cable_config[0] = 0xF0;
-	ts->pdata->cable_config[1] = 0x00;
-#endif
 
 	ret = himax_input_register(ts);
 	if (ret) {
