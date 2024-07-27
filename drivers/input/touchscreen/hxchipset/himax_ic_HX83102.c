@@ -53,7 +53,7 @@ static int hx83102_flash_write_burst(struct i2c_client *client,
 	uint8_t data_byte[8];
 	int i = 0, ret = 0;
 
-	D("%s: ENTER ****** register=%s", __func__, wdtohex(reg_byte, 4));
+	D("%s: ENTER ****** reg_le=%s", __func__, wdtohex(reg_byte, 4));
 
 	for (i = 0; i < 4; i++)
 		data_byte[i] = reg_byte[i];
