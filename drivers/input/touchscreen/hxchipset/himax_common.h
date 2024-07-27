@@ -524,4 +524,14 @@ int himax_report_data(struct himax_ts_data *ts, int ts_path, int ts_status);
 
 void himax_parse_assign_cmd(uint32_t addr, uint8_t *cmd, int len);
 
+#if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
+char* himax_common_rdtohex(uint8_t *data, uint32_t length);
+char* himax_common_wdtohex(uint8_t *data, uint32_t length);
+#define rdtohex(a, b) himax_common_rdtohex(a, b)
+#define wdtohex(a, b) himax_common_wdtohex(a, b)
+#else
+#define rdtohex(a, b) ""
+#define wdtohex(a, b) ""
+#endif
+
 #endif

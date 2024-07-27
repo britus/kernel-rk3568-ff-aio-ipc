@@ -39,7 +39,7 @@ static void himax_mcu_burst_enable(struct himax_ts_data *ts,
 	uint8_t tmp_data[DATA_LEN_4];
 	int ret;
 
-	D("%s: Entering auto_add_4_byte=%d\n", __func__, auto_add_4_byte);
+	D("%s: ENTER ------ auto_add_4_byte=%d\n", __func__, auto_add_4_byte);
 
 	tmp_data[0] = pic_op->data_conti[0];
 
@@ -59,7 +59,7 @@ static void himax_mcu_burst_enable(struct himax_ts_data *ts,
 		return;
 	}
 
-	D("%s: Leave\n", __func__);
+	D("%s: LEAVE ------\n", __func__);
 }
 
 int himax_mcu_register_read(struct himax_ts_data *ts, uint8_t *read_addr,
@@ -72,7 +72,16 @@ int himax_mcu_register_read(struct himax_ts_data *ts, uint8_t *read_addr,
 	int address = 0;
 	int ret = 0;
 
-	D("%s: ENTER+++++ cfg_flag=%d\n", __func__, cfg_flag);
+	address = (read_addr[3] << 24) + (read_addr[2] << 16) +
+			(read_addr[1] << 8) + read_addr[0];
+	i = address;
+	tmp_data[0] = (uint8_t)i;
+	tmp_data[1] = (uint8_t)(i >> 8);
+	tmp_data[2] = (uint8_t)(i >> 16);
+	tmp_data[3] = (uint8_t)(i >> 24);
+
+	D("%s: ENTER+++++ address=%X [%s]cfg_flag=%d\n", __func__, 
+		address, rdtohex(tmp_data, 4), cfg_flag);
 
 	if (cfg_flag == false) {
 		if (read_length > FLASH_RW_MAX_LEN) {
@@ -85,14 +94,6 @@ int himax_mcu_register_read(struct himax_ts_data *ts, uint8_t *read_addr,
 			himax_mcu_burst_enable(ts, 1);
 		else
 			himax_mcu_burst_enable(ts, 0);
-
-		address = (read_addr[3] << 24) + (read_addr[2] << 16) +
-			  (read_addr[1] << 8) + read_addr[0];
-		i = address;
-		tmp_data[0] = (uint8_t)i;
-		tmp_data[1] = (uint8_t)(i >> 8);
-		tmp_data[2] = (uint8_t)(i >> 16);
-		tmp_data[3] = (uint8_t)(i >> 24);
 
 		ret = himax_bus_write(ts->client,
 				      pic_op->addr_ahb_addr_byte_0[0], tmp_data,
@@ -147,6 +148,8 @@ static int himax_mcu_flash_write_burst_lenth(struct himax_ts_data *ts,
 	uint8_t *data_byte;
 	int ret = 0;
 
+	D("%s: ENTER++++++\n", __func__);
+
 	if (!g_internal_buffer) {
 		E("%s: internal buffer not initialized!\n", __func__);
 		return MEM_ALLOC_FAIL;
@@ -168,7 +171,8 @@ static int himax_mcu_flash_write_burst_lenth(struct himax_ts_data *ts,
 		return I2C_FAIL;
 	}
 
-	return NO_ERR;
+	D("%s: LEAVE++++++\n", __func__);
+	return 0;
 }
 
 int himax_mcu_register_write(struct himax_ts_data *ts, uint8_t *write_addr,
@@ -262,7 +266,7 @@ int himax_write_read_reg(struct himax_ts_data *ts, uint8_t *tmp_addr,
 {
 	int cnt = 0;
 
-	D("%s: Entering hb=%d lb=%d\n", __func__, hb, lb);
+	D("%s: ENTER ------ hb=%d lb=%d\n", __func__, hb, lb);
 
 	do {
 		himax_mcu_register_write(ts, tmp_addr, DATA_LEN_4, tmp_data, 0);
@@ -281,7 +285,7 @@ int himax_write_read_reg(struct himax_ts_data *ts, uint8_t *tmp_addr,
 	D("%s: Now register 0x%08X : high byte=0x%02X,low byte=0x%02X\n",
 	  __func__, tmp_addr[3], tmp_data[1], tmp_data[0]);
 
-	D("%s: Leave\n", __func__);
+	D("%s: LEAVE ------\n", __func__);
 	return NO_ERR;
 }
 EXPORT_SYMBOL(himax_write_read_reg);
@@ -294,7 +298,7 @@ void himax_mcu_interface_on(struct himax_ts_data *ts)
 	int cnt = 0;
 	int ret = 0;
 
-	D("%s: Entering\n", __func__);
+	D("%s: ENTER ------\n", __func__);
 
 	/* Read a dummy register to wake up I2C.*/
 	ret = himax_bus_read(ts->client, pic_op->addr_ahb_rdata_byte_0[0],
@@ -339,7 +343,7 @@ void himax_mcu_interface_on(struct himax_ts_data *ts)
 	if (cnt > 0)
 		D("%s: Polling burst mode: %d times\n", __func__, cnt);
 
-	D("%s: Leave\n", __func__);
+	D("%s: LEAVE ------\n", __func__);
 }
 EXPORT_SYMBOL(himax_mcu_interface_on);
 
@@ -350,7 +354,7 @@ bool himax_mcu_wait_wip(struct himax_ts_data *ts, int Timing)
 	uint8_t tmp_data[DATA_LEN_4];
 	int retry_cnt = 0;
 
-	D("%s: Entering\n", __func__);
+	D("%s: ENTER ------\n", __func__);
 
 	himax_mcu_register_write(ts, pflash_op->addr_spi200_trans_fmt,
 				 DATA_LEN_4, pflash_op->data_spi200_trans_fmt,
@@ -387,85 +391,36 @@ bool himax_mcu_wait_wip(struct himax_ts_data *ts, int Timing)
 		msleep(Timing);
 	} while ((tmp_data[0] & 0x01) == 0x01);
 
-	D("%s: Leave\n", __func__);
+	D("%s: LEAVE ------\n", __func__);
 	return true;
 }
 EXPORT_SYMBOL(himax_mcu_wait_wip);
 
-static void himax_mcu_sense_on(struct himax_ts_data *ts, uint8_t FlashMode)
+static void himax_mcu_sense_on(struct himax_ts_data *ts)
 {
 	struct fw_operation *pfw_op = ts->g_core_cmd_op->fw_op;
-	struct ic_operation *pic_op = ts->g_core_cmd_op->ic_op;
+	int ret;
 
-	uint8_t tmp_data[DATA_LEN_4];
-	int retry = 0;
-	int ret = 0;
-
-	D("%s: Entering FlashMode=%d\n", __func__, FlashMode);
+	D("%s: ENTER ------\n", __func__);
 
 	himax_mcu_interface_on(ts);
-	himax_mcu_register_write(ts, pfw_op->addr_ctrl_fw_isr,
+
+	ret = himax_mcu_register_write(ts, pfw_op->addr_ctrl_fw_isr,
 				 sizeof(pfw_op->data_clear), pfw_op->data_clear,
 				 0);
+	if (ret)
+		return;
 
 	/*msleep(20);*/
 	usleep_range(10000, 11000);
-	if (!FlashMode) {
+
 #if defined(HX_RST_PIN_FUNC)
-		himax_mcu_ic_reset(ts, false, false);
+	himax_mcu_ic_reset(ts, false, false);
 #else
-		himax_mcu_system_reset(ts);
+	himax_mcu_system_reset(ts);
 #endif
-	} else {
-		do {
-			himax_mcu_register_write(
-				ts, pfw_op->addr_safe_mode_release_pw,
-				sizeof(pfw_op->data_safe_mode_release_pw_active),
-				pfw_op->data_safe_mode_release_pw_active, 0);
-			himax_mcu_register_read(ts,
-						pfw_op->addr_flag_reset_event,
-						DATA_LEN_4, tmp_data, 0);
-			D("%s: Read status from IC = %X,%X\n", __func__,
-			  tmp_data[0], tmp_data[1]);
-		} while ((tmp_data[1] != 0x01 || tmp_data[0] != 0x00) &&
-			 retry++ < 5);
 
-		if (retry >= 5) {
-			E("%s: Fail:\n", __func__);
-#if defined(HX_RST_PIN_FUNC)
-			himax_mcu_ic_reset(ts, false, false);
-#else
-			himax_mcu_system_reset(ts);
-#endif
-		} else {
-			D("%s: OK and Read status from IC = %X,%X\n", __func__,
-			  tmp_data[0], tmp_data[1]);
-
-			/* reset code*/
-			tmp_data[0] = 0x00;
-
-			ret = himax_bus_write(ts->client,
-					      pic_op->adr_i2c_psw_lb[0],
-					      tmp_data, 1,
-					      HIMAX_I2C_RETRY_TIMES);
-			if (ret < 0) {
-				E("%s: i2c access fail!\n", __func__);
-				ret = himax_bus_write(ts->client,
-						      pic_op->adr_i2c_psw_ub[0],
-						      tmp_data, 1,
-						      HIMAX_I2C_RETRY_TIMES);
-			}
-			if (ret < 0) {
-				E("%s: i2c access fail!\n", __func__);
-			}
-			himax_mcu_register_write(
-				ts, pfw_op->addr_safe_mode_release_pw,
-				sizeof(pfw_op->data_safe_mode_release_pw_reset),
-				pfw_op->data_safe_mode_release_pw_reset, 0);
-		}
-	}
-
-	D("%s: Leave\n", __func__);
+	D("%s: LEAVE ------\n", __func__);
 }
 
 bool himax_mcu_sense_off(struct himax_ts_data *ts, bool check_en)
@@ -475,7 +430,7 @@ bool himax_mcu_sense_off(struct himax_ts_data *ts, bool check_en)
 	uint8_t tmp_data[DATA_LEN_4];
 	int ret = 0;
 
-	D("%s: Entering check_en=%d\n", __func__, check_en);
+	D("%s: ENTER ------ check_en=%d\n", __func__, check_en);
 
 	do {
 		tmp_data[0] = pic_op->data_i2c_psw_lb[0];
@@ -534,11 +489,11 @@ bool himax_mcu_sense_off(struct himax_ts_data *ts, bool check_en)
 		}
 	} while (cnt++ < 15);
 
-	D("%s: Leave false\n", __func__);
+	D("%s: LEAVE false\n", __func__);
 	return false;
 
 TRUE_END:
-	D("%s: Leave true\n", __func__);
+	D("%s: LEAVE true\n", __func__);
 	return true;
 }
 EXPORT_SYMBOL(himax_mcu_sense_off);
@@ -559,7 +514,7 @@ int himax_mcu_power_on_init(struct himax_ts_data *ts)
 	struct fw_operation *pfw_op = ts->g_core_cmd_op->fw_op;
 	int ret;
 
-	D("%s: Entering\n", __func__);
+	D("%s: ENTER ------\n", __func__);
 
 	himax_mcu_touch_information(ts);
 
@@ -579,9 +534,9 @@ int himax_mcu_power_on_init(struct himax_ts_data *ts)
 		return ret;
 	}
 
-	himax_mcu_sense_on(ts, 0x00);
+	himax_mcu_sense_on(ts);
 
-	D("%s: Leave\n", __func__);
+	D("%s: LEAVE\n", __func__);
 	return 0;
 }
 EXPORT_SYMBOL(himax_mcu_power_on_init);
@@ -601,7 +556,7 @@ void himax_mcu_dd_reg_en(struct himax_ts_data *ts, bool enable)
 	struct ic_operation *pic_op = ts->g_core_cmd_op->ic_op;
 	uint8_t data[4] = { 0 };
 
-	D("%s: Entering\n", __func__);
+	D("%s: ENTER ------\n", __func__);
 
 	himax_mcu_dd_reg_read(ts, 0xCB, 8, 1, data, 0);
 
@@ -625,7 +580,7 @@ void himax_mcu_dd_reg_en(struct himax_ts_data *ts, bool enable)
 	data[3] = 0x2A;
 	himax_mcu_dd_reg_write(ts, 0xB9, 0, 4, data, 0);
 
-	D("%s: Leave\n", __func__);
+	D("%s: LEAVE\n", __func__);
 }
 EXPORT_SYMBOL(himax_mcu_dd_reg_en);
 
@@ -642,7 +597,7 @@ bool himax_mcu_dd_reg_write(struct himax_ts_data *ts, uint8_t addr,
 	uint32_t chk_idx = 0;
 	int ret, i = 0;
 
-	D("%s: Entering addr=%x pa_num=%d len=%d bank=%d\n", __func__, addr,
+	D("%s: ENTER ------ addr=%x pa_num=%d len=%d bank=%d\n", __func__, addr,
 	  pa_num, len, bank);
 
 	memset(w_data, 0, data_len * sizeof(uint8_t));
@@ -675,7 +630,7 @@ bool himax_mcu_dd_reg_write(struct himax_ts_data *ts, uint8_t addr,
 	  tmp_addr[1], tmp_addr[0]);
 	ret = himax_mcu_register_write(ts, tmp_addr, data_len, w_data, 0);
 
-	D("%s: Leave ret=%d\n", __func__, ret);
+	D("%s: LEAVE ret=%d\n", __func__, ret);
 	return (ret == NO_ERR);
 }
 EXPORT_SYMBOL(himax_mcu_dd_reg_write);
@@ -687,7 +642,7 @@ bool himax_mcu_dd_reg_read(struct himax_ts_data *ts, uint8_t addr,
 	uint8_t tmp_data[4] = { 0 };
 	int i = 0;
 
-	D("%s: Entering addr=%x pa_num=%d len=%d bank=%d\n", __func__, addr,
+	D("%s: ENTER ------ addr=%x pa_num=%d len=%d bank=%d\n", __func__, addr,
 	  pa_num, len, bank);
 
 	for (i = 0; i < len; i++) {
@@ -706,7 +661,7 @@ bool himax_mcu_dd_reg_read(struct himax_ts_data *ts, uint8_t addr,
 		  tmp_addr[3], tmp_addr[2], tmp_addr[1], tmp_addr[0], data[i]);
 	}
 
-	D("%s: Leave\n", __func__);
+	D("%s: LEAVE\n", __func__);
 	return true;
 
 READ_FAIL:
@@ -751,11 +706,10 @@ static bool himax_mcu_ic_id_read(struct himax_ts_data *ts)
 void himax_mcu_system_reset(struct himax_ts_data *ts)
 {
 	struct fw_operation *pfw_op = ts->g_core_cmd_op->fw_op;
-	int ret = 0;
-
 	struct ic_operation *pic_op = ts->g_core_cmd_op->ic_op;
 	uint8_t tmp_data[DATA_LEN_4];
 	int retry = 0;
+	int ret = 0;
 
 	himax_mcu_interface_on(ts);
 	himax_mcu_register_write(ts, pfw_op->addr_ctrl_fw_isr,
@@ -811,6 +765,8 @@ static uint32_t himax_mcu_check_CRC(struct himax_ts_data *ts,
 	uint8_t tmp_data[DATA_LEN_4];
 	int cnt = 0, ret = 0;
 	int length = reload_length / DATA_LEN_4;
+	
+	D("%s: ENTER ++++++", __func__);
 
 	ret = himax_mcu_register_write(ts, pfw_op->addr_reload_addr_from,
 				       DATA_LEN_4, start_addr, 0);
@@ -859,6 +815,7 @@ static uint32_t himax_mcu_check_CRC(struct himax_ts_data *ts,
 
 	} while (cnt++ < 100);
 END:
+	D("%s: LEAVE ++++++ result=%d", __func__, result);
 	return result;
 }
 
@@ -868,6 +825,8 @@ static void himax_mcu_set_HSEN_enable(struct himax_ts_data *ts)
 	uint8_t tmp_data[DATA_LEN_4];
 	uint8_t back_data[DATA_LEN_4];
 	uint8_t retry_cnt = 0;
+
+	D("%s: ENTER ++++++", __func__);
 
 	do {
 		if (ts->HSEN_enable) {
@@ -897,6 +856,8 @@ static void himax_mcu_set_HSEN_enable(struct himax_ts_data *ts)
 	} while ((tmp_data[3] != back_data[3] || tmp_data[2] != back_data[2] ||
 		  tmp_data[1] != back_data[1] || tmp_data[0] != back_data[0]) &&
 		 retry_cnt < HIMAX_REG_RETRY_TIMES);
+
+	D("%s: LEAVE ++++++", __func__);
 }
 
 bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
@@ -909,7 +870,7 @@ bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 	int i2c_speed = 0;
 	int ret = 0;
 
-	D("%s: ENTER ++++", __func__);
+	D("%s: ENTER ++++++", __func__);
 
 	/*  AHB_I2C Burst Read Off */
 	cmd[0] = pfw_op->data_ahb_dis[0];
@@ -947,7 +908,7 @@ bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 		return 0;
 	}
 
-	D("%s: LEAVE ++++", __func__);
+	D("%s: LEAVE ++++++", __func__);
 	return 1;
 }
 EXPORT_SYMBOL(himax_mcu_read_event_stack);
@@ -957,14 +918,15 @@ int himax_mcu_assign_sorting_mode(struct himax_ts_data *ts, uint8_t *tmp_data)
 	struct fw_operation *pfw_op = ts->g_core_cmd_op->fw_op;
 	int ret;
 
-	D("%s: Now data[3]=0x%02X,data[2]=0x%02X,data[1]=0x%02X,data[0]=0x%02X\n",
+	D("%s: ENTER ++++++ Now data[3]=0x%02X,data[2]=0x%02X,data[1]=0x%02X,data[0]=0x%02X\n",
 	  __func__, tmp_data[3], tmp_data[2], tmp_data[1], tmp_data[0]);
 
 	ret = himax_mcu_register_write(ts, pfw_op->addr_sorting_mode_en,
 				       DATA_LEN_4, tmp_data, 0);
 	if (ret)
 		return ret;
-
+	
+	D("%s: LEAVE ++++++\n", __func__);
 	return 0;
 }
 EXPORT_SYMBOL(himax_mcu_assign_sorting_mode);
@@ -973,13 +935,13 @@ int himax_mcu_check_sorting_mode(struct himax_ts_data *ts,
 					uint8_t *tmp_data)
 {
 	struct fw_operation *pfw_op = ts->g_core_cmd_op->fw_op;
-
+		
+	D("%s: ENTER ++++++\n", __func__);
 	himax_mcu_register_read(ts, pfw_op->addr_sorting_mode_en, DATA_LEN_4,
 				tmp_data, 0);
-	D("%s: tmp_data[0]=%x,tmp_data[1]=%x\n", __func__, tmp_data[0],
+	D("%s: LEAVE tmp_data[0]=%x,tmp_data[1]=%x\n", __func__, tmp_data[0],
 	  tmp_data[1]);
-
-	return NO_ERR;
+	return 0;
 }
 EXPORT_SYMBOL(himax_mcu_check_sorting_mode);
 /* FW side end*/
@@ -989,11 +951,12 @@ EXPORT_SYMBOL(himax_mcu_check_sorting_mode);
 #if defined(HX_RST_PIN_FUNC)
 static void himax_mcu_pin_reset(struct himax_ts_data *ts)
 {
-	D("%s: Now reset the Touch chip.\n", __func__);
+	D("%s: ENTER ++++++ Now reset the Touch chip.\n", __func__);
 	himax_rst_gpio_set(ts->rst_gpio, 0);
 	msleep(20);
 	himax_rst_gpio_set(ts->rst_gpio, 1);
 	msleep(50);
+	D("%s: LEAVE ++++++\n", __func__);
 }
 
 static void himax_mcu_irq_switch(struct himax_ts_data *ts, int switch_on)
@@ -1019,7 +982,7 @@ static void himax_mcu_reload_config(struct himax_ts_data *ts)
 {
 	if (himax_report_data_init(ts))
 		E("%s: allocate data fail\n", __func__);
-	himax_mcu_sense_on(ts, 0x00);
+	himax_mcu_sense_on(ts);
 }
 
 void himax_mcu_ic_reset(struct himax_ts_data *ts, uint8_t loadconfig,
@@ -1027,7 +990,7 @@ void himax_mcu_ic_reset(struct himax_ts_data *ts, uint8_t loadconfig,
 {
 	ts->HX_HW_RESET_ACTIVATE = 0;
 
-	D("%s: status: loadconfig=%d,int_off=%d\n", __func__, loadconfig,
+	D("%s: status: loadconfig=%d, int_off=%d\n", __func__, loadconfig,
 	  int_off);
 
 	if (ts->rst_gpio >= 0) {
@@ -1101,7 +1064,7 @@ void himax_mcu_touch_information(struct himax_ts_data *ts)
 	char data[DATA_LEN_8] = { 0 };
 	uint8_t err_cnt = 0;
 
-	D("%s: Entering ------", __func__);
+	D("%s: ENTER ------ ------", __func__);
 
 	himax_mcu_register_read(ts,
 				pdriver_op->addr_fw_define_rxnum_txnum_maxpt,
@@ -1155,7 +1118,7 @@ void himax_mcu_touch_information(struct himax_ts_data *ts)
 	ic_data->HX_PEN_FUNC = tmp_data[3];
 	D("%s: HX_PEN_FUNC = %d\n", __func__, ic_data->HX_PEN_FUNC);
 
-	D("%s: Leave ------", __func__);
+	D("%s: LEAVE ------", __func__);
 }
 EXPORT_SYMBOL(himax_mcu_touch_information);
 
@@ -1320,13 +1283,10 @@ EXPORT_SYMBOL(himax_guest_info_read);
 #endif
 /* CORE_DRIVER */
 
-#if defined(HX_SMART_WAKEUP) || defined(HX_HIGH_SENSE) ||                      \
-	defined(HX_USB_DETECT_GLOBAL)
+#if defined(HX_HIGH_SENSE)
 void himax_mcu_resend_cmd_func(struct himax_ts_data *ts)
 {
-#if defined(HX_HIGH_SENSE)
 	himax_mcu_set_HSEN_enable(ts);
-#endif
 }
 EXPORT_SYMBOL(himax_mcu_resend_cmd_func);
 #endif
@@ -1335,7 +1295,7 @@ int himax_mcu_in_cmd_struct_init(struct himax_ts_data *ts)
 {
 	int err = 0;
 
-	D("%s: ENTER ****!\n", __func__);
+	D("%s: ENTER ******\n", __func__);
 
 	ts->g_core_cmd_op = kzalloc(sizeof(struct himax_core_command_operation),
 				    GFP_KERNEL);
@@ -1386,7 +1346,7 @@ int himax_mcu_in_cmd_struct_init(struct himax_ts_data *ts)
 		goto err_g_core_cmd_op_g_internal_buffer_fail;
 	}
 
-	D("%s: LEAVE ****\n", __func__);
+	D("%s: LEAVE ******\n", __func__);
 	return 0;
 
 err_g_core_cmd_op_g_internal_buffer_fail:
@@ -1454,7 +1414,8 @@ void himax_mcu_in_cmd_init(struct himax_ts_data *ts)
 	struct sram_operation *sr_op = ts->g_core_cmd_op->sram_op;
 	struct driver_operation *drv_op = ts->g_core_cmd_op->driver_op;
 
-	D("%s: Entering!\n", __func__);
+	D("%s: ENTER ------\n", __func__);
+
 	/* CORE_IC */
 	himax_parse_assign_cmd(ic_adr_ahb_addr_byte_0,
 			       ic_op->addr_ahb_addr_byte_0,
@@ -1808,6 +1769,8 @@ void himax_mcu_in_cmd_init(struct himax_ts_data *ts)
 		drv_op->data_fw_define_rxnum_txnum_maxpt_normal,
 		sizeof(drv_op->data_fw_define_rxnum_txnum_maxpt_normal));
 	/* CORE_DRIVER */
+
+	D("%s: LEAVE ------\n", __func__);
 }
 EXPORT_SYMBOL(himax_mcu_in_cmd_init);
 /* CORE_INIT init end */

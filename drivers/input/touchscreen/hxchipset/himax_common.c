@@ -51,9 +51,43 @@ static void himax_report_all_leave_event(struct himax_ts_data *ts);
 static int p_point_num = 0xFFFF;
 static int probe_fail_flag;
 
+#if defined(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
+static char __himax_dhor[1024];
+char* himax_common_rdtohex(uint8_t *data, uint32_t length)
+{
+	int i;
+	char *p = __himax_dhor;
+	if (data) {
+		memset(p, 0, 1024);
+		for(i=0; i < length; i++) {
+			snprintf(p, 4, "%02x ", data[i]);
+			p += 3;
+		}
+	}
+	return __himax_dhor;
+}
+EXPORT_SYMBOL(himax_common_rdtohex);
+
+static char __himax_dhow[1024];
+char* himax_common_wdtohex(uint8_t *data, uint32_t length)
+{
+	int i;
+	char *p = __himax_dhow;
+	if (data) {
+		memset(p, 0, 1024);
+		for(i=0; i < length; i++) {
+			snprintf(p, 4, "%02x ", data[i]);
+			p += 3;
+		}
+	}
+	return __himax_dhow;
+}
+EXPORT_SYMBOL(himax_common_wdtohex);
+#endif
+
 void himax_parse_assign_cmd(uint32_t addr, uint8_t *cmd, int len)
 {
-	/*D("%s: Entering!\n", __func__);*/
+	/*D("%s: ENTER ------\n", __func__);*/
 
 	switch (len) {
 	case 1:
@@ -238,7 +272,7 @@ static void calculate_point_number(struct himax_ts_data *ts)
 static void himax_esd_hw_reset(struct himax_ts_data *ts)
 {
 	if (g_ts_dbg != 0)
-		D("%s: Entering\n", __func__);
+		D("%s: ENTER ------\n", __func__);
 
 	D("%s: START_Himax TP: ESD - Reset\n", __func__);
 
@@ -463,14 +497,6 @@ mem_alloc_fail_report_data:
 	kfree(ts->hx_touch_data->hx_rawdata_buf);
 	ts->hx_touch_data->hx_rawdata_buf = NULL;
 mem_alloc_fail_rawdata_buf:
-#if defined(HX_SMART_WAKEUP)
-	kfree(ts->hx_touch_data->hx_event_buf);
-	ts->hx_touch_data->hx_event_buf = NULL;
-mem_alloc_fail_event_buf:
-	kfree(wake_event_buffer);
-	wake_event_buffer = NULL;
-mem_alloc_fail_smwp:
-#endif
 	kfree(ts->hx_touch_data->hx_coord_buf);
 	ts->hx_touch_data->hx_coord_buf = NULL;
 mem_alloc_fail_coord_buf:
@@ -538,7 +564,7 @@ static int himax_touch_get(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 			   int ts_status)
 {
 	if (g_ts_dbg != 0)
-		D("%s: Entering, ts_status=%d!\n", __func__, ts_status);
+		D("%s: ENTER ------, ts_status=%d!\n", __func__, ts_status);
 
 	switch (ts_path) {
 	/*normal*/
@@ -590,7 +616,7 @@ static int himax_checksum_cal(struct himax_ts_data *ts, uint8_t *buf,
 	int ret_val = ts_status;
 
 	if (g_ts_dbg != 0)
-		D("%s: Entering, ts_status=%d!\n", __func__, ts_status);
+		D("%s: ENTER ------, ts_status=%d!\n", __func__, ts_status);
 
 	/* Normal */
 	switch (ts_path) {
@@ -661,7 +687,7 @@ himax_ts_event_check(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 	int ret_val = ts_status;
 
 	if (g_ts_dbg != 0)
-		D("%s: Entering, ts_status=%d!\n", __func__, ts_status);
+		D("%s: ENTER ------, ts_status=%d!\n", __func__, ts_status);
 
 	/* Normal */
 	switch (ts_path) {
@@ -804,7 +830,7 @@ static int himax_distribute_touch_data(struct himax_ts_data *ts, uint8_t *buf,
 		hx_state_info_pos -= PEN_INFO_SZ;
 
 	if (g_ts_dbg != 0)
-		D("%s: Entering, ts_status=%d!\n", __func__, ts_status);
+		D("%s: ENTER ------, ts_status=%d!\n", __func__, ts_status);
 
 	if (ts_path == HX_REPORT_COORD) {
 		memcpy(ts->hx_touch_data->hx_coord_buf, &buf[0],
@@ -1331,7 +1357,7 @@ static void himax_report_points(struct himax_ts_data *ts)
 int himax_report_data(struct himax_ts_data *ts, int ts_path, int ts_status)
 {
 	if (g_ts_dbg != 0)
-		D("%s: Entering, ts_status=%d!\n", __func__, ts_status);
+		D("%s: ENTER ------, ts_status=%d!\n", __func__, ts_status);
 
 	if (ts_path == HX_REPORT_COORD || ts_path == HX_REPORT_COORD_RAWDATA) {
 		/* Touch Point information */
@@ -1622,8 +1648,7 @@ int himax_chip_common_suspend(struct himax_ts_data *ts)
 		ts->suspended = true;
 	}
 
-#if defined(HX_SMART_WAKEUP) || defined(HX_HIGH_SENSE) ||                      \
-	defined(HX_USB_DETECT_GLOBAL)
+#if defined(HX_HIGH_SENSE)
 #if !defined(HX_RESUME_SEND_CMD)
 	himax_mcu_resend_cmd_func(ts);
 #endif
@@ -1683,10 +1708,10 @@ int himax_chip_common_resume(struct himax_ts_data *ts)
 	himax_mcu_ic_reset(ts, false, false);
 #endif
 
-#if defined(HX_SMART_WAKEUP) || defined(HX_HIGH_SENSE) ||                      \
-	defined(HX_USB_DETECT_GLOBAL)
+#if defined(HX_HIGH_SENSE)
 	himax_mcu_resend_cmd_func(ts);
 #endif
+
 	himax_report_all_leave_event(ts);
 	himax_int_enable(ts, 1);
 

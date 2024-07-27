@@ -26,6 +26,8 @@ static void hx83102_burst_enable(struct i2c_client *client,
 	uint8_t tmp_data[4];
 	int ret = 0;
 
+	D("%s: ENTER auto_add_4_byte=%d\n", __func__, auto_add_4_byte);
+
 	tmp_data[0] = 0x31;
 
 	ret = himax_bus_write(client, 0x13, tmp_data, 1, HIMAX_I2C_RETRY_TIMES);
@@ -41,21 +43,23 @@ static void hx83102_burst_enable(struct i2c_client *client,
 		E("%s: i2c access fail!\n", __func__);
 		return;
 	}
+	
+	D("%s: LEAVE\n", __func__);
 }
 
 static int hx83102_flash_write_burst(struct i2c_client *client,
 				     uint8_t *reg_byte, uint8_t *write_data)
 {
 	uint8_t data_byte[8];
-	int i = 0, j = 0, ret = 0;
+	int i = 0, ret = 0;
 
-	D("%s: ENTER ******", __func__);
+	D("%s: ENTER ****** register=%s", __func__, wdtohex(reg_byte, 4));
 
 	for (i = 0; i < 4; i++)
 		data_byte[i] = reg_byte[i];
 
-	for (j = 4; j < 8; j++)
-		data_byte[j] = write_data[j - 4];
+	for (i = 4; i < 8; i++)
+		data_byte[i] = write_data[i - 4];
 
 	ret = himax_bus_write(client, 0x00, data_byte, 8,
 			      HIMAX_I2C_RETRY_TIMES);
@@ -83,23 +87,23 @@ static int hx83102_register_read(struct himax_ts_data *ts, uint8_t *read_addr,
 		E("%s: read len over 256!\n", __func__);
 		return LENGTH_FAIL;
 	}
-	if (read_length > 4)
-		hx83102_burst_enable(ts->client, 1);
-	else
-		hx83102_burst_enable(ts->client, 0);
 
 	address = (read_addr[3] << 24) + (read_addr[2] << 16) +
 		  (read_addr[1] << 8) + read_addr[0];
-
 	i = address;
 	tmp_data[0] = (uint8_t)i;
 	tmp_data[1] = (uint8_t)(i >> 8);
 	tmp_data[2] = (uint8_t)(i >> 16);
 	tmp_data[3] = (uint8_t)(i >> 24);
 
-	D("%s: bus_write 0x00 address=%04x data=[%02x %02x %02x %02x]",
+	D("%s: address=%04x addr_le[%02x %02x %02x %02x]",
 	  __func__, address, tmp_data[0], tmp_data[1], tmp_data[2],
 	  tmp_data[3]);
+
+	if (read_length > 4)
+		hx83102_burst_enable(ts->client, 1);
+	else
+		hx83102_burst_enable(ts->client, 0);
 
 	ret = himax_bus_write(ts->client, 0x00, tmp_data, 4,
 			      HIMAX_I2C_RETRY_TIMES);
@@ -109,16 +113,12 @@ static int hx83102_register_read(struct himax_ts_data *ts, uint8_t *read_addr,
 	}
 	tmp_data[0] = 0x00;
 
-	D("%s: bus_write 0x0C data=[%02x]", __func__, tmp_data[0]);
-
 	ret = himax_bus_write(ts->client, 0x0C, tmp_data, 1,
 			      HIMAX_I2C_RETRY_TIMES);
 	if (ret < 0) {
 		E("%s: i2c access fail!\n", __func__);
 		return I2C_FAIL;
 	}
-
-	D("%s: bus_read 0x08 read_length=%d", __func__, read_length);
 
 	ret = himax_bus_read(ts->client, 0x08, read_data, read_length,
 			     HIMAX_I2C_RETRY_TIMES);
