@@ -29,8 +29,10 @@ if [ ${OS_HOST} == "x86_64" ] ; then
 	REMOTE_HOST="192.168.181.112"
     #dev-sd	
 	#REMOTE_HOST="192.168.181.12"
-	#prod 
-	#REMOTE_HOST="192.168.181.113" 
+	#prod
+	if [ "x$1" == "xprod" ] ; then
+	REMOTE_HOST="192.168.181.113"
+	fi 
     REMOTE_TARGET="root@${REMOTE_HOST}:/mnt/ssd/boot-update/"
     if [ -e ${TOOL_CHAIN} ] ; then 
         if [[ ! ${PATH} =~ "${TOOL_CHAIN}" ]]; then
