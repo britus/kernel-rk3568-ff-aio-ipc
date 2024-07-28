@@ -439,11 +439,12 @@ struct himax_ts_data {
 	atomic_t irq_state;
 	spinlock_t irq_lock;
 
-	/******* SPI-start *******/
+	/******* I2C / SPI-start *******/
 	int hx_irq;
 	struct spi_device *spi;
 	uint8_t *xfer_buff;
-	/******* SPI-end *******/
+	uint32_t xfer_size;
+	/******* I2C / SPI-end *******/
 
 	int in_self_test;
 	int suspend_resume_done;

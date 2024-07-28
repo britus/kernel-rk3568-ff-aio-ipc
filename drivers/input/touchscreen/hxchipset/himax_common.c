@@ -247,7 +247,7 @@ static void calcDataSize(struct himax_ts_data *ts)
 			1 :
 			0;
 
-	D("%s: coord_dsz:%d,area_dsz:%d,raw_data_fsz:%d,raw_data_nframes:%d",
+	D("%s: coord_dsz=%d area_dsz=%d raw_data_frame_sz=%d raw_data_nframes=%d",
 	  __func__, ts->coord_data_size, ts->area_data_size,
 	  ts->raw_data_frame_size, ts->raw_data_nframes);
 }
@@ -340,17 +340,22 @@ int himax_report_data_init(struct himax_ts_data *ts)
 				ts->hx_touch_data->rawdata_size +
 			1;
 
-	D("%s: rawdata_fsz = %d,HX_MAX_PT:%d,hx_raw_cnt_max:%d\n", __func__,
+	D("%s: rawdata_frame_sz=%d HX_MAX_PT=%d hx_raw_cnt_max=%d\n", __func__,
 	  ts->hx_touch_data->rawdata_frame_size, ts->ic_data->HX_MAX_PT,
 	  ts->hx_touch_data->raw_cnt_max);
-	D("%s: hx_raw_cnt_rmd:%d,g_hx_rawdata_size:%d,touch_info_size:%d\n",
+	D("%s: hx_raw_cnt_rmd=%d g_hx_rawdata_size=%d touch_info_size=%d\n",
 	  __func__, ts->hx_touch_data->raw_cnt_rmd,
 	  ts->hx_touch_data->rawdata_size, ts->hx_touch_data->touch_info_size);
+
+	if (ts->hx_touch_data->touch_info_size > ts->xfer_size) {
+		E("%s: touch_info_size=%d exceeds max. bus xfer_size=%d\n", __func__,
+		ts->hx_touch_data->touch_info_size, ts->xfer_size);
+		return -EINVAL;
+	}
 
 	ts->hx_touch_data->hx_coord_buf =
 		kzalloc(sizeof(uint8_t) * (ts->hx_touch_data->touch_info_size),
 			GFP_KERNEL);
-
 	if (ts->hx_touch_data->hx_coord_buf == NULL)
 		goto mem_alloc_fail_coord_buf;
 
@@ -473,7 +478,6 @@ mem_alloc_fail_report_data_py:
 	kfree(g_target_report_data->p_x);
 	g_target_report_data->p_x = NULL;
 mem_alloc_fail_report_data_px:
-
 	kfree(g_target_report_data->finger_id);
 	g_target_report_data->finger_id = NULL;
 mem_alloc_fail_report_data_fid:
@@ -555,23 +559,30 @@ static int himax_ts_work_status(struct himax_ts_data *ts)
 	return result;
 }
 
-static int himax_touch_get(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
-			   int ts_status)
+static int himax_touch_get(struct himax_ts_data *ts, uint8_t *buf, 
+			int length, int ts_path, int ts_status)
 {
+	uint8_t is_reset = 0;
+
 	if (ts->debug_log_level & BIT(4))
 		D("%s: ENTER :-:-:-: ts_status=%d!\n", __func__, ts_status);
+
+	if (ts->HX_HW_RESET_ACTIVATE) {
+		is_reset = 1;
+	}
+	
+#if defined(HX_ESD_RECOVERY)
+	if (ts->HX_ESD_RESET_ACTIVATE) {
+		is_reset = 1;
+	}
+#endif
 
 	switch (ts_path) {
 	/*normal*/
 	case HX_REPORT_COORD:
-		if ((ts->HX_HW_RESET_ACTIVATE)
-#if defined(HX_ESD_RECOVERY)
-		    || (ts->HX_ESD_RESET_ACTIVATE)
-#endif
-		)
-		#if 1
+		if (is_reset)
 		{
-			if (!himax_mcu_read_event_stack(ts, buf, 128)) {
+			if (!himax_mcu_read_event_stack(ts, buf, length)) {
 				E("%s: can't read data from chip!\n", __func__);
 				ts_status = HX_TS_GET_DATA_FAIL;
 			}
@@ -583,37 +594,13 @@ static int himax_touch_get(struct himax_ts_data *ts, uint8_t *buf, int ts_path,
 				ts_status = HX_TS_GET_DATA_FAIL;
 			}
 		}
-		#else
-		{
-			if (!hx83102e_read_event_stack(ts, buf, 128)) {
-				E("%s: can't read data from chip!\n", __func__);
-				ts_status = HX_TS_GET_DATA_FAIL;
-			}
-		} else {
-			if (!hx83102e_read_event_stack(
-				    ts, buf,
-				    ts->hx_touch_data->touch_info_size)) {
-				E("%s: can't read data from chip!\n", __func__);
-				ts_status = HX_TS_GET_DATA_FAIL;
-			}
-		}
-		#endif
 		break;
-
+	/*coordinates as raw data*/
 	case HX_REPORT_COORD_RAWDATA:
-		#if 1
-		if (!himax_mcu_read_event_stack(ts, buf, 128)) {
+		if (!himax_mcu_read_event_stack(ts, buf, length)) {
 			E("%s: can't read data from chip!\n", __func__);
 			ts_status = HX_TS_GET_DATA_FAIL;
 		}
-		#else
-		if (!hx83102e_read_event_stack(ts, buf, 128)) {
-			E("%s: can't read data from chip!\n", __func__);
-			ts_status = HX_TS_GET_DATA_FAIL;
-		}
-		#endif
-		break;
-	default:
 		break;
 	}
 
@@ -661,7 +648,6 @@ static int himax_checksum_cal(struct himax_ts_data *ts, uint8_t *buf,
 	} else if (zero_cnt == length) {
 		if (ts->use_irq)
 			D("%s: [HIMAX TP MSG] All Zero event\n", __func__);
-
 		ret_val = HX_CHKSUM_FAIL;
 	} else {
 		raw_data_sel = buf[ts->HX_TOUCH_INFO_POINT_CNT] >> 4 & 0x0F;
@@ -670,18 +656,10 @@ static int himax_checksum_cal(struct himax_ts_data *ts, uint8_t *buf,
 		    (raw_data_sel != ts->hx_touch_data->diag_cmd)) {
 			if (!ts->hx_touch_data->diag_cmd) {
 				/*Need to clear event stack here*/
-				/* TODO: himax_mcu_read_event_stack */
-				#if 1 
 				himax_mcu_read_event_stack(
 					ts, buf,
-					(128 -
+					(ts->xfer_size -
 					 ts->hx_touch_data->touch_info_size));
-				#else
-				hx83102e_read_event_stack(
-					ts, buf,
-					(128 -
-					 ts->hx_touch_data->touch_info_size));
-				#endif
 			}
 			ret_val = HX_READY_SERVE;
 		}
@@ -1403,16 +1381,22 @@ static int himax_ts_operation(struct himax_ts_data *ts, int ts_path,
 {
 	uint8_t hw_reset_check[2];
 
+	D("%s: ENTER ****\n", __func__);
+
 	memset(ts->xfer_buff, 0x00, 128 * sizeof(uint8_t));
 	memset(hw_reset_check, 0x00, sizeof(hw_reset_check));
 
-	ts_status = himax_touch_get(ts, ts->xfer_buff, ts_path, ts_status);
+	ts_status = himax_touch_get(ts, ts->xfer_buff, ts->xfer_size, ts_path, ts_status);
 	if (ts_status == HX_TS_GET_DATA_FAIL) {
 		goto END_FUNCTION;
 	}
 
 	ts_status = himax_distribute_touch_data(ts, ts->xfer_buff, ts_path,
 						ts_status);
+	if (ts_status == HX_PATH_FAIL) {
+		goto END_FUNCTION;
+	}
+
 	ts_status = himax_err_ctrl(ts, ts->xfer_buff, ts_path, ts_status);
 	if (ts_status == HX_REPORT_DATA || ts_status == HX_TS_NORMAL_END)
 		ts_status = himax_parse_report_data(ts, ts_path, ts_status);
@@ -1420,8 +1404,15 @@ static int himax_ts_operation(struct himax_ts_data *ts, int ts_path,
 		goto END_FUNCTION;
 
 	ts_status = himax_report_data(ts, ts_path, ts_status);
+	if (ts_status == HX_PATH_FAIL) {
+		E("%s: himax_report_data() failed.\n", __func__);
+		goto END_FUNCTION;
+	}
 
+	/* success */
+	
 END_FUNCTION:
+	D("%s: LEAVE **** ts_status=%d\n", __func__, ts_status);
 	return ts_status;
 }
 
@@ -1481,34 +1472,37 @@ int himax_chip_common_init(struct himax_ts_data *ts)
 {
 	int ret = 0, err = PROBE_FAIL;
 
-	D("%s: XFER_BUFF START\n", __func__);
+	D("%s: ENTER --------\n", __func__);
+
+	ts->xfer_size = 128 * sizeof(uint8_t);
 	ts->xfer_buff =
-		devm_kzalloc(ts->dev, 128 * sizeof(uint8_t), GFP_KERNEL);
+		devm_kzalloc(ts->dev, ts->xfer_size, GFP_KERNEL);
 	if (ts->xfer_buff == NULL) {
+		E("%s: Xfer buffer, out of memory.\n", __func__);
 		err = -ENOMEM;
 		goto exit_err_0;
 	}
 
-	D("%s: PDATA START\n", __func__);
 	ts->pdata = kzalloc(sizeof(struct himax_i2c_platform_data), GFP_KERNEL);
 	if (ts->pdata == NULL) { /*Allocate Platform data space*/
+		E("%s: Platform data, out of memory.\n", __func__);
 		err = -ENOMEM;
 		goto exit_err_1;
 	}
 
 	/* allocate IC data */
-	D("%s: ic_data START\n", __func__);
 	ts->ic_data = kzalloc(sizeof(struct himax_ic_data), GFP_KERNEL);
 	if (ts->ic_data == NULL) { /*Allocate IC data space*/
+		E("%s: IC data, out of memory.\n", __func__);
 		err = -ENOMEM;
 		goto exit_err_2;
 	}
 
 	/* allocate report data */
-	D("%s: report data START\n", __func__);
 	ts->hx_touch_data =
 		kzalloc(sizeof(struct himax_report_data), GFP_KERNEL);
 	if (ts->hx_touch_data == NULL) {
+		E("%s: Touch data, out of memory.\n", __func__);
 		err = -ENOMEM;
 		goto exit_err_3;
 	}
@@ -1593,7 +1587,7 @@ int himax_chip_common_init(struct himax_ts_data *ts)
 
 	spin_lock_init(&ts->irq_lock);
 
-	/*touch data init*/
+	/* touch data init */
 	err = himax_report_data_init(ts);
 	if (err)
 		goto exit_err_6;
@@ -1604,6 +1598,8 @@ int himax_chip_common_init(struct himax_ts_data *ts)
 
 	/* chip is ready */
 	ts->initialized = true;
+	
+	I("%s: Chip successfully initialized.\n", __func__);
 	return 0;
 
 exit_err_7:

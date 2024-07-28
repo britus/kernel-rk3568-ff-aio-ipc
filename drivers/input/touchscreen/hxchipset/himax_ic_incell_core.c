@@ -16,6 +16,7 @@
 #include "himax_common.h"
 #include "himax_ic_core.h"
 #include "himax_ic_incell_core.h"
+#include "himax_ic_HX83102.h"
 
 #if defined(HX_ZERO_FLASH)
 struct zf_operation *pzf_op;
@@ -865,9 +866,6 @@ bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 {
 	struct fw_operation *pfw_op = ts->g_core_cmd_op->fw_op;
 	uint8_t cmd[DATA_LEN_4];
-	struct timespec t_start, t_end, t_delta;
-	int len = length;
-	int i2c_speed = 0;
 	int ret = 0;
 
 	D("%s: ENTER ++++++", __func__);
@@ -878,23 +876,12 @@ bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 			      HIMAX_I2C_RETRY_TIMES);
 	if (ret < 0) {
 		E("%s: i2c access fail!\n", __func__);
-		return 0;
+		return false;
 	}
-	if (ts->debug_log_level & BIT(2))
-		getnstimeofday(&t_start);
 
-	ret = himax_bus_read(ts->client, pfw_op->addr_event_addr[0], buf,
-			     length, HIMAX_I2C_RETRY_TIMES);
-
-	if (ts->debug_log_level & BIT(2)) {
-		getnstimeofday(&t_end);
-		t_delta.tv_nsec =
-			(t_end.tv_sec * 1000000000 + t_end.tv_nsec) -
-			(t_start.tv_sec * 1000000000 + t_start.tv_nsec);
-
-		i2c_speed =
-			(len * 9 * 1000000 / (int)t_delta.tv_nsec) * 13 / 10;
-		ts->bus_speed = (int)i2c_speed;
+	if (!hx83102e_read_event_stack(ts, buf, length)) {
+		E("%s: hx83102e_read_event_stack() fail!\n", __func__);
+		return false;
 	}
 
 	/*  AHB_I2C Burst Read On */
@@ -903,11 +890,11 @@ bool himax_mcu_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 			      HIMAX_I2C_RETRY_TIMES);
 	if (ret < 0) {
 		E("%s: i2c access fail!\n", __func__);
-		return 0;
+		return false;
 	}
 
 	D("%s: LEAVE ++++++", __func__);
-	return 1;
+	return true;
 }
 EXPORT_SYMBOL(himax_mcu_read_event_stack);
 

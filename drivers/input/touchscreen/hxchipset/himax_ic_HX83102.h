@@ -15,13 +15,6 @@
 #ifndef __HIMAX_83102_H__
 #define __HIMAX_83102_H__
 
-#include <linux/slab.h>
-
-#include "himax_platform.h"
-#include "himax_common.h"
-#include "himax_ic_core.h"
-#include "himax_ic_incell_core.h"
-
 #define hx83102ab_fw_addr_sorting_mode_en 0x100007FC
 #define hx83102ab_fw_addr_selftest_addr_en 0x100007F8
 #define hx83102ab_data_adc_cfg_1 0x10007B00

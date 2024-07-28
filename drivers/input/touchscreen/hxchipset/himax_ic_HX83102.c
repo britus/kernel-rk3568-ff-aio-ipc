@@ -14,6 +14,8 @@
  */
 
 #include <linux/module.h>
+#include <linux/slab.h>
+
 #include "himax_common.h"
 #include "himax_platform.h"
 #include "himax_ic_core.h"
@@ -438,6 +440,62 @@ bool hx83102e_sense_off(struct himax_ts_data *ts, bool check_en)
 }
 EXPORT_SYMBOL(hx83102e_sense_off);
 
+static int hx83102e_is_invalid_event(uint8_t err_byte, uint8_t *buf, uint8_t length)
+{
+	int i, state = 0;
+
+	/* valid event stack */
+	if (buf[0] != 0xff) {
+		return 0;
+	}
+
+	/* find misterious last 4 bytes (at end) 
+	 * 1) f0 02 00 36 
+	 * 2) f0 00 00 38 */
+	for (i = length; i >= 0; i--) {
+		switch (err_byte) {
+			case 0x36: {
+				if ((state == 0) && (buf[i] == 0x36)) {
+					state = 1;
+				}
+				else if ((state == 1) && (buf[i] == 0x00)) {
+					state = 2;
+				}
+				else if ((state == 2) && (buf[i] == 0x02)) {
+					state = 3;
+				}
+				else if ((state == 3) && (buf[i] == 0xf0)) {
+					state = 4;
+				}
+				if (state == 4) {
+					return -EINVAL;
+				}
+				break;
+			}
+			case 0x38: {
+				if ((state == 0) && (buf[i] == 0x38)) {
+					state = 1;
+				}
+				else if ((state == 1) && (buf[i] == 0x00)) {
+					state = 2;
+				}
+				else if ((state == 2) && (buf[i] == 0x00)) {
+					state = 3;
+				}
+				else if ((state == 3) && (buf[i] == 0xf0)) {
+					state = 4;
+				}
+				if (state == 4) {
+					return -EINVAL;
+				}
+				break;
+			}
+		}
+	}
+
+	return 0;
+}
+
 bool hx83102e_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 			       uint8_t length)
 {
@@ -445,14 +503,28 @@ bool hx83102e_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 	struct timespec t_start, t_end, t_delta;
 	int len = length;
 	int i2c_speed = 0;
+	int ret;
 
 	D("%s: ENTER *****\n", __func__);
 
 	if (ts->debug_log_level & BIT(2))
 		getnstimeofday(&t_start);
 
-	himax_bus_read(ts->client, pfw_op->addr_event_addr[0], buf, length,
-		       HIMAX_I2C_RETRY_TIMES);
+	ret = himax_bus_read(ts->client, pfw_op->addr_event_addr[0], 
+			buf, length, HIMAX_I2C_RETRY_TIMES);
+	if (ret) {
+		E("%s: himax_bus_read() fail!\n", __func__);
+		return false;
+	}
+
+	if (hx83102e_is_invalid_event(0x36, buf, length)) {
+		E("%s: Invalid event stack detected. [f0 02 00 36]\n", __func__);
+		return false;
+	}
+	if (hx83102e_is_invalid_event(0x38, buf, length)) {
+		E("%s: Invalid event stack detected. [f0 00 00 38]\n", __func__);
+		return false;
+	}
 
 	if (ts->debug_log_level & BIT(2)) {
 		getnstimeofday(&t_end);
@@ -466,7 +538,7 @@ bool hx83102e_read_event_stack(struct himax_ts_data *ts, uint8_t *buf,
 	}
 
 	D("%s: LEAVE *****\n", __func__);
-	return 1;
+	return true;
 }
 EXPORT_SYMBOL(hx83102e_read_event_stack);
 

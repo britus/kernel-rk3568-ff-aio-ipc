@@ -238,8 +238,8 @@ int himax_bus_read(struct i2c_client *client, uint8_t command, uint8_t *data,
 	}
 	mutex_unlock(&ts->rw_lock);
 
-	D("%s: command=0x%02x receive=%s\n", __func__, 
-		command, rdtohex(data, length));
+	D("%s: command=0x%02x length=%d receive=%s\n", __func__, 
+		command, length, rdtohex(data, length));
 
 	return 0;
 }
