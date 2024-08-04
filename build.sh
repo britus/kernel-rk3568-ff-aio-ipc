@@ -42,6 +42,7 @@ if [ ${OS_HOST} == "x86_64" ] ; then
 else
     KRNL_ARCH="arm64"
     CC="gcc"
+    LD="ld"
 fi
 
 # Used kernel branch
