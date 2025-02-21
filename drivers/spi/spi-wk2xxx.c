@@ -1872,10 +1872,9 @@ static int wk2xxx_probe(struct spi_device *spi)
 	uint8_t i;
 	int ret, priv_size;
 
-	dev_info(&spi->dev, DRIVER_DESC "\n");
-	dev_info(&spi->dev, VERSION_DESC "\n");
-
-	dev_dbg(&spi->dev, "%s: Setup spi device.\n", __func__);
+	dev_info(&spi->dev, "%s: " DRIVER_DESC "\n", __func__);
+	dev_info(&spi->dev, "%s: " VERSION_DESC "\n", __func__);
+	dev_info(&spi->dev, "%s: Setup spi device.\n", __func__);
 	
 	/*
 	 * TODO: get spi parameters from DT 
@@ -2015,7 +2014,7 @@ static int wk2xxx_probe(struct spi_device *spi)
 		}
 	}
 
-	dev_dbg(&spi->dev, "%s: Initialize serial ports.\n", __func__);
+	dev_info(&spi->dev, "%s: Initialize serial ports.\n", __func__);
 
 	for (i = 0; i < WK2_NR_PORTS; i++) {
 		priv->p[i].line = i;
@@ -2058,7 +2057,7 @@ static int wk2xxx_probe(struct spi_device *spi)
 	}
 	mutex_unlock(&wk2xxxs_lock);
 
-	dev_dbg(&spi->dev, "%s: Setup interrupt.\n", __func__);
+	dev_info(&spi->dev, "%s: Setup interrupt.\n", __func__);
 
 	/* Setup interrupt */
 	ret = devm_request_irq(&spi->dev, priv->irq_num, wk2xxx_irq,
@@ -2072,7 +2071,7 @@ static int wk2xxx_probe(struct spi_device *spi)
 	/* probe successfully completed */
 	priv->init_done = 1;
 
-	dev_info(&spi->dev, "Driver successfully installed.\n");
+	dev_info(&spi->dev, "%s: Driver successfully installed.\n", __func__);
 	return 0;
 
 out_port:
@@ -2131,7 +2130,7 @@ static int wk2xxx_remove(struct spi_device *spi)
 		return 0;
 	}
 
-	dev_dbg(&spi->dev, "%s: Driver cleanup\n", __func__);
+	dev_info(&spi->dev, "%s: Driver cleanup\n", __func__);
 
 	mutex_lock(&wk2xxxs_lock);
 
@@ -2181,7 +2180,7 @@ static int wk2xxx_remove(struct spi_device *spi)
 
 	devm_kfree(&spi->dev, priv);
 
-	dev_info(&spi->dev, "Driver removed\n");
+	dev_info(&spi->dev, "%s: Driver removed\n", __func__);
 	return 0;
 }
 

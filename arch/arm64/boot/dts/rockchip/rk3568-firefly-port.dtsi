@@ -485,7 +485,7 @@
 };
 
 &can1 {
-	status = "disabled";
+	status = "okay";
 	compatible = "rockchip,rk3568-can-2.0";
 	assigned-clocks = <&cru CLK_CAN1>;
 	assigned-clock-rates = <200000000>;
@@ -494,7 +494,7 @@
 };
 
 &can2 {
-	status = "disabled";
+	status = "okay";
 	compatible = "rockchip,rk3568-can-2.0";
 	assigned-clocks = <&cru CLK_CAN2>;
 	assigned-clock-rates = <200000000>;
@@ -503,14 +503,14 @@
 };
 
 &spi1 {
-	status = "disabled";
+	status = "okay";
 	max-freq = <48000000>;
 	dev-port = <0>;
 	pinctrl-0 = <&spi1m1_pins>;
 	pinctrl-1 = <&spi1m1_pins_hs>;
 
 	spi_wk2xxx: spi_wk2xxx@00 {
-		status = "disabled";
+		status = "okay";
 		compatible = "firefly,spi-wk2xxx";
 		reg = <0x00>;
 		spi-max-frequency = <10000000>;
